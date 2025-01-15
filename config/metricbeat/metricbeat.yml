@@ -1,0 +1,79 @@
+metricbeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: true
+
+metricbeat.modules:
+- module: system
+  metricsets:
+    - cpu
+    - load
+    - memory
+    - network
+    - process
+    - process_summary
+    - uptime
+    - socket_summary
+    - filesystem
+    - fsstat
+  enabled: true
+  period: 10s
+  processes: ['.*']
+
+- module: docker
+  metricsets:
+    - container
+    - cpu
+    - diskio
+    - healthcheck
+    - info
+    - memory
+    - network
+  hosts: ["unix:///var/run/docker.sock"]
+  period: 10s
+
+- module: postgresql
+  metricsets:
+    - database
+    - bgwriter
+    - activity
+  period: 10s
+  hosts: ["postgres://postgres:${DB_PASSWORD}@db_primary:5432?sslmode=disable"]
+
+- module: nginx
+  metricsets:
+    - stubstatus
+  period: 10s
+  hosts: ["http://nginx:80"]
+  server_status_path: "/nginx_status"
+
+- module: redis
+  metricsets:
+    - info
+    - keyspace
+  period: 10s
+  hosts: ["redis:6379"]
+  password: ${REDIS_PASSWORD}
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  username: "${ELASTIC_USER}"
+  password: "${ELASTIC_PASSWORD}"
+  index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+
+setup.kibana:
+  host: "kibana:5601"
+  username: "${KIBANA_USERNAME}"
+  password: "${KIBANA_PASSWORD}"
+
+setup.dashboards.enabled: true
+setup.template.enabled: true
+
+logging.json: true
+logging.metrics.enabled: true

@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  db_primary:
+    image: postgres:14-alpine
+    container_name: db_primary
+    volumes:
+      - db_primary_data:/var/lib/postgresql/data
+      - ./docker/postgres/primary/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./docker/postgres/primary/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./docker/postgres/ssl:/etc/ssl
+      - ./docker/postgres/archive:/var/lib/postgresql/archive
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - db_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db_replica:
+    image: postgres:14-alpine
+    container_name: db_replica
+    volumes:
+      - db_replica_data:/var/lib/postgresql/data
+      - ./docker/postgres/replica/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./docker/postgres/ssl:/etc/ssl
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    depends_on:
+      - db_primary
+    networks:
+      - db_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: pgbouncer
+    volumes:
+      - ./docker/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./docker/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt
+      - ./docker/postgres/ssl:/etc/ssl
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "6432:6432"
+    networks:
+      - db_network
+    depends_on:
+      - db_primary
+      - db_replica
+
+  backup:
+    image: postgres:14-alpine
+    container_name: db_backup
+    volumes:
+      - ./scripts/backup:/scripts
+      - db_backup:/backup
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+    command: ["/bin/sh", "-c", "crond -f"]
+    depends_on:
+      - db_primary
+    networks:
+      - db_network
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres_exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${DB_USER}:${DB_PASSWORD}@db_primary:5432/${DB_NAME}?sslmode=disable
+    ports:
+      - "9187:9187"
+    networks:
+      - db_network
+      - monitoring
+    depends_on:
+      - db_primary
+
+volumes:
+  db_primary_data:
+  db_replica_data:
+  db_backup:
+
+networks:
+  db_network:
+    driver: overlay
+    internal: true
+  monitoring:
+    external: true

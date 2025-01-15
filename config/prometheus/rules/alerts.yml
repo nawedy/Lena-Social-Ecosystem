@@ -1,0 +1,192 @@
+groups:
+  - name: service_health
+    rules:
+      # Service Health
+      - alert: HighCPUUsage
+        expr: avg(container_cpu_usage_seconds_total{container!=""}) by (container) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High CPU usage on {{ $labels.container }}
+          description: CPU usage is above 85% for 5 minutes
+
+      - alert: HighMemoryUsage
+        expr: avg(container_memory_usage_bytes{container!=""}) / avg(container_spec_memory_limit_bytes{container!=""}) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High memory usage on {{ $labels.container }}
+          description: Memory usage is above 90% for 5 minutes
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Service {{ $labels.job }} is down
+          description: Service has been down for more than 1 minute
+
+  - name: api_performance
+    rules:
+      # API Performance
+      - alert: HighResponseTime
+        expr: rate(http_request_duration_ms_sum[5m]) / rate(http_request_duration_ms_count[5m]) > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High API response time
+          description: Average response time is above 500ms for 5 minutes
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High API error rate
+          description: Error rate is above 5% for 5 minutes
+
+      - alert: HighRequestRate
+        expr: sum(rate(http_requests_total[5m])) > 2000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High request rate
+          description: Request rate is above 2000 req/s for 5 minutes
+
+  - name: database_performance
+    rules:
+      # Database Performance
+      - alert: SlowQueries
+        expr: rate(database_query_duration_ms_sum[5m]) / rate(database_query_duration_ms_count[5m]) > 200
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Slow database queries
+          description: Average query time is above 200ms for 5 minutes
+
+      - alert: HighConnectionUsage
+        expr: pg_stat_database_connections / pg_settings_max_connections * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High database connection usage
+          description: Connection pool usage is above 90% for 5 minutes
+
+      - alert: HighDiskUsage
+        expr: pg_database_size_bytes / pg_database_size_limit_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High database disk usage
+          description: Database disk usage is above 90% for 5 minutes
+
+  - name: cache_performance
+    rules:
+      # Cache Performance
+      - alert: LowCacheHitRate
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) * 100 < 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Low cache hit rate
+          description: Cache hit rate is below 80% for 5 minutes
+
+      - alert: HighCacheMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High cache memory usage
+          description: Cache memory usage is above 90% for 5 minutes
+
+      - alert: HighCacheEvictionRate
+        expr: rate(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High cache eviction rate
+          description: Cache eviction rate is above 100 keys/s for 5 minutes
+
+  - name: network_performance
+    rules:
+      # Network Performance
+      - alert: HighNetworkLatency
+        expr: network_latency_ms > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High network latency
+          description: Network latency is above 100ms for 5 minutes
+
+      - alert: HighNetworkErrors
+        expr: rate(network_errors_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High network errors
+          description: Network error rate is above 10 errors/s for 5 minutes
+
+      - alert: HighBandwidthUsage
+        expr: network_bandwidth_bytes / network_bandwidth_limit_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High bandwidth usage
+          description: Network bandwidth usage is above 90% for 5 minutes
+
+  - name: scaling_performance
+    rules:
+      # Scaling Performance
+      - alert: HighScalingActivity
+        expr: rate(scaling_operations_total[1h]) > 10
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: High scaling activity
+          description: More than 10 scaling operations in the last hour
+
+      - alert: ScalingFailure
+        expr: scaling_operation_failures_total > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Scaling operation failed
+          description: One or more scaling operations have failed
+
+  - name: cost_optimization
+    rules:
+      # Cost Optimization
+      - alert: HighResourceCost
+        expr: resource_cost_per_hour > resource_cost_threshold
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: High resource cost
+          description: Resource cost is above the defined threshold for 1 hour
+
+      - alert: UnderutilizedResources
+        expr: avg_cpu_utilization < 20 and avg_memory_utilization < 30
+        for: 24h
+        labels:
+          severity: warning
+        annotations:
+          summary: Underutilized resources
+          description: Resources have been underutilized for 24 hours

@@ -1,0 +1,2 @@
+npm install @atproto/api @atproto/identity react-native typescript @types/node
+npm install --save-dev jest @types/jest ts-jest

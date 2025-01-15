@@ -1,0 +1,148 @@
+groups:
+  - name: business_alerts
+    rules:
+      # User Activity Alerts
+      - alert: LowDailyActiveUsers
+        expr: |
+          rate(daily_active_users[24h]) < 
+          avg_over_time(daily_active_users[7d]) * 0.8
+        for: 1h
+        labels:
+          severity: warning
+          team: product
+        annotations:
+          summary: Daily Active Users below threshold
+          description: DAU has dropped below 80% of 7-day average
+
+      - alert: HighUserChurn
+        expr: |
+          (
+            rate(user_churn[24h]) / 
+            rate(daily_active_users[24h])
+          ) > 0.1
+        for: 6h
+        labels:
+          severity: warning
+          team: product
+        annotations:
+          summary: High user churn detected
+          description: User churn rate exceeds 10% in the last 24 hours
+
+      # Revenue Alerts
+      - alert: RevenueDrop
+        expr: |
+          rate(revenue_daily[24h]) < 
+          avg_over_time(revenue_daily[7d]) * 0.7
+        for: 12h
+        labels:
+          severity: critical
+          team: business
+        annotations:
+          summary: Significant revenue drop detected
+          description: Daily revenue has dropped below 70% of 7-day average
+
+      - alert: LowConversionRate
+        expr: |
+          rate(premium_conversion_rate[24h]) < 0.02
+        for: 24h
+        labels:
+          severity: warning
+          team: business
+        annotations:
+          summary: Low premium conversion rate
+          description: Premium conversion rate below 2% for 24 hours
+
+      # Content Metrics
+      - alert: LowContentCreation
+        expr: |
+          rate(content_created_daily[24h]) < 
+          avg_over_time(content_created_daily[7d]) * 0.6
+        for: 6h
+        labels:
+          severity: warning
+          team: content
+        annotations:
+          summary: Low content creation rate
+          description: Content creation has dropped below 60% of 7-day average
+
+      - alert: LowEngagementRate
+        expr: |
+          rate(content_engagement_rate[24h]) < 0.05
+        for: 12h
+        labels:
+          severity: warning
+          team: content
+        annotations:
+          summary: Low content engagement
+          description: Content engagement rate below 5% for 12 hours
+
+      # Performance Alerts
+      - alert: HighErrorRate
+        expr: |
+          rate(error_rate[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: High error rate detected
+          description: Error rate exceeds 5% in the last 5 minutes
+
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: Slow response times detected
+          description: 95th percentile of response times exceeds 1 second
+
+      # Growth Metrics
+      - alert: NegativeUserGrowth
+        expr: |
+          rate(user_growth_rate[7d]) < 0
+        for: 24h
+        labels:
+          severity: warning
+          team: growth
+        annotations:
+          summary: Negative user growth detected
+          description: User growth rate has been negative for 24 hours
+
+      - alert: LowRetentionRate
+        expr: |
+          rate(user_retention_7d[7d]) < 0.3
+        for: 24h
+        labels:
+          severity: warning
+          team: product
+        annotations:
+          summary: Low user retention rate
+          description: 7-day retention rate below 30% for 24 hours
+
+      # Cost Alerts
+      - alert: HighInfrastructureCost
+        expr: |
+          sum(infrastructure_cost_hourly) > 
+          avg_over_time(sum(infrastructure_cost_hourly)[7d]) * 1.3
+        for: 6h
+        labels:
+          severity: warning
+          team: operations
+        annotations:
+          summary: High infrastructure costs detected
+          description: Infrastructure costs 30% above 7-day average
+
+      - alert: HighStorageCost
+        expr: |
+          sum(storage_cost_daily) > 
+          avg_over_time(sum(storage_cost_daily)[30d]) * 1.5
+        for: 24h
+        labels:
+          severity: warning
+          team: operations
+        annotations:
+          summary: High storage costs detected
+          description: Storage costs 50% above monthly average

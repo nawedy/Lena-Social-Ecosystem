@@ -1,0 +1,140 @@
+{
+  "rules": [
+    {
+      "name": "High Error Rate",
+      "type": "metrics",
+      "schedule": "*/5 * * * *",
+      "params": {
+        "index": "logstash-*",
+        "timeField": "@timestamp",
+        "window": "5m",
+        "threshold": 50,
+        "query": {
+          "bool": {
+            "must": [
+              { "term": { "tags": "error" } }
+            ]
+          }
+        }
+      },
+      "actions": {
+        "slack": {
+          "webhook": "{{slack_webhook_url}}",
+          "message": "High error rate detected: {{ctx.payload.hits.total}} errors in last 5 minutes"
+        },
+        "email": {
+          "to": ["ops-team@company.com"],
+          "subject": "High Error Rate Alert",
+          "body": "Error rate exceeded threshold: {{ctx.payload.hits.total}} errors in last 5 minutes"
+        }
+      }
+    },
+    {
+      "name": "Server Response Time",
+      "type": "metrics",
+      "schedule": "*/1 * * * *",
+      "params": {
+        "index": "metricbeat-*",
+        "timeField": "@timestamp",
+        "window": "1m",
+        "threshold": 1000,
+        "query": {
+          "bool": {
+            "must": [
+              { "term": { "metricset.name": "http" } }
+            ]
+          }
+        }
+      },
+      "actions": {
+        "slack": {
+          "webhook": "{{slack_webhook_url}}",
+          "message": "High response time detected: {{ctx.payload.aggregations.avg_response_time.value}}ms"
+        }
+      }
+    },
+    {
+      "name": "Database Connection Issues",
+      "type": "metrics",
+      "schedule": "*/1 * * * *",
+      "params": {
+        "index": "metricbeat-*",
+        "timeField": "@timestamp",
+        "window": "1m",
+        "threshold": 5,
+        "query": {
+          "bool": {
+            "must": [
+              { "term": { "service.type": "postgresql" } },
+              { "term": { "event.type": "connection_failed" } }
+            ]
+          }
+        }
+      },
+      "actions": {
+        "slack": {
+          "webhook": "{{slack_webhook_url}}",
+          "message": "Database connection issues detected"
+        },
+        "pagerduty": {
+          "service_key": "{{pagerduty_service_key}}",
+          "description": "Multiple database connection failures detected"
+        }
+      }
+    },
+    {
+      "name": "High Memory Usage",
+      "type": "metrics",
+      "schedule": "*/5 * * * *",
+      "params": {
+        "index": "metricbeat-*",
+        "timeField": "@timestamp",
+        "window": "5m",
+        "threshold": 90,
+        "query": {
+          "bool": {
+            "must": [
+              { "term": { "metricset.name": "memory" } }
+            ]
+          }
+        }
+      },
+      "actions": {
+        "slack": {
+          "webhook": "{{slack_webhook_url}}",
+          "message": "High memory usage detected: {{ctx.payload.aggregations.max_memory_usage.value}}%"
+        }
+      }
+    },
+    {
+      "name": "Security Events",
+      "type": "metrics",
+      "schedule": "*/5 * * * *",
+      "params": {
+        "index": "logstash-*",
+        "timeField": "@timestamp",
+        "window": "5m",
+        "threshold": 1,
+        "query": {
+          "bool": {
+            "should": [
+              { "term": { "tags": "security_violation" } },
+              { "term": { "tags": "unauthorized_access" } }
+            ]
+          }
+        }
+      },
+      "actions": {
+        "slack": {
+          "webhook": "{{slack_webhook_url}}",
+          "message": "Security event detected: {{ctx.payload.hits.hits[0]._source.message}}"
+        },
+        "email": {
+          "to": ["security-team@company.com"],
+          "subject": "Security Alert",
+          "body": "Security event detected: {{ctx.payload.hits.hits[0]._source.message}}"
+        }
+      }
+    }
+  ]
+}

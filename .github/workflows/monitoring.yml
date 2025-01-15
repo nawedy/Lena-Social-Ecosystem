@@ -1,0 +1,138 @@
+name: Monitoring CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'config/**'
+      - 'src/utils/apm.ts'
+      - 'src/middleware/monitoring.ts'
+      - 'docker-compose.monitoring.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'config/**'
+      - 'src/utils/apm.ts'
+      - 'src/middleware/monitoring.ts'
+      - 'docker-compose.monitoring.yml'
+
+jobs:
+  validate-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Validate Elasticsearch config
+        run: |
+          for file in config/elasticsearch/**/*.json; do
+            jq empty "$file" || exit 1
+          done
+
+      - name: Validate Kibana config
+        run: |
+          for file in config/kibana/**/*.json; do
+            jq empty "$file" || exit 1
+          done
+
+      - name: Validate Logstash config
+        run: |
+          docker run --rm -v $(pwd)/config/logstash:/config logstash:8.11.1 logstash -f /config/pipeline/main.conf --config.test_and_exit
+
+  test-monitoring:
+    runs-on: ubuntu-latest
+    needs: validate-config
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run monitoring tests
+        run: npm run test:monitoring
+
+      - name: Test APM integration
+        run: npm run test:apm
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: validate-config
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+  deploy-monitoring:
+    runs-on: ubuntu-latest
+    needs: [test-monitoring, security-scan]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push monitoring images
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker-compose -f docker-compose.monitoring.yml build
+          docker-compose -f docker-compose.monitoring.yml push
+
+      - name: Deploy to ECS
+        run: |
+          aws ecs update-service --cluster production --service monitoring --force-new-deployment
+
+      - name: Verify deployment
+        run: |
+          aws ecs wait services-stable --cluster production --services monitoring
+
+      - name: Verify monitoring stack health
+        run: |
+          curl -f http://elasticsearch:9200/_cluster/health || exit 1
+          curl -f http://kibana:5601/api/status || exit 1
+          curl -f http://apm-server:8200 || exit 1
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: deploy-monitoring
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: notify
+    if: always()
+    steps:
+      - name: Clean up resources
+        run: |
+          docker system prune -f
+          docker volume prune -f

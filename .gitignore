@@ -1,0 +1,48 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+dist/
+build/
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Database
+*.sqlite
+*.db
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Monitoring
+data/
+grafana/data/
+prometheus/data/
+elasticsearch/data/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

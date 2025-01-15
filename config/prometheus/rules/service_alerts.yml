@@ -1,0 +1,96 @@
+groups:
+  - name: service_alerts
+    rules:
+      # API Service Alerts
+      - alert: APIHighResponseTime
+        expr: rate(http_request_duration_ms_sum[5m]) / rate(http_request_duration_ms_count[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: High API response time
+          description: API response time is above 1s for 5 minutes
+
+      - alert: APIHighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: High API error rate
+          description: API error rate is above 5% for 5 minutes
+
+      # Database Alerts
+      - alert: DatabaseHighTransactions
+        expr: rate(pg_stat_database_xact_commit[5m]) + rate(pg_stat_database_xact_rollback[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: High database transaction rate
+          description: Database is processing more than 1000 transactions per second
+
+      - alert: DatabaseHighRollbackRate
+        expr: rate(pg_stat_database_xact_rollback[5m]) / (rate(pg_stat_database_xact_commit[5m]) + rate(pg_stat_database_xact_rollback[5m])) > 0.02
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: High transaction rollback rate
+          description: Database rollback rate is above 2% for 5 minutes
+
+      # Cache Alerts
+      - alert: CacheHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: High cache memory usage
+          description: Cache memory usage is above 80% for 5 minutes
+
+      - alert: CacheHighMissRate
+        expr: rate(redis_keyspace_misses_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: High cache miss rate
+          description: Cache miss rate is above 50% for 5 minutes
+
+      # Resource Alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: High CPU usage
+          description: CPU usage is above 80% for 5 minutes
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: High memory usage
+          description: Memory usage is above 80% for 5 minutes
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_free_bytes{mountpoint="/"}) / node_filesystem_size_bytes{mountpoint="/"} * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: High disk usage
+          description: Disk usage is above 80% for 5 minutes

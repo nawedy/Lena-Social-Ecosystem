@@ -1,0 +1,53 @@
+/var/log/tiktok-toe/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data www-data
+    sharedscripts
+    postrotate
+        /usr/bin/killall -HUP rsyslogd
+    endscript
+}
+
+/var/log/nginx/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data www-data
+    sharedscripts
+    postrotate
+        [ -f /var/run/nginx.pid ] && kill -USR1 $(cat /var/run/nginx.pid)
+    endscript
+}
+
+/var/log/postgresql/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 postgres postgres
+    sharedscripts
+    postrotate
+        /usr/lib/postgresql/14/bin/pg_ctl reload
+    endscript
+}
+
+/var/log/elasticsearch/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 elasticsearch elasticsearch
+    dateext
+    dateformat -%Y%m%d
+}

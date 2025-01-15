@@ -1,0 +1,183 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=tiktok-toe-monitoring
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.1
+    container_name: logstash
+    volumes:
+      - ./config/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./config/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx512m -Xms512m"
+    networks:
+      - monitoring
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.1
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+    networks:
+      - monitoring
+    depends_on:
+      - elasticsearch
+
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:8.11.1
+    container_name: apm-server
+    ports:
+      - "8200:8200"
+    environment:
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+      - output.elasticsearch.username=elastic
+      - output.elasticsearch.password=${ELASTIC_PASSWORD}
+    networks:
+      - monitoring
+    depends_on:
+      - elasticsearch
+      - kibana
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.1
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./config/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+      - KIBANA_HOST=http://kibana:5601
+    networks:
+      - monitoring
+    depends_on:
+      - elasticsearch
+      - kibana
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:8.11.1
+    container_name: metricbeat
+    user: root
+    volumes:
+      - ./config/metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /proc:/hostfs/proc:ro
+      - /:/hostfs:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+      - KIBANA_HOST=http://kibana:5601
+    networks:
+      - monitoring
+    depends_on:
+      - elasticsearch
+      - kibana
+
+  sentry:
+    image: sentry:latest
+    container_name: sentry
+    ports:
+      - "9000:9000"
+    environment:
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_POSTGRES_HOST: db_primary
+      SENTRY_DB_USER: ${SENTRY_DB_USER}
+      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
+      SENTRY_REDIS_HOST: redis
+    volumes:
+      - sentry_data:/var/lib/sentry/files
+    networks:
+      - monitoring
+      - db_network
+    depends_on:
+      - redis
+      - db_primary
+
+  sentry-worker:
+    image: sentry:latest
+    container_name: sentry-worker
+    command: run worker
+    environment:
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_POSTGRES_HOST: db_primary
+      SENTRY_DB_USER: ${SENTRY_DB_USER}
+      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
+      SENTRY_REDIS_HOST: redis
+    networks:
+      - monitoring
+      - db_network
+    depends_on:
+      - redis
+      - sentry
+      - db_primary
+
+  sentry-cron:
+    image: sentry:latest
+    container_name: sentry-cron
+    command: run cron
+    environment:
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_POSTGRES_HOST: db_primary
+      SENTRY_DB_USER: ${SENTRY_DB_USER}
+      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
+      SENTRY_REDIS_HOST: redis
+    networks:
+      - monitoring
+      - db_network
+    depends_on:
+      - redis
+      - sentry
+      - db_primary
+
+volumes:
+  elasticsearch_data:
+  sentry_data:
+
+networks:
+  monitoring:
+    external: true
+  db_network:
+    external: true
