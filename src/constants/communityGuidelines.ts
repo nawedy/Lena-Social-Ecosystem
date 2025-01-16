@@ -162,7 +162,7 @@ export const CommunityGuidelines = {
     recommendations: [
       'Use strong privacy settings',
       'Be careful with personal information',
-      'Respect others' privacy choices',
+      'Respect others\' privacy choices',
       'Report privacy violations',
     ],
   },

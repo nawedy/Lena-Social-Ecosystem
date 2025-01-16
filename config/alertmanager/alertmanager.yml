@@ -24,6 +24,11 @@ route:
       receiver: 'slack-services'
       group_by: ['alertname', 'service']
       continue: true
+    - match_re:
+        service: ^(business|auth|payments)$
+      receiver: 'slack-business'
+      group_by: ['alertname', 'service']
+      continue: true
 
 inhibit_rules:
   - source_match:
@@ -52,12 +57,14 @@ receivers:
       - channel: '#incidents'
         send_resolved: true
         title: '[CRITICAL] {{ .CommonLabels.alertname }}'
+        color: 'danger'
         text: >-
           {{ range .Alerts }}
             *Alert:* {{ .Annotations.summary }}
             *Description:* {{ .Annotations.description }}
             *Service:* {{ .Labels.service }}
             *Started:* {{ .StartsAt }}
+            *Action Required:* Immediate attention needed
           {{ end }}
 
   - name: 'slack-warnings'
@@ -65,6 +72,7 @@ receivers:
       - channel: '#warnings'
         send_resolved: true
         title: '[WARNING] {{ .CommonLabels.alertname }}'
+        color: 'warning'
         text: >-
           {{ range .Alerts }}
             *Alert:* {{ .Annotations.summary }}
@@ -84,4 +92,20 @@ receivers:
             *Description:* {{ .Annotations.description }}
             *Severity:* {{ .Labels.severity }}
             *Started:* {{ .StartsAt }}
+            *Metrics:* {{ if .GeneratorURL }}[View in Prometheus]({{ .GeneratorURL }}){{ end }}
+          {{ end }}
+
+  - name: 'slack-business'
+    slack_configs:
+      - channel: '#business-alerts'
+        send_resolved: true
+        title: '[{{ .Status | toUpper }}] {{ .CommonLabels.service | toUpper }} - {{ .CommonLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}
+            *Alert:* {{ .Annotations.summary }}
+            *Description:* {{ .Annotations.description }}
+            *Severity:* {{ .Labels.severity }}
+            *Service:* {{ .Labels.service }}
+            *Started:* {{ .StartsAt }}
+            *Impact:* Business critical service affected
           {{ end }}

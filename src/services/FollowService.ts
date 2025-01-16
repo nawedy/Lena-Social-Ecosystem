@@ -1,13 +1,12 @@
-import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
-import { Follow, FollowRequest, FollowStatus } from '../types/follow';
-import { User, UserPrivacySettings } from '../types/user';
+import { Firestore, getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { Follow, FollowRequest } from '../types/follow';
+import { User } from '../types/user';
 import { NotificationService } from './NotificationService';
 import { BlockingService } from './BlockingService';
 
 export class FollowService {
   private static instance: FollowService;
-  private db: FirebaseFirestore;
+  private db: Firestore;
   private notificationService: NotificationService;
   private blockingService: BlockingService;
 
@@ -32,10 +31,10 @@ export class FollowService {
     }
 
     // Get user privacy settings
-    const followedUser = await this.db.collection('users').doc(followedId).get();
-    const privacySettings = (followedUser.data() as User).privacySettings;
+    const followedUserDoc = await getDoc(doc(this.db, 'users', followedId));
+    const followedUser = followedUserDoc.data() as User;
 
-    if (privacySettings.followApprovalRequired) {
+    if (followedUser.preferences?.privacy?.profileVisibility === 'private') {
       await this.createFollowRequest(followerId, followedId);
     } else {
       await this.createFollow(followerId, followedId);
@@ -46,25 +45,25 @@ export class FollowService {
     const followsQuery = query(
       collection(this.db, 'follows'),
       where('followerId', '==', followerId),
-      where('followedId', '==', followedId),
-      where('status', '==', FollowStatus.ACTIVE)
+      where('followingId', '==', followedId),
+      where('status', '==', 'active')
     );
 
-    const snapshot = await followsQuery.get();
+    const snapshot = await getDocs(followsQuery);
     if (snapshot.empty) {
       throw new Error('Follow relationship not found');
     }
 
     const followDoc = snapshot.docs[0];
-    await followDoc.ref.update({
-      status: FollowStatus.INACTIVE,
+    await updateDoc(followDoc.ref, {
+      status: 'inactive',
       unfollowTimestamp: new Date(),
     });
   }
 
   async approveFollowRequest(requestId: string): Promise<void> {
-    const requestDoc = await this.db.collection('followRequests').doc(requestId).get();
-    if (!requestDoc.exists) {
+    const requestDoc = await getDoc(doc(this.db, 'followRequests', requestId));
+    if (!requestDoc.exists()) {
       throw new Error('Follow request not found');
     }
 
@@ -74,28 +73,28 @@ export class FollowService {
     }
 
     // Update request status
-    await requestDoc.ref.update({
-      status: 'approved',
-      responseTimestamp: new Date(),
+    await updateDoc(doc(this.db, 'followRequests', requestId), {
+      status: 'accepted',
+      updatedAt: new Date(),
     });
 
     // Create follow relationship
-    await this.createFollow(request.followerId, request.followedId);
+    await this.createFollow(request.fromUserId, request.toUserId);
 
     // Notify follower
-    await this.notificationService.sendNotification(request.followerId, {
+    await this.notificationService.sendNotification(request.fromUserId, {
       type: 'follow_request_approved',
       title: 'Follow Request Approved',
       body: 'Your follow request has been approved',
       data: {
-        followedId: request.followedId,
+        followedId: request.toUserId,
       },
     });
   }
 
   async rejectFollowRequest(requestId: string): Promise<void> {
-    const requestDoc = await this.db.collection('followRequests').doc(requestId).get();
-    if (!requestDoc.exists) {
+    const requestDoc = await getDoc(doc(this.db, 'followRequests', requestId));
+    if (!requestDoc.exists()) {
       throw new Error('Follow request not found');
     }
 
@@ -104,127 +103,70 @@ export class FollowService {
       throw new Error('Follow request is not pending');
     }
 
-    await requestDoc.ref.update({
+    // Update request status
+    await updateDoc(doc(this.db, 'followRequests', requestId), {
       status: 'rejected',
-      responseTimestamp: new Date(),
+      updatedAt: new Date(),
     });
 
     // Notify follower
-    await this.notificationService.sendNotification(request.followerId, {
+    await this.notificationService.sendNotification(request.fromUserId, {
       type: 'follow_request_rejected',
       title: 'Follow Request Rejected',
-      body: 'Your follow request was not approved',
+      body: 'Your follow request has been rejected',
       data: {
-        followedId: request.followedId,
+        followedId: request.toUserId,
       },
     });
   }
 
-  async getFollowers(userId: string): Promise<User[]> {
-    const followsQuery = query(
-      collection(this.db, 'follows'),
-      where('followedId', '==', userId),
-      where('status', '==', FollowStatus.ACTIVE)
-    );
-
-    const snapshot = await followsQuery.get();
-    const followerIds = snapshot.docs.map(doc => (doc.data() as Follow).followerId);
-
-    if (followerIds.length === 0) {
-      return [];
-    }
-
-    const usersQuery = query(
-      collection(this.db, 'users'),
-      where('id', 'in', followerIds)
-    );
-
-    const usersSnapshot = await usersQuery.get();
-    return usersSnapshot.docs.map(doc => doc.data() as User);
-  }
-
-  async getFollowing(userId: string): Promise<User[]> {
-    const followsQuery = query(
-      collection(this.db, 'follows'),
-      where('followerId', '==', userId),
-      where('status', '==', FollowStatus.ACTIVE)
-    );
-
-    const snapshot = await followsQuery.get();
-    const followingIds = snapshot.docs.map(doc => (doc.data() as Follow).followedId);
-
-    if (followingIds.length === 0) {
-      return [];
-    }
-
-    const usersQuery = query(
-      collection(this.db, 'users'),
-      where('id', 'in', followingIds)
-    );
-
-    const usersSnapshot = await usersQuery.get();
-    return usersSnapshot.docs.map(doc => doc.data() as User);
-  }
-
-  async getPendingFollowRequests(userId: string): Promise<FollowRequest[]> {
-    const requestsQuery = query(
-      collection(this.db, 'followRequests'),
-      where('followedId', '==', userId),
-      where('status', '==', 'pending')
-    );
-
-    const snapshot = await requestsQuery.get();
-    return snapshot.docs.map(doc => doc.data() as FollowRequest);
-  }
-
-  async updateFollowPrivacySettings(
-    userId: string,
-    settings: Partial<UserPrivacySettings>
-  ): Promise<void> {
-    await this.db.collection('users').doc(userId).update({
-      'privacySettings.followApprovalRequired': settings.followApprovalRequired,
-    });
-  }
-
-  private async createFollowRequest(
-    followerId: string,
-    followedId: string
-  ): Promise<void> {
+  private async createFollowRequest(fromUserId: string, toUserId: string): Promise<void> {
     const request: FollowRequest = {
-      id: `freq_${Date.now()}`,
-      followerId,
-      followedId,
+      id: `${fromUserId}_${toUserId}`,
+      fromUserId,
+      toUserId,
       status: 'pending',
-      timestamp: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    await this.db.collection('followRequests').add(request);
+    await setDoc(doc(this.db, 'followRequests', request.id), {
+      ...request,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }, { merge: true });
 
-    // Notify user of follow request
-    await this.notificationService.sendNotification(followedId, {
+    // Notify the target user
+    await this.notificationService.sendNotification(toUserId, {
       type: 'follow_request',
       title: 'New Follow Request',
       body: 'Someone wants to follow you',
       data: {
-        followerId,
         requestId: request.id,
+        fromUserId,
       },
     });
   }
 
-  private async createFollow(followerId: string, followedId: string): Promise<void> {
+  private async createFollow(followerId: string, followingId: string): Promise<void> {
     const follow: Follow = {
-      id: `follow_${Date.now()}`,
+      id: `${followerId}_${followingId}`,
       followerId,
-      followedId,
-      status: FollowStatus.ACTIVE,
-      timestamp: new Date(),
+      followingId,
+      createdAt: new Date(),
+      status: 'active',
+      metadata: {
+        source: 'direct',
+      },
     };
 
-    await this.db.collection('follows').add(follow);
+    await setDoc(doc(this.db, 'follows', follow.id), {
+      ...follow,
+      createdAt: new Date(),
+    }, { merge: true });
 
-    // Notify user of new follower
-    await this.notificationService.sendNotification(followedId, {
+    // Notify the followed user
+    await this.notificationService.sendNotification(followingId, {
       type: 'new_follower',
       title: 'New Follower',
       body: 'Someone started following you',

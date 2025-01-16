@@ -1,5 +1,17 @@
-import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore } from 'firebase/firestore';
+import { 
+  Firestore,
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  DocumentData,
+  QueryDocumentSnapshot
+} from 'firebase/firestore';
 import { ContentTemplate } from './ContentTemplateService';
 
 export interface TemplateRecommendation {
@@ -35,7 +47,7 @@ export interface RecommendationContext {
 
 export class TemplateRecommendationService {
   private static instance: TemplateRecommendationService;
-  private db: FirebaseFirestore;
+  private db: Firestore;
   private readonly MAX_RECOMMENDATIONS = 10;
   private readonly SIMILARITY_THRESHOLD = 0.7;
 
@@ -79,11 +91,12 @@ export class TemplateRecommendationService {
       throw new Error('Template not found');
     }
 
-    const similarTemplates = await this.db
-      .collection('templates')
-      .where('categoryId', '==', template.categoryId)
-      .where('isActive', '==', true)
-      .get();
+    const q = query(
+      collection(this.db, 'templates'),
+      where('categoryId', '==', template.categoryId),
+      where('isActive', '==', true)
+    );
+    const similarTemplates = await getDocs(q);
 
     const scored = await Promise.all(
       similarTemplates.docs
@@ -115,19 +128,21 @@ export class TemplateRecommendationService {
     const timeframe = options.timeframe || 'week';
     const startDate = this.getStartDate(timeframe);
 
-    let query = this.db.collection('templates')
-      .where('isActive', '==', true)
-      .where('lastUsed', '>=', startDate);
+    const queryConstraints = [
+      where('isActive', '==', true),
+      where('lastUsed', '>=', startDate)
+    ];
 
     if (options.category) {
-      query = query.where('categoryId', '==', options.category) as any;
+      queryConstraints.push(where('categoryId', '==', options.category));
     }
 
     if (options.contentType) {
-      query = query.where('contentType', '==', options.contentType) as any;
+      queryConstraints.push(where('contentType', '==', options.contentType));
     }
 
-    const templates = await query.get();
+    const q = query(collection(this.db, 'templates'), ...queryConstraints);
+    const templates = await getDocs(q);
 
     const scored = templates.docs.map(doc => {
       const data = doc.data();
@@ -156,15 +171,16 @@ export class TemplateRecommendationService {
 
     // Get templates from favorite categories
     if (userPrefs.favoriteCategories.length > 0) {
-      const categoryTemplates = await this.db
-        .collection('templates')
-        .where('categoryId', 'in', userPrefs.favoriteCategories)
-        .where('isActive', '==', true)
-        .limit(limit)
-        .get();
+      const categoryQuery = query(
+        collection(this.db, 'templates'),
+        where('categoryId', 'in', userPrefs.favoriteCategories),
+        where('isActive', '==', true),
+        limit(limit)
+      );
+      const categoryTemplates = await getDocs(categoryQuery);
 
       recommendations.push(
-        ...categoryTemplates.docs.map(doc => ({
+        ...categoryTemplates.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
           templateId: doc.id,
           score: this.calculatePersonalizedScore(doc.data(), userPrefs),
           reasons: ['Based on your favorite categories'],
@@ -177,15 +193,16 @@ export class TemplateRecommendationService {
 
     // Get templates with favorite tags
     if (userPrefs.favoriteTags.length > 0) {
-      const tagTemplates = await this.db
-        .collection('templates')
-        .where('tags', 'array-contains-any', userPrefs.favoriteTags)
-        .where('isActive', '==', true)
-        .limit(limit)
-        .get();
+      const tagQuery = query(
+        collection(this.db, 'templates'),
+        where('tags', 'array-contains-any', userPrefs.favoriteTags),
+        where('isActive', '==', true),
+        limit(limit)
+      );
+      const tagTemplates = await getDocs(tagQuery);
 
       recommendations.push(
-        ...tagTemplates.docs.map(doc => ({
+        ...tagTemplates.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
           templateId: doc.id,
           score: this.calculatePersonalizedScore(doc.data(), userPrefs),
           reasons: ['Based on your favorite tags'],
@@ -228,7 +245,7 @@ export class TemplateRecommendationService {
         .collection('userPreferences')
         .doc(userId)
         .update({
-          usageHistory: FirebaseFirestore.FieldValue.arrayUnion(usage),
+          usageHistory: this.db.FieldValue.arrayUnion(usage),
         }),
 
       // Update template stats
@@ -236,22 +253,24 @@ export class TemplateRecommendationService {
         .collection('templates')
         .doc(templateId)
         .update({
-          usageCount: FirebaseFirestore.FieldValue.increment(1),
-          successCount: FirebaseFirestore.FieldValue.increment(success ? 1 : 0),
+          usageCount: this.db.FieldValue.increment(1),
+          successCount: this.db.FieldValue.increment(success ? 1 : 0),
           lastUsed: new Date(),
         }),
     ]);
   }
 
-  private async getUserPreferences(
-    userId: string
-  ): Promise<UserPreferences> {
-    const doc = await this.db
-      .collection('userPreferences')
-      .doc(userId)
-      .get();
+  private async getTemplate(templateId: string): Promise<ContentTemplate | null> {
+    const docRef = doc(this.db, 'templates', templateId);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as ContentTemplate : null;
+  }
 
-    if (!doc.exists) {
+  private async getUserPreferences(userId: string): Promise<UserPreferences> {
+    const docRef = doc(this.db, 'userPreferences', userId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
       return {
         favoriteCategories: [],
         favoriteTags: [],
@@ -262,31 +281,32 @@ export class TemplateRecommendationService {
       };
     }
 
-    return doc.data() as UserPreferences;
+    return docSnap.data() as UserPreferences;
   }
 
   private async getRelevantTemplates(
     context: RecommendationContext
   ): Promise<ContentTemplate[]> {
-    let query = this.db.collection('templates')
-      .where('isActive', '==', true);
+    const queryConstraints = [where('isActive', '==', true)];
 
     if (context.currentCategory) {
-      query = query.where('categoryId', '==', context.currentCategory) as any;
+      queryConstraints.push(where('categoryId', '==', context.currentCategory));
     }
 
     if (context.contentType) {
-      query = query.where('contentType', '==', context.contentType) as any;
+      queryConstraints.push(where('contentType', '==', context.contentType));
     }
 
     if (context.aiProvider) {
-      query = query.where('aiProvider', '==', context.aiProvider) as any;
+      queryConstraints.push(where('aiProvider', '==', context.aiProvider));
     }
 
-    const snapshot = await query.get();
+    const q = query(collection(this.db, 'templates'), ...queryConstraints);
+    const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data(),
+      ...doc.data()
     })) as ContentTemplate[];
   }
 
@@ -513,11 +533,6 @@ export class TemplateRecommendationService {
         break;
     }
     return date;
-  }
-
-  private async getTemplate(templateId: string): Promise<any> {
-    const doc = await this.db.collection('templates').doc(templateId).get();
-    return doc.exists ? { id: doc.id, ...doc.data() } : null;
   }
 
   private calculatePersonalizedScore(

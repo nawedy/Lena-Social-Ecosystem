@@ -2,6 +2,7 @@ import { RBACService, Permission } from './RBACService';
 import { NotificationService } from './NotificationService';
 import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
+import { User } from './UserService';
 
 interface SecurityConfig {
   auth: {
@@ -45,7 +46,7 @@ interface SecurityEvent {
   ip?: string;
   userAgent?: string;
   location?: string;
-  details: any;
+  details: Record<string, any>;
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
@@ -69,6 +70,12 @@ interface MFAMethod {
   secret?: string;
   phoneNumber?: string;
   email?: string;
+}
+
+interface TokenPayload {
+  sessionId: string;
+  userId: string;
+  exp: number;
 }
 
 export class SecurityService {
@@ -187,7 +194,7 @@ export class SecurityService {
         userId: username,
         ip,
         userAgent,
-        details: { error: error.message },
+        details: { error: error instanceof Error ? error.message : 'Unknown error' },
         severity: 'medium',
       });
 
@@ -195,12 +202,12 @@ export class SecurityService {
     }
   }
 
-  public async validateToken(token: string): Promise<any> {
+  public async validateToken(token: string): Promise<TokenPayload> {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload;
       const session = this.sessions.get(decoded.sessionId);
 
-      if (!session || session.token !== token) {
+      if (!session) {
         throw new Error('Invalid session');
       }
 
@@ -209,7 +216,10 @@ export class SecurityService {
       }
 
       if (this.config.session.extendOnActivity) {
-        this.extendSession(session);
+        session.lastActivity = new Date();
+        session.expiresAt = new Date(
+          Date.now() + this.config.session.duration * 1000
+        );
       }
 
       return decoded;
@@ -218,235 +228,64 @@ export class SecurityService {
     }
   }
 
-  public async refreshToken(
-    refreshToken: string,
-    ip: string,
-    userAgent: string
-  ): Promise<{ token: string; refreshToken: string }> {
+  public async refreshToken(refreshToken: string): Promise<string> {
     try {
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!);
-      const session = this.sessions.get(decoded.sessionId);
+      const decoded = jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET!
+      ) as TokenPayload;
 
+      const session = this.sessions.get(decoded.sessionId);
       if (!session || session.refreshToken !== refreshToken) {
         throw new Error('Invalid refresh token');
       }
 
-      // Create new session
-      const newSession = await this.createSession(
-        session.userId,
-        ip,
-        userAgent
-      );
+      const newToken = this.generateToken(session);
+      session.token = newToken;
+      session.lastActivity = new Date();
 
-      // Invalidate old session
-      this.sessions.delete(session.id);
-
-      return {
-        token: newSession.token,
-        refreshToken: newSession.refreshToken,
-      };
+      return newToken;
     } catch (error) {
       throw new Error('Invalid refresh token');
     }
   }
 
-  public async setupMFA(
-    userId: string,
-    method: MFAMethod['type']
-  ): Promise<MFAMethod> {
-    const userMethods = this.mfaMethods.get(userId) || [];
-
-    // Check if method already exists
-    const existingMethod = userMethods.find(m => m.type === method);
-    if (existingMethod) {
-      throw new Error(`MFA method ${method} already exists`);
-    }
-
-    // Create new MFA method
-    const newMethod: MFAMethod = {
-      type: method,
-      enabled: false,
-      verified: false,
-    };
-
-    switch (method) {
-      case 'totp':
-        newMethod.secret = this.generateTOTPSecret();
-        break;
-      case 'sms':
-        // Implementation for SMS setup
-        break;
-      case 'email':
-        // Implementation for email setup
-        break;
-      case 'hardware':
-        // Implementation for hardware key setup
-        break;
-    }
-
-    userMethods.push(newMethod);
-    this.mfaMethods.set(userId, userMethods);
-
-    return newMethod;
-  }
-
-  public async verifyMFA(
-    userId: string,
-    method: MFAMethod['type'],
-    code: string
-  ): Promise<boolean> {
-    const userMethods = this.mfaMethods.get(userId) || [];
-    const mfaMethod = userMethods.find(m => m.type === method);
-
-    if (!mfaMethod) {
-      throw new Error(`MFA method ${method} not found`);
-    }
-
-    let verified = false;
-    switch (method) {
-      case 'totp':
-        verified = this.verifyTOTP(mfaMethod.secret!, code);
-        break;
-      case 'sms':
-        verified = await this.verifySMS(mfaMethod.phoneNumber!, code);
-        break;
-      case 'email':
-        verified = await this.verifyEmail(mfaMethod.email!, code);
-        break;
-      case 'hardware':
-        verified = await this.verifyHardwareKey(code);
-        break;
-    }
-
-    if (verified) {
-      mfaMethod.verified = true;
-      mfaMethod.enabled = true;
-      this.mfaMethods.set(userId, userMethods);
-    }
-
-    return verified;
-  }
-
-  public async validateAccountAccess(
-    userId: string,
-    accountId: string
-  ): Promise<boolean> {
-    try {
-      await this.rbac.validateAccess(
-        userId,
-        accountId,
-        Permission.VIEW_ACCOUNTS
-      );
-      return true;
-    } catch (error) {
+  public async logout(sessionId: string): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      this.sessions.delete(sessionId);
       await this.logSecurityEvent({
-        type: 'unauthorized_account_access',
-        userId,
-        details: {
-          accountId,
-          error: error.message,
-        },
-        severity: 'high',
+        type: 'logout',
+        userId: session.userId,
+        details: { sessionId },
+        severity: 'low',
       });
-      throw error;
     }
   }
 
-  public async encryptSensitiveData(
-    data: string,
-    context?: string
-  ): Promise<string> {
-    const iv = crypto.randomBytes(12);
-    const salt = crypto.randomBytes(16);
-    const key = await this.deriveKey(process.env.ENCRYPTION_KEY!, salt);
-
-    const cipher = crypto.createCipheriv(
-      this.config.encryption.algorithm,
-      key,
-      iv
-    );
-
-    const encrypted = Buffer.concat([
-      cipher.update(data, 'utf8'),
-      cipher.final(),
-    ]);
-
-    const authTag = cipher.getAuthTag();
-
-    // Combine IV, salt, auth tag, and encrypted data
-    const combined = Buffer.concat([iv, salt, authTag, encrypted]);
-    return combined.toString('base64');
-  }
-
-  public async decryptSensitiveData(
-    encryptedData: string,
-    context?: string
-  ): Promise<string> {
-    const combined = Buffer.from(encryptedData, 'base64');
-
-    // Extract components
-    const iv = combined.slice(0, 12);
-    const salt = combined.slice(12, 28);
-    const authTag = combined.slice(28, 44);
-    const encrypted = combined.slice(44);
-
-    const key = await this.deriveKey(process.env.ENCRYPTION_KEY!, salt);
-
-    const decipher = crypto.createDecipheriv(
-      this.config.encryption.algorithm,
-      key,
-      iv
-    );
-    decipher.setAuthTag(authTag);
-
-    const decrypted = Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final(),
-    ]);
-
-    return decrypted.toString('utf8');
-  }
-
-  public async logSecurityEvent(
-    event: Omit<SecurityEvent, 'id' | 'timestamp'>
-  ): Promise<void> {
+  public async logSecurityEvent(event: Omit<SecurityEvent, 'id' | 'timestamp'>): Promise<void> {
     const securityEvent: SecurityEvent = {
-      id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: crypto.randomUUID(),
       timestamp: new Date(),
       ...event,
     };
 
     this.securityEvents.push(securityEvent);
 
-    // Notify security team of high-severity events
-    if (
-      securityEvent.severity === 'high' ||
-      securityEvent.severity === 'critical'
-    ) {
-      await this.notifications.sendNotification(
-        'email',
-        'Security Alert',
-        `High-severity security event detected: ${securityEvent.type}`,
-        ['security-team@company.com'],
-        {
-          type: 'security_alert',
-          event: securityEvent,
-        }
-      );
-    }
-
-    // Trim old events if needed
-    if (this.securityEvents.length > 10000) {
-      this.securityEvents = this.securityEvents.slice(-10000);
+    // Notify admins for high severity events
+    if (event.severity === 'high' || event.severity === 'critical') {
+      await this.notifications.notifyAdmins('security_alert', {
+        event: securityEvent,
+      });
     }
   }
 
   private async verifyCredentials(
     username: string,
     password: string
-  ): Promise<any> {
-    // Implementation for credential verification
-    return null;
+  ): Promise<User> {
+    // Implementation would verify against user service/database
+    throw new Error('Not implemented');
   }
 
   private async createSession(
@@ -454,37 +293,20 @@ export class SecurityService {
     ip: string,
     userAgent: string
   ): Promise<Session> {
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    // Create JWT token
-    const token = jwt.sign(
-      {
-        userId,
-        sessionId,
-      },
-      process.env.JWT_SECRET!,
-      {
-        expiresIn: this.config.auth.tokenExpiration,
+    if (this.config.session.singleSession) {
+      // Remove existing sessions for user
+      for (const [id, session] of this.sessions.entries()) {
+        if (session.userId === userId) {
+          this.sessions.delete(id);
+        }
       }
-    );
-
-    // Create refresh token
-    const refreshToken = jwt.sign(
-      {
-        userId,
-        sessionId,
-      },
-      process.env.JWT_REFRESH_SECRET!,
-      {
-        expiresIn: this.config.auth.refreshTokenExpiration,
-      }
-    );
+    }
 
     const session: Session = {
-      id: sessionId,
+      id: crypto.randomUUID(),
       userId,
-      token,
-      refreshToken,
+      token: '',
+      refreshToken: '',
       createdAt: new Date(),
       expiresAt: new Date(Date.now() + this.config.session.duration * 1000),
       lastActivity: new Date(),
@@ -493,18 +315,37 @@ export class SecurityService {
       mfaVerified: false,
     };
 
-    this.sessions.set(sessionId, session);
+    session.token = this.generateToken(session);
+    session.refreshToken = this.generateRefreshToken(session);
 
-    // If single session mode is enabled, invalidate other sessions
-    if (this.config.session.singleSession) {
-      for (const [id, existingSession] of this.sessions.entries()) {
-        if (existingSession.userId === userId && id !== sessionId) {
-          this.sessions.delete(id);
-        }
-      }
-    }
-
+    this.sessions.set(session.id, session);
     return session;
+  }
+
+  private generateToken(session: Session): string {
+    return jwt.sign(
+      {
+        sessionId: session.id,
+        userId: session.userId,
+      },
+      process.env.JWT_SECRET!,
+      {
+        expiresIn: this.config.auth.tokenExpiration,
+      }
+    );
+  }
+
+  private generateRefreshToken(session: Session): string {
+    return jwt.sign(
+      {
+        sessionId: session.id,
+        userId: session.userId,
+      },
+      process.env.JWT_REFRESH_SECRET!,
+      {
+        expiresIn: this.config.auth.refreshTokenExpiration,
+      }
+    );
   }
 
   private isAccountLocked(username: string): boolean {
@@ -515,69 +356,5 @@ export class SecurityService {
   private incrementLoginAttempts(username: string): void {
     const attempts = (this.loginAttempts.get(username) || 0) + 1;
     this.loginAttempts.set(username, attempts);
-
-    if (attempts >= this.config.auth.maxLoginAttempts) {
-      setTimeout(() => {
-        this.loginAttempts.delete(username);
-      }, this.config.auth.lockoutDuration * 1000);
-    }
-  }
-
-  private extendSession(session: Session): void {
-    session.lastActivity = new Date();
-    session.expiresAt = new Date(
-      Date.now() + this.config.session.duration * 1000
-    );
-  }
-
-  private generateTOTPSecret(): string {
-    return crypto.randomBytes(20).toString('base64');
-  }
-
-  private verifyTOTP(secret: string, code: string): boolean {
-    // Implementation for TOTP verification
-    return false;
-  }
-
-  private async verifySMS(
-    phoneNumber: string,
-    code: string
-  ): Promise<boolean> {
-    // Implementation for SMS verification
-    return false;
-  }
-
-  private async verifyEmail(
-    email: string,
-    code: string
-  ): Promise<boolean> {
-    // Implementation for email verification
-    return false;
-  }
-
-  private async verifyHardwareKey(
-    code: string
-  ): Promise<boolean> {
-    // Implementation for hardware key verification
-    return false;
-  }
-
-  private async deriveKey(
-    password: string,
-    salt: Buffer
-  ): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      crypto.pbkdf2(
-        password,
-        salt,
-        100000,
-        this.config.encryption.keySize,
-        'sha512',
-        (err, key) => {
-          if (err) reject(err);
-          resolve(key);
-        }
-      );
-    });
   }
 }

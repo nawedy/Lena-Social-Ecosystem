@@ -1,0 +1,92 @@
+groups:
+  - name: elasticsearch_alerts
+    rules:
+      - alert: ElasticsearchHighCPUUsage
+        expr: elasticsearch_process_cpu_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High CPU usage on Elasticsearch
+          description: Elasticsearch CPU usage has been above 80% for 5 minutes.
+
+      - alert: ElasticsearchHighJVMMemoryUsage
+        expr: (elasticsearch_jvm_memory_used_bytes / elasticsearch_jvm_memory_max_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High JVM memory usage
+          description: Elasticsearch JVM memory usage is above 85%.
+
+      - alert: ElasticsearchHighDiskUsage
+        expr: (elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Low disk space
+          description: Elasticsearch has less than 20% disk space remaining.
+
+      - alert: ElasticsearchHighSearchLatency
+        expr: rate(elasticsearch_indices_search_query_time_seconds[5m]) / rate(elasticsearch_indices_search_query_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High search latency
+          description: Elasticsearch search latency is above 100ms on average.
+
+      - alert: ElasticsearchHighIndexingLatency
+        expr: rate(elasticsearch_indices_indexing_index_time_seconds[5m]) / rate(elasticsearch_indices_indexing_index_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High indexing latency
+          description: Elasticsearch indexing latency is above 100ms on average.
+
+      - alert: ElasticsearchHighRejectionRate
+        expr: rate(elasticsearch_thread_pool_rejected_count{type="search"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Search rejections occurring
+          description: Elasticsearch is rejecting search requests.
+
+      - alert: ElasticsearchClusterHealth
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Cluster health is RED
+          description: Elasticsearch cluster health is RED - some primary shards are unassigned.
+
+      - alert: ElasticsearchUnassignedShards
+        expr: elasticsearch_cluster_health_unassigned_shards > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Unassigned shards detected
+          description: There are {{ $value }} unassigned shards in the cluster.
+
+      - alert: ElasticsearchPendingTasks
+        expr: elasticsearch_cluster_health_number_of_pending_tasks > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Pending cluster tasks
+          description: There are {{ $value }} pending tasks in the cluster.
+
+      - alert: ElasticsearchInitializingShards
+        expr: elasticsearch_cluster_health_initializing_shards > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Shards still initializing
+          description: There are {{ $value }} shards still initializing after 15 minutes.

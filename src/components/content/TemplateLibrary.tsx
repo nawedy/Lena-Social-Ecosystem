@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,18 +10,31 @@ import {
   FlatList,
   ActivityIndicator,
   Dimensions,
+  Alert,
+  ListRenderItem,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
   ContentTemplate,
   ContentTemplateService,
+  TemplateCategory,
+  TemplateListOptions,
+  TemplateType,
 } from '../../services/ContentTemplateService';
+import { debounce } from 'lodash';
 
 interface TemplateLibraryProps {
   userId: string;
   onSelectTemplate: (template: ContentTemplate) => void;
 }
+
+interface TemplateLibraryError extends Error {
+  operation: 'load' | 'search' | 'filter';
+  details?: Record<string, unknown>;
+}
+
+type ViewMode = 'grid' | 'list';
 
 export function TemplateLibrary({
   userId,
@@ -30,61 +43,104 @@ export function TemplateLibrary({
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<'text' | 'image' | 'video' | null>(
-    null
-  );
+  const [selectedType, setSelectedType] = useState<TemplateType | null>(null);
   const [templates, setTemplates] = useState<ContentTemplate[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<TemplateCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [error, setError] = useState<TemplateLibraryError | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const templateService = ContentTemplateService.getInstance();
 
-  useEffect(() => {
-    loadTemplates();
-    loadCategories();
-  }, [selectedCategory, selectedType]);
-
-  const loadTemplates = async () => {
-    setLoading(true);
+  const loadTemplates = async (options?: Partial<TemplateListOptions>): Promise<void> => {
     try {
-      const loadedTemplates = await templateService.listTemplates({
+      setLoading(true);
+      setError(null);
+
+      const listOptions: TemplateListOptions = {
         category: selectedCategory || undefined,
         type: selectedType || undefined,
         isPublic: true,
         orderBy: 'usageCount',
-      });
+        ...options,
+      };
+
+      const loadedTemplates = await templateService.listTemplates(listOptions);
       setTemplates(loadedTemplates);
-    } catch (error) {
-      console.error('Error loading templates:', error);
+    } catch (err) {
+      console.error('Error loading templates:', err);
+      const error: TemplateLibraryError = {
+        name: 'LoadError',
+        message: 'Failed to load templates',
+        operation: 'load',
+        details: { selectedCategory, selectedType },
+      };
+      setError(error);
+      Alert.alert(t('error'), t('errors.loadTemplatesFailed'));
     } finally {
       setLoading(false);
     }
   };
 
-  const loadCategories = async () => {
+  const loadCategories = async (): Promise<void> => {
     try {
+      setError(null);
       const loadedCategories = await templateService.getTemplateCategories();
       setCategories(loadedCategories);
-    } catch (error) {
-      console.error('Error loading categories:', error);
+    } catch (err) {
+      console.error('Error loading categories:', err);
+      const error: TemplateLibraryError = {
+        name: 'LoadError',
+        message: 'Failed to load categories',
+        operation: 'load',
+      };
+      setError(error);
+      Alert.alert(t('error'), t('errors.loadCategoriesFailed'));
     }
   };
 
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    if (query.length >= 2) {
-      const results = await templateService.searchTemplates(query);
-      setTemplates(results);
-    } else if (query.length === 0) {
-      loadTemplates();
+  const handleSearch = useCallback(
+    debounce(async (query: string): Promise<void> => {
+      try {
+        setError(null);
+        if (query.length >= 2) {
+          const results = await templateService.searchTemplates(query);
+          setTemplates(results);
+        } else if (query.length === 0) {
+          await loadTemplates();
+        }
+      } catch (err) {
+      console.error('Error searching templates:', err);
+      const error: TemplateLibraryError = {
+        name: 'SearchError',
+        message: 'Failed to search templates',
+        operation: 'search',
+        details: { query },
+      };
+      setError(error);
+      Alert.alert(t('error'), t('errors.searchFailed'));
     }
+  }, 300),
+    []
+  );
+
+  const handleRefresh = async (): Promise<void> => {
+    setRefreshing(true);
+    await loadTemplates();
+    setRefreshing(false);
   };
 
-  const renderTemplateGrid = ({ item }: { item: ContentTemplate }) => (
+  useEffect(() => {
+    void loadTemplates();
+    void loadCategories();
+  }, [selectedCategory, selectedType]);
+
+  const renderTemplateGrid: ListRenderItem<ContentTemplate> = ({ item }) => (
     <TouchableOpacity
       style={styles.gridItem}
       onPress={() => onSelectTemplate(item)}
+      testID={`template-${item.id}`}
     >
       {item.previewUrl ? (
         <Image
@@ -97,7 +153,7 @@ export function TemplateLibrary({
           <Ionicons
             name={
               item.type === 'text'
-                ? 'text'
+                ? 'document-text'
                 : item.type === 'image'
                 ? 'image'
                 : 'videocam'
@@ -107,70 +163,55 @@ export function TemplateLibrary({
           />
         </View>
       )}
-      <View style={styles.gridItemInfo}>
+      <View style={styles.templateInfo}>
         <Text style={styles.templateName} numberOfLines={1}>
           {item.name}
         </Text>
-        <Text style={styles.templateCategory} numberOfLines={1}>
-          {item.category}
+        <Text style={styles.templateStats}>
+          {t('usageCount', { count: item.usageCount })} • {t('rating', { rating: item.rating })}
         </Text>
-        <View style={styles.templateStats}>
-          <View style={styles.statItem}>
-            <Ionicons name="star" size={12} color="#FFD700" />
-            <Text style={styles.statText}>{item.rating.toFixed(1)}</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons name="repeat" size={12} color="#666" />
-            <Text style={styles.statText}>{item.usageCount}</Text>
-          </View>
-        </View>
       </View>
     </TouchableOpacity>
   );
 
-  const renderTemplateList = ({ item }: { item: ContentTemplate }) => (
+  const renderTemplateList: ListRenderItem<ContentTemplate> = ({ item }) => (
     <TouchableOpacity
       style={styles.listItem}
       onPress={() => onSelectTemplate(item)}
+      testID={`template-${item.id}`}
     >
-      {item.previewUrl ? (
-        <Image
-          source={{ uri: item.previewUrl }}
-          style={styles.listItemPreview}
-          resizeMode="cover"
-        />
-      ) : (
-        <View style={[styles.listItemPreview, styles.templatePreviewPlaceholder]}>
-          <Ionicons
-            name={
-              item.type === 'text'
-                ? 'text'
-                : item.type === 'image'
-                ? 'image'
-                : 'videocam'
-            }
-            size={24}
-            color="#666"
+      <View style={styles.listItemContent}>
+        {item.previewUrl ? (
+          <Image
+            source={{ uri: item.previewUrl }}
+            style={styles.listItemPreview}
+            resizeMode="cover"
           />
-        </View>
-      )}
-      <View style={styles.listItemInfo}>
-        <Text style={styles.templateName}>{item.name}</Text>
-        <Text style={styles.templateDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-        <View style={styles.templateMetadata}>
-          <Text style={styles.templateCategory}>{item.category}</Text>
-          <View style={styles.templateStats}>
-            <View style={styles.statItem}>
-              <Ionicons name="star" size={12} color="#FFD700" />
-              <Text style={styles.statText}>{item.rating.toFixed(1)}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Ionicons name="repeat" size={12} color="#666" />
-              <Text style={styles.statText}>{item.usageCount}</Text>
-            </View>
+        ) : (
+          <View style={[styles.listItemPreview, styles.templatePreviewPlaceholder]}>
+            <Ionicons
+              name={
+                item.type === 'text'
+                  ? 'document-text'
+                  : item.type === 'image'
+                  ? 'image'
+                  : 'videocam'
+              }
+              size={24}
+              color="#666"
+            />
           </View>
+        )}
+        <View style={styles.listItemInfo}>
+          <Text style={styles.templateName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={styles.templateDescription} numberOfLines={2}>
+            {item.description}
+          </Text>
+          <Text style={styles.templateStats}>
+            {t('usageCount', { count: item.usageCount })} • {t('rating', { rating: item.rating })}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -268,7 +309,7 @@ export function TemplateLibrary({
           onPress={() => setSelectedType('text')}
         >
           <Ionicons
-            name="text"
+            name="document-text"
             size={20}
             color={selectedType === 'text' ? '#fff' : '#666'}
           />
@@ -338,6 +379,8 @@ export function TemplateLibrary({
           key={viewMode} // Force re-render when changing view mode
           contentContainerStyle={styles.templateList}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
         />
       )}
     </View>
@@ -457,7 +500,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  gridItemInfo: {
+  templateInfo: {
     padding: 12,
   },
   listItem: {
@@ -470,6 +513,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  listItemContent: {
+    flexDirection: 'row',
   },
   listItemPreview: {
     width: 80,
@@ -491,28 +537,8 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 8,
   },
-  templateCategory: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-  templateMetadata: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   templateStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  statText: {
     fontSize: 12,
     color: '#666',
-    marginLeft: 4,
   },
 });

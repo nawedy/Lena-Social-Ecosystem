@@ -1,5 +1,23 @@
-import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore } from 'firebase/firestore';
+import { 
+  Firestore, 
+  getFirestore, 
+  collection, 
+  doc, 
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAfter,
+  updateDoc,
+  setDoc,
+  addDoc,
+  arrayUnion,
+  DocumentData,
+  QueryDocumentSnapshot,
+  DocumentSnapshot
+} from 'firebase/firestore';
 import { ContentTemplate } from './ContentTemplateService';
 
 export type ApprovalStatus =
@@ -75,7 +93,7 @@ export interface ApprovalStep {
 
 export class TemplateApprovalService {
   private static instance: TemplateApprovalService;
-  private db: FirebaseFirestore;
+  private db: Firestore;
 
   private constructor() {
     this.db = getFirestore();
@@ -93,18 +111,15 @@ export class TemplateApprovalService {
     userId: string,
     metadata?: ApprovalRequest['metadata']
   ): Promise<string> {
-    const template = await this.db
-      .collection('templates')
-      .doc(templateId)
-      .get();
+    const templateDoc = await getDoc(doc(this.db, 'templates', templateId));
 
-    if (!template.exists) {
+    if (!templateDoc.exists()) {
       throw new Error('Template not found');
     }
 
     const request: Omit<ApprovalRequest, 'id'> = {
       templateId,
-      templateVersion: template.data()?.version,
+      templateVersion: templateDoc.data()?.version,
       status: 'pending',
       submittedBy: userId,
       submittedAt: new Date(),
@@ -113,21 +128,21 @@ export class TemplateApprovalService {
       metadata,
     };
 
-    const doc = await this.db.collection('approvalRequests').add(request);
+    const docRef = await addDoc(collection(this.db, 'approvalRequests'), request);
     
     // Create initial workflow steps
-    await this.initializeWorkflow(doc.id);
+    await this.initializeWorkflow(docRef.id);
 
-    return doc.id;
+    return docRef.id;
   }
 
   async getApprovalRequest(requestId: string): Promise<ApprovalRequest | null> {
-    const doc = await this.db
-      .collection('approvalRequests')
-      .doc(requestId)
-      .get();
+    const docRef = doc(this.db, 'approvalRequests', requestId);
+    const docSnap = await getDoc(docRef);
 
-    return doc.exists ? { id: doc.id, ...doc.data() } as ApprovalRequest : null;
+    return docSnap.exists() 
+      ? { id: docSnap.id, ...docSnap.data() } as ApprovalRequest 
+      : null;
   }
 
   async updateApprovalStatus(
@@ -141,14 +156,12 @@ export class TemplateApprovalService {
       throw new Error('Approval request not found');
     }
 
-    const batch = this.db.batch();
-    const requestRef = this.db.collection('approvalRequests').doc(requestId);
-
-    batch.update(requestRef, {
+    const requestRef = doc(this.db, 'approvalRequests', requestId);
+    const updates: Partial<ApprovalRequest> = {
       status,
       reviewedBy: userId,
       reviewedAt: new Date(),
-    });
+    };
 
     if (comment) {
       const commentData: ApprovalComment = {
@@ -159,25 +172,20 @@ export class TemplateApprovalService {
         type: this.getCommentType(status),
       };
 
-      batch.update(requestRef, {
-        comments: FirebaseFirestore.FieldValue.arrayUnion(commentData),
-      });
+      updates.comments = arrayUnion(commentData) as any;
     }
+
+    await updateDoc(requestRef, updates);
 
     // Update template status if approved or rejected
     if (status === 'approved' || status === 'rejected') {
-      const templateRef = this.db
-        .collection('templates')
-        .doc(request.templateId);
-
-      batch.update(templateRef, {
+      const templateRef = doc(this.db, 'templates', request.templateId);
+      await updateDoc(templateRef, {
         approvalStatus: status,
         lastModified: new Date(),
         modifiedBy: userId,
       });
     }
-
-    await batch.commit();
   }
 
   async addComment(
@@ -195,12 +203,10 @@ export class TemplateApprovalService {
       location,
     };
 
-    await this.db
-      .collection('approvalRequests')
-      .doc(requestId)
-      .update({
-        comments: FirebaseFirestore.FieldValue.arrayUnion(commentData),
-      });
+    const requestRef = doc(this.db, 'approvalRequests', requestId);
+    await updateDoc(requestRef, {
+      comments: arrayUnion(commentData),
+    });
   }
 
   async requestChanges(
@@ -209,13 +215,11 @@ export class TemplateApprovalService {
     changes: string[],
     comment?: string
   ): Promise<void> {
-    const batch = this.db.batch();
-    const requestRef = this.db.collection('approvalRequests').doc(requestId);
-
-    batch.update(requestRef, {
+    const requestRef = doc(this.db, 'approvalRequests', requestId);
+    const updates: any = {
       status: 'changes_requested',
-      changes: FirebaseFirestore.FieldValue.arrayUnion(...changes),
-    });
+      changes: arrayUnion(...changes),
+    };
 
     if (comment) {
       const commentData: ApprovalComment = {
@@ -226,12 +230,10 @@ export class TemplateApprovalService {
         type: 'change_request',
       };
 
-      batch.update(requestRef, {
-        comments: FirebaseFirestore.FieldValue.arrayUnion(commentData),
-      });
+      updates.comments = arrayUnion(commentData);
     }
 
-    await batch.commit();
+    await updateDoc(requestRef, updates);
   }
 
   async listApprovalRequests(options: {
@@ -241,35 +243,33 @@ export class TemplateApprovalService {
     startAfter?: Date;
     limit?: number;
   } = {}): Promise<ApprovalRequest[]> {
-    let query = this.db.collection('approvalRequests');
+    const queryConstraints = [];
 
     if (options.status) {
-      query = query.where('status', '==', options.status) as any;
+      queryConstraints.push(where('status', '==', options.status));
     }
 
     if (options.userId) {
-      query = query.where('submittedBy', '==', options.userId) as any;
+      queryConstraints.push(where('submittedBy', '==', options.userId));
     }
 
     if (options.category) {
-      query = query.where(
-        'metadata.category',
-        '==',
-        options.category
-      ) as any;
+      queryConstraints.push(where('metadata.category', '==', options.category));
     }
 
-    query = query.orderBy('submittedAt', 'desc') as any;
+    queryConstraints.push(orderBy('submittedAt', 'desc'));
 
     if (options.startAfter) {
-      query = query.startAfter(options.startAfter) as any;
+      queryConstraints.push(startAfter(options.startAfter));
     }
 
     if (options.limit) {
-      query = query.limit(options.limit) as any;
+      queryConstraints.push(limit(options.limit));
     }
 
-    const snapshot = await query.get();
+    const q = query(collection(this.db, 'approvalRequests'), ...queryConstraints);
+    const snapshot = await getDocs(q);
+
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -277,55 +277,51 @@ export class TemplateApprovalService {
   }
 
   async createWorkflow(workflow: Omit<ApprovalWorkflow, 'id'>): Promise<string> {
-    const doc = await this.db.collection('approvalWorkflows').add(workflow);
-    return doc.id;
+    const docRef = await addDoc(collection(this.db, 'approvalWorkflows'), workflow);
+    return docRef.id;
   }
 
   async updateWorkflow(
     workflowId: string,
     updates: Partial<ApprovalWorkflow>
   ): Promise<void> {
-    await this.db
-      .collection('approvalWorkflows')
-      .doc(workflowId)
-      .update(updates);
+    const workflowRef = doc(this.db, 'approvalWorkflows', workflowId);
+    await updateDoc(workflowRef, updates);
   }
 
   async getWorkflow(workflowId: string): Promise<ApprovalWorkflow | null> {
-    const doc = await this.db
-      .collection('approvalWorkflows')
-      .doc(workflowId)
-      .get();
+    const docRef = doc(this.db, 'approvalWorkflows', workflowId);
+    const docSnap = await getDoc(docRef);
 
-    return doc.exists ? { id: doc.id, ...doc.data() } as ApprovalWorkflow : null;
+    return docSnap.exists() 
+      ? { id: docSnap.id, ...docSnap.data() } as ApprovalWorkflow 
+      : null;
   }
 
   async assignReviewers(
     requestId: string,
     reviewerIds: string[]
   ): Promise<void> {
-    await this.db
-      .collection('approvalRequests')
-      .doc(requestId)
-      .update({
-        assignedReviewers: reviewerIds,
-      });
+    const requestRef = doc(this.db, 'approvalRequests', requestId);
+    await updateDoc(requestRef, {
+      assignedReviewers: reviewerIds,
+    });
   }
 
   async checkAutoApproval(templateId: string): Promise<{
     canAutoApprove: boolean;
     reasons: string[];
   }> {
-    const [template, workflow] = await Promise.all([
-      this.db.collection('templates').doc(templateId).get(),
+    const [templateDoc, workflow] = await Promise.all([
+      getDoc(doc(this.db, 'templates', templateId)),
       this.getDefaultWorkflow(),
     ]);
 
-    if (!template.exists || !workflow?.autoApprovalCriteria) {
+    if (!templateDoc.exists() || !workflow?.autoApprovalCriteria) {
       return { canAutoApprove: false, reasons: ['No auto-approval criteria'] };
     }
 
-    const data = template.data() as ContentTemplate;
+    const data = templateDoc.data() as ContentTemplate;
     const criteria = workflow.autoApprovalCriteria;
     const reasons: string[] = [];
 
@@ -379,13 +375,14 @@ export class TemplateApprovalService {
     byReviewer: Record<string, number>;
   }> {
     const startDate = this.getStartDate(timeframe);
-    const requests = await this.db
-      .collection('approvalRequests')
-      .where('submittedAt', '>=', startDate)
-      .get();
+    const q = query(
+      collection(this.db, 'approvalRequests'),
+      where('submittedAt', '>=', startDate)
+    );
+    const snapshot = await getDocs(q);
 
     const stats = {
-      total: requests.size,
+      total: snapshot.size,
       approved: 0,
       rejected: 0,
       pending: 0,
@@ -395,7 +392,7 @@ export class TemplateApprovalService {
       byReviewer: {} as Record<string, number>,
     };
 
-    requests.docs.forEach(doc => {
+    snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const data = doc.data() as ApprovalRequest;
       
       switch (data.status) {
@@ -465,20 +462,17 @@ export class TemplateApprovalService {
       completedBy: null,
     }));
 
-    await this.db
-      .collection('approvalRequests')
-      .doc(requestId)
-      .collection('workflow')
-      .doc('steps')
-      .set({ steps });
+    const stepsRef = doc(this.db, 'approvalRequests', requestId, 'workflow', 'steps');
+    await setDoc(stepsRef, { steps });
   }
 
   private async getDefaultWorkflow(): Promise<ApprovalWorkflow | null> {
-    const snapshot = await this.db
-      .collection('approvalWorkflows')
-      .where('isDefault', '==', true)
-      .limit(1)
-      .get();
+    const q = query(
+      collection(this.db, 'approvalWorkflows'),
+      where('isDefault', '==', true),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
 
     return snapshot.empty
       ? null

@@ -76,10 +76,16 @@ interface Environment {
     devPort: number;
     apiBaseUrl: string;
   };
+  production: boolean;
+  baseUrl: string;
+  apiUrl: string;
+  wsUrl: string;
+  version: string;
+  buildDate: string;
 }
 
 const getEnvironment = (): Environment => {
-  const env = Constants.manifest?.extra?.env || 'development';
+  const env = Constants.manifest?.extra?.env || process.env.NODE_ENV || 'development';
   
   // Common configuration
   const common = {
@@ -166,6 +172,12 @@ const getEnvironment = (): Environment => {
         devPort: Number(process.env.DEV_PORT) || 3000,
         apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
       },
+      production: false,
+      baseUrl: process.env.REACT_APP_PRODUCTION_URL || 'http://localhost:3000',
+      apiUrl: `${process.env.REACT_APP_PRODUCTION_URL || 'http://localhost:3000'}/api`,
+      wsUrl: `${process.env.REACT_APP_PRODUCTION_URL || 'http://localhost:3000'}/ws`,
+      version: process.env.npm_package_version || '1.0.0',
+      buildDate: '2025-01-15T21:37:30-06:00',
     },
     production: {
       ...common,
@@ -209,6 +221,12 @@ const getEnvironment = (): Environment => {
         devPort: Number(process.env.DEV_PORT) || 3000,
         apiBaseUrl: process.env.API_BASE_URL || '',
       },
+      production: true,
+      baseUrl: process.env.REACT_APP_PRODUCTION_URL || 'https://eri-ethio.com/tiktoktoe',
+      apiUrl: `${process.env.REACT_APP_PRODUCTION_URL || 'https://eri-ethio.com/tiktoktoe'}/api`,
+      wsUrl: `${process.env.REACT_APP_PRODUCTION_URL || 'https://eri-ethio.com/tiktoktoe'}/ws`,
+      version: process.env.npm_package_version || '1.0.0',
+      buildDate: '2025-01-15T21:37:30-06:00',
     },
     test: {
       ...common,
@@ -252,40 +270,35 @@ const getEnvironment = (): Environment => {
         devPort: 3000,
         apiBaseUrl: 'http://localhost:3000',
       },
+      production: false,
+      baseUrl: process.env.REACT_APP_PRODUCTION_URL || 'http://localhost:3000',
+      apiUrl: `${process.env.REACT_APP_PRODUCTION_URL || 'http://localhost:3000'}/api`,
+      wsUrl: `${process.env.REACT_APP_PRODUCTION_URL || 'http://localhost:3000'}/ws`,
+      version: process.env.npm_package_version || '1.0.0',
+      buildDate: '2025-01-15T21:37:30-06:00',
     },
   };
 
-  return environments[env];
+  return environments[env] || environments.development;
 };
 
 export const environment = getEnvironment();
 
+export const getApiUrl = (endpoint: string): string => {
+  const cleanEndpoint = endpoint.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
+  return cleanEndpoint ? `${environment.apiUrl}/${cleanEndpoint}` : `${environment.apiUrl}/`;
+};
+
+export const getWebSocketUrl = (endpoint: string): string => {
+  const cleanEndpoint = endpoint.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
+  return cleanEndpoint ? `${environment.wsUrl}/${cleanEndpoint}` : `${environment.wsUrl}/`;
+};
+
+export const getAssetUrl = (path: string): string => {
+  const cleanPath = path.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
+  return cleanPath ? `${environment.baseUrl}/assets/${cleanPath}` : `${environment.baseUrl}/assets/`;
+};
+
 // Utility functions for environment checks
 export const isDevelopment = () => Constants.manifest?.extra?.env === 'development';
 export const isProduction = () => Constants.manifest?.extra?.env === 'production';
-export const isTest = () => Constants.manifest?.extra?.env === 'test';
-
-// Feature flag checks
-export const isFeatureEnabled = (feature: keyof typeof environment.featureFlags) =>
-  environment.featureFlags[feature];
-
-// Rate limit checks
-export const getRateLimit = (type: keyof typeof environment.rateLimits) =>
-  environment.rateLimits[type];
-
-// Content generation settings
-export const getContentGenerationSetting = (
-  setting: keyof typeof environment.contentGeneration
-) => environment.contentGeneration[setting];
-
-// Template settings
-export const getTemplateSetting = (
-  setting: keyof typeof environment.templateSettings
-) => environment.templateSettings[setting];
-
-// Analytics settings
-export const getAnalyticsSetting = (
-  setting: keyof typeof environment.analytics
-) => environment.analytics[setting];
-
-export default environment;

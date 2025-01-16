@@ -1,0 +1,117 @@
+groups:
+  - name: beta_testing
+    rules:
+      # Beta Tester Metrics
+      - record: beta_testers_total
+        expr: count(beta_tester_status{status="active"})
+      
+      - record: beta_tester_activations_total
+        expr: sum(increase(beta_tester_status{status="active"}[1h]))
+      
+      # Feedback Metrics
+      - record: beta_feedback_submissions_total
+        expr: sum(increase(beta_feedback_created_total[1h]))
+      
+      - record: beta_feedback_by_type
+        expr: sum(beta_feedback_total) by (type)
+      
+      # Migration Metrics
+      - record: beta_migration_success_rate
+        expr: sum(beta_migration_success_total) / sum(beta_migration_attempts_total) * 100
+      
+      - record: beta_migration_duration_p95
+        expr: histogram_quantile(0.95, sum(rate(beta_migration_duration_bucket[1h])) by (le))
+      
+      - record: beta_migration_duration_p50
+        expr: histogram_quantile(0.50, sum(rate(beta_migration_duration_bucket[1h])) by (le))
+
+    # Alerts
+    - name: beta_testing_alerts
+      rules:
+        - alert: LowBetaTesterActivation
+          expr: rate(beta_tester_activations_total[24h]) < 1
+          for: 24h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Low beta tester activation rate"
+            description: "Beta tester activation rate has been low for the past 24 hours"
+
+        - alert: HighMigrationFailureRate
+          expr: (sum(beta_migration_success_total) / sum(beta_migration_attempts_total)) < 0.9
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: "High migration failure rate"
+            description: "TikTok account migration success rate has dropped below 90%"
+
+        - alert: SlowMigrationTime
+          expr: histogram_quantile(0.95, sum(rate(beta_migration_duration_bucket[1h])) by (le)) > 30000
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Slow migration times"
+            description: "95th percentile of migration duration is above 30 seconds"
+
+        - alert: LowFeedbackRate
+          expr: rate(beta_feedback_submissions_total[24h]) < 0.5
+          for: 24h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Low feedback submission rate"
+            description: "Beta testers are not submitting enough feedback"
+
+        - alert: HighBetaTesterChurn
+          expr: |
+            (
+              sum(delta(beta_testers_total{status="active"}[24h])) < 0
+            )
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: High beta tester churn detected
+            description: "Beta tester count has decreased in the last 24 hours"
+
+        - alert: LowFeatureUsage
+          expr: |
+            sum(rate(feature_usage_total[24h])) by (feature) < 1
+          for: 12h
+          labels:
+            severity: warning
+          annotations:
+            summary: Low feature usage detected
+            description: "Feature {{ $labels.feature }} has low usage over the last 24 hours"
+
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(error_total[1h])) / sum(rate(request_total[1h])) * 100 > 5
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: High error rate detected
+            description: "Error rate is above 5% in the last hour"
+
+        - alert: LowMigrationSuccess
+          expr: |
+            sum(migration_success_total) / sum(migration_total) * 100 < 90
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: Low migration success rate
+            description: "Migration success rate has dropped below 90%"
+
+        - alert: NegativeFeedbackSpike
+          expr: |
+            sum(rate(feedback_total{type="negative"}[1h])) > 10
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Spike in negative feedback
+            description: "Receiving high rate of negative feedback"

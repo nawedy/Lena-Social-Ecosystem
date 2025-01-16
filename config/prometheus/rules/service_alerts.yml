@@ -1,96 +1,225 @@
 groups:
-  - name: service_alerts
+  - name: api_alerts
     rules:
-      # API Service Alerts
-      - alert: APIHighResponseTime
-        expr: rate(http_request_duration_ms_sum[5m]) / rate(http_request_duration_ms_count[5m]) > 1000
-        for: 5m
-        labels:
-          severity: warning
-          service: api
-        annotations:
-          summary: High API response time
-          description: API response time is above 1s for 5 minutes
-
-      - alert: APIHighErrorRate
-        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
-        for: 5m
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 1m
         labels:
           severity: critical
           service: api
         annotations:
           summary: High API error rate
-          description: API error rate is above 5% for 5 minutes
+          description: "Error rate is above 5% ({{ $value | printf \"%.2f\" }}%)"
 
-      # Database Alerts
-      - alert: DatabaseHighTransactions
-        expr: rate(pg_stat_database_xact_commit[5m]) + rate(pg_stat_database_xact_rollback[5m]) > 1000
+      - alert: SlowResponseTime
+        expr: rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: Slow API response time
+          description: "Average response time is above 500ms ({{ $value | printf \"%.2f\" }}ms)"
+
+  - name: database_alerts
+    rules:
+      - alert: HighDatabaseConnections
+        expr: pg_stat_activity_count > 100
         for: 5m
         labels:
           severity: warning
           service: database
         annotations:
-          summary: High database transaction rate
-          description: Database is processing more than 1000 transactions per second
+          summary: High number of database connections
+          description: "Database connections > 100 ({{ $value }})"
 
-      - alert: DatabaseHighRollbackRate
-        expr: rate(pg_stat_database_xact_rollback[5m]) / (rate(pg_stat_database_xact_commit[5m]) + rate(pg_stat_database_xact_rollback[5m])) > 0.02
+      - alert: SlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration{datname!=""}[5m]) > 30
         for: 5m
         labels:
           severity: warning
           service: database
         annotations:
-          summary: High transaction rollback rate
-          description: Database rollback rate is above 2% for 5 minutes
+          summary: Slow database queries detected
+          description: "Queries taking longer than 30s to execute"
 
-      # Cache Alerts
-      - alert: CacheHighMemoryUsage
+  - name: cache_alerts
+    rules:
+      - alert: HighMemoryUsage
         expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
         for: 5m
         labels:
           severity: warning
           service: cache
         annotations:
-          summary: High cache memory usage
-          description: Cache memory usage is above 80% for 5 minutes
+          summary: High Redis memory usage
+          description: "Redis memory usage is above 80% ({{ $value | printf \"%.2f\" }}%)"
 
-      - alert: CacheHighMissRate
-        expr: rate(redis_keyspace_misses_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) > 0.5
+      - alert: HighKeyEvictionRate
+        expr: rate(redis_evicted_keys_total[5m]) > 100
         for: 5m
         labels:
           severity: warning
           service: cache
         annotations:
-          summary: High cache miss rate
-          description: Cache miss rate is above 50% for 5 minutes
+          summary: High key eviction rate
+          description: "Redis is evicting more than 100 keys per second"
 
-      # Resource Alerts
+  - name: resource_alerts
+    rules:
       - alert: HighCPUUsage
-        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
         for: 5m
         labels:
           severity: warning
           service: system
         annotations:
           summary: High CPU usage
-          description: CPU usage is above 80% for 5 minutes
+          description: "CPU usage is above 80% ({{ $value | printf \"%.2f\" }}%)"
 
       - alert: HighMemoryUsage
-        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 80
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
         for: 5m
         labels:
           severity: warning
           service: system
         annotations:
           summary: High memory usage
-          description: Memory usage is above 80% for 5 minutes
+          description: "Memory usage is above 85% ({{ $value | printf \"%.2f\" }}%)"
 
-      - alert: HighDiskUsage
-        expr: (node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_free_bytes{mountpoint="/"}) / node_filesystem_size_bytes{mountpoint="/"} * 100 > 80
+      - alert: DiskSpaceRunningOut
+        expr: (node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_free_bytes{mountpoint="/"}) / node_filesystem_size_bytes{mountpoint="/"} * 100 > 85
         for: 5m
         labels:
           severity: warning
           service: system
         annotations:
-          summary: High disk usage
-          description: Disk usage is above 80% for 5 minutes
+          summary: Low disk space
+          description: "Disk usage is above 85% ({{ $value | printf \"%.2f\" }}%)"
+
+  - name: network_alerts
+    rules:
+      - alert: HighNetworkErrors
+        expr: rate(node_network_receive_errs_total[5m]) + rate(node_network_transmit_errs_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: network
+        annotations:
+          summary: High network error rate
+          description: "Network errors > 10/s ({{ $value | printf \"%.2f\" }}/s)"
+
+      - alert: NetworkSaturation
+        expr: (rate(node_network_receive_bytes_total[5m]) + rate(node_network_transmit_bytes_total[5m])) / node_network_speed_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: network
+        annotations:
+          summary: Network saturation
+          description: "Network utilization is above 80% ({{ $value | printf \"%.2f\" }}%)"
+
+  - name: service_alerts
+    rules:
+      # Frontend Performance Alerts
+      - alert: HighLCPValue
+        expr: histogram_quantile(0.95, sum(rate(rum_lcp_seconds_bucket[5m])) by (le)) * 1000 > 2500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Largest Contentful Paint
+          description: 95th percentile LCP is above 2.5 seconds.
+
+      - alert: HighFIDValue
+        expr: histogram_quantile(0.95, sum(rate(rum_fid_seconds_bucket[5m])) by (le)) * 1000 > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High First Input Delay
+          description: 95th percentile FID is above 100ms.
+
+      - alert: HighCLSValue
+        expr: histogram_quantile(0.95, sum(rate(rum_cls_score_bucket[5m])) by (le)) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Cumulative Layout Shift
+          description: 95th percentile CLS is above 0.1.
+
+      - alert: HighJavaScriptErrors
+        expr: sum(rate(rum_error_count{error_type="javascript"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High JavaScript Error Rate
+          description: More than 0.1 JavaScript errors per second.
+
+      # Backend Performance Alerts
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{handler!~"metrics|health"}[5m])) by (le, handler)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High API Latency
+          description: 95th percentile API latency is above 1 second for {{ $labels.handler }}.
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Error Rate
+          description: Error rate is above 5% for the last 5 minutes.
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / container_memory_usage_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Memory Usage
+          description: Service is using more than 80% of allocated memory.
+
+      # Distributed Tracing Alerts
+      - alert: HighTraceLatency
+        expr: histogram_quantile(0.95, sum(rate(span_latency_milliseconds_bucket[5m])) by (le, service_name)) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Trace Latency
+          description: 95th percentile trace latency is above 1 second for {{ $labels.service_name }}.
+
+      - alert: HighSpanErrorRate
+        expr: sum(rate(span_count{status="error"}[5m])) by (service_name) / sum(rate(span_count[5m])) by (service_name) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Span Error Rate
+          description: Span error rate is above 5% for {{ $labels.service_name }}.
+
+      # Service Dependencies Alerts
+      - alert: HighDependencyLatency
+        expr: rate(dependency_request_duration_milliseconds_sum[5m]) / rate(dependency_request_duration_milliseconds_count[5m]) > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Dependency Latency
+          description: Average dependency request latency is above 500ms for {{ $labels.client }} -> {{ $labels.server }}.
+
+      - alert: HighDependencyErrorRate
+        expr: sum(rate(dependency_request_errors_total[5m])) by (client, server) / sum(rate(dependency_requests_total[5m])) by (client, server) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High Dependency Error Rate
+          description: Error rate is above 5% for {{ $labels.client }} -> {{ $labels.server }}.

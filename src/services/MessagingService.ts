@@ -1,13 +1,12 @@
-import { FirebaseFirestore, DocumentData } from '@firebase/firestore';
-import { getFirestore, collection, query, where, orderBy, limit } from 'firebase/firestore';
-import { Message, Chat, MessageStatus } from '../types/messaging';
+import { Firestore, getFirestore, collection, query, where, orderBy, limit, getDocs, doc, getDoc, updateDoc, setDoc, arrayUnion } from 'firebase/firestore';
+import { Message, Conversation } from '../types/messaging';
 import { User } from '../types/user';
 import { NotificationService } from './NotificationService';
 import { BlockingService } from './BlockingService';
 
 export class MessagingService {
   private static instance: MessagingService;
-  private db: FirebaseFirestore;
+  private db: Firestore;
   private notificationService: NotificationService;
   private blockingService: BlockingService;
 
@@ -24,7 +23,7 @@ export class MessagingService {
     return MessagingService.instance;
   }
 
-  async sendMessage(chatId: string, senderId: string, content: string, type: 'text' | 'image' | 'video' = 'text'): Promise<Message> {
+  async sendMessage(conversationId: string, senderId: string, content: string, type: 'text' | 'image' | 'video' | 'audio' | 'file' = 'text'): Promise<Message> {
     // Check if sender is blocked
     const isBlocked = await this.blockingService.isUserBlocked(senderId);
     if (isBlocked) {
@@ -33,110 +32,117 @@ export class MessagingService {
 
     const message: Message = {
       id: `msg_${Date.now()}`,
-      chatId,
+      conversationId,
       senderId,
       content,
       type,
-      timestamp: new Date(),
-      status: MessageStatus.SENT,
-      readBy: [],
+      status: 'sent',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    await this.db.collection('messages').add(message);
-    await this.updateChatLastMessage(chatId, message);
-    await this.notifyRecipients(chatId, senderId, message);
+    await setDoc(doc(this.db, 'messages', message.id), message, { merge: true });
+    await this.updateConversationLastMessage(conversationId, message);
+    await this.notifyRecipients(conversationId, senderId, message);
 
     return message;
   }
 
-  async createChat(participants: string[]): Promise<Chat> {
+  async createConversation(participants: string[]): Promise<Conversation> {
     // Verify no blocking between participants
     for (const participant of participants) {
       const isBlocked = await this.blockingService.isUserBlocked(participant);
       if (isBlocked) {
-        throw new Error(`Unable to create chat due to blocking restrictions`);
+        throw new Error(`Unable to create conversation due to blocking restrictions`);
       }
     }
 
-    const chat: Chat = {
-      id: `chat_${Date.now()}`,
+    const conversation: Conversation = {
+      id: `conv_${Date.now()}`,
       participants,
-      createdAt: new Date(),
-      lastMessage: null,
       type: participants.length > 2 ? 'group' : 'direct',
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastMessage: null,
+      metadata: {},
     };
 
-    await this.db.collection('chats').add(chat);
-    return chat;
+    await setDoc(doc(this.db, 'conversations', conversation.id), conversation, { merge: true });
+    return conversation;
   }
 
-  async getChat(chatId: string): Promise<Chat> {
-    const chatDoc = await this.db.collection('chats').doc(chatId).get();
-    return chatDoc.data() as Chat;
+  async getConversation(conversationId: string): Promise<Conversation> {
+    const conversationDoc = await getDoc(doc(this.db, 'conversations', conversationId));
+    if (!conversationDoc.exists()) {
+      throw new Error('Conversation not found');
+    }
+    return conversationDoc.data() as Conversation;
   }
 
-  async getUserChats(userId: string): Promise<Chat[]> {
-    const chatsQuery = query(
-      collection(this.db, 'chats'),
+  async getUserConversations(userId: string): Promise<Conversation[]> {
+    const conversationsQuery = query(
+      collection(this.db, 'conversations'),
       where('participants', 'array-contains', userId),
-      orderBy('lastMessage.timestamp', 'desc')
+      orderBy('updatedAt', 'desc')
     );
 
-    const snapshot = await chatsQuery.get();
-    return snapshot.docs.map(doc => doc.data() as Chat);
+    const snapshot = await getDocs(conversationsQuery);
+    return snapshot.docs.map(doc => doc.data() as Conversation);
   }
 
-  async getChatMessages(chatId: string, limit: number = 50): Promise<Message[]> {
+  async getConversationMessages(conversationId: string, messageLimit: number = 50): Promise<Message[]> {
     const messagesQuery = query(
       collection(this.db, 'messages'),
-      where('chatId', '==', chatId),
-      orderBy('timestamp', 'desc'),
-      limit(limit)
+      where('conversationId', '==', conversationId),
+      orderBy('createdAt', 'desc'),
+      limit(messageLimit)
     );
 
-    const snapshot = await messagesQuery.get();
+    const snapshot = await getDocs(messagesQuery);
     return snapshot.docs.map(doc => doc.data() as Message);
   }
 
   async markMessageAsRead(messageId: string, userId: string): Promise<void> {
-    await this.db.collection('messages').doc(messageId).update({
-      readBy: FirebaseFirestore.FieldValue.arrayUnion(userId),
-      status: MessageStatus.READ,
+    await updateDoc(doc(this.db, 'messages', messageId), {
+      readBy: arrayUnion(userId),
+      status: 'read',
+      updatedAt: new Date(),
     });
   }
 
   async deleteMessage(messageId: string, userId: string): Promise<void> {
-    const messageRef = this.db.collection('messages').doc(messageId);
-    const message = await messageRef.get();
-
-    if (!message.exists) {
+    const messageDoc = await getDoc(doc(this.db, 'messages', messageId));
+    if (!messageDoc.exists()) {
       throw new Error('Message not found');
     }
 
-    const messageData = message.data() as Message;
+    const messageData = messageDoc.data() as Message;
     if (messageData.senderId !== userId) {
       throw new Error('Unauthorized to delete this message');
     }
 
-    await messageRef.update({
+    await updateDoc(doc(this.db, 'messages', messageId), {
       content: 'This message has been deleted',
-      status: MessageStatus.DELETED,
+      status: 'deleted',
+      updatedAt: new Date(),
     });
   }
 
-  private async updateChatLastMessage(chatId: string, message: Message): Promise<void> {
-    await this.db.collection('chats').doc(chatId).update({
+  private async updateConversationLastMessage(conversationId: string, message: Message): Promise<void> {
+    await updateDoc(doc(this.db, 'conversations', conversationId), {
       lastMessage: {
         content: message.content,
-        timestamp: message.timestamp,
+        createdAt: message.createdAt,
         senderId: message.senderId,
       },
+      updatedAt: new Date(),
     });
   }
 
-  private async notifyRecipients(chatId: string, senderId: string, message: Message): Promise<void> {
-    const chat = await this.getChat(chatId);
-    const recipients = chat.participants.filter(id => id !== senderId);
+  private async notifyRecipients(conversationId: string, senderId: string, message: Message): Promise<void> {
+    const conversation = await this.getConversation(conversationId);
+    const recipients = conversation.participants.filter(id => id !== senderId);
 
     for (const recipientId of recipients) {
       await this.notificationService.sendNotification(recipientId, {
@@ -144,26 +150,26 @@ export class MessagingService {
         title: 'New Message',
         body: message.type === 'text' ? message.content : `Sent you a ${message.type}`,
         data: {
-          chatId,
+          conversationId,
           messageId: message.id,
         },
       });
     }
   }
 
-  async searchMessages(userId: string, query: string): Promise<Message[]> {
-    const userChats = await this.getUserChats(userId);
-    const chatIds = userChats.map(chat => chat.id);
+  async searchMessages(userId: string, searchQuery: string): Promise<Message[]> {
+    const userConversations = await this.getUserConversations(userId);
+    const conversationIds = userConversations.map(conversation => conversation.id);
 
     const messagesQuery = query(
       collection(this.db, 'messages'),
-      where('chatId', 'in', chatIds),
-      where('content', '>=', query),
-      where('content', '<=', query + '\uf8ff'),
+      where('conversationId', 'in', conversationIds),
+      where('content', '>=', searchQuery),
+      where('content', '<=', searchQuery + '\uf8ff'),
       limit(20)
     );
 
-    const snapshot = await messagesQuery.get();
+    const snapshot = await getDocs(messagesQuery);
     return snapshot.docs.map(doc => doc.data() as Message);
   }
 }

@@ -1,0 +1,132 @@
+groups:
+  - name: user_engagement_alerts
+    rules:
+      - alert: LowActiveUsers
+        expr: rate(user_active_total[15m]) < 100
+        for: 15m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: Low active user count
+          description: "Active users in the last 15 minutes is below 100"
+
+      - alert: HighUserChurnRate
+        expr: rate(user_churn_total[1h]) / rate(user_signup_total[1h]) > 0.1
+        for: 1h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: High user churn rate
+          description: "User churn rate is above 10% in the last hour"
+
+  - name: content_performance_alerts
+    rules:
+      - alert: LowContentEngagement
+        expr: rate(content_interaction_total[15m]) / rate(content_view_total[15m]) < 0.05
+        for: 15m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: Low content engagement
+          description: "Content engagement rate is below 5%"
+
+      - alert: HighContentReportRate
+        expr: rate(content_report_total[1h]) / rate(content_post_total[1h]) > 0.01
+        for: 1h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: High content report rate
+          description: "Content report rate is above 1%"
+
+  - name: ai_service_alerts
+    rules:
+      - alert: HighAIProcessingLatency
+        expr: rate(ai_processing_duration_seconds_sum[5m]) / rate(ai_processing_duration_seconds_count[5m]) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: ai
+        annotations:
+          summary: High AI processing latency
+          description: "AI processing time is above 2 seconds"
+
+      - alert: HighAIProcessingErrors
+        expr: rate(ai_processing_errors_total[5m]) / rate(ai_processing_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: ai
+        annotations:
+          summary: High AI processing error rate
+          description: "AI processing error rate is above 5%"
+
+  - name: auth_alerts
+    rules:
+      - alert: HighLoginFailureRate
+        expr: rate(auth_login_failure_total[5m]) / rate(auth_login_attempt_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: auth
+        annotations:
+          summary: High login failure rate
+          description: "Login failure rate is above 10%"
+
+      - alert: UnusualAuthActivity
+        expr: rate(auth_login_attempt_total[5m]) > historicalAvg(auth_login_attempt_total[24h]) * 2
+        for: 5m
+        labels:
+          severity: warning
+          service: auth
+        annotations:
+          summary: Unusual authentication activity
+          description: "Login attempts are 2x higher than usual"
+
+  - name: user_acquisition_alerts
+    rules:
+      - alert: LowSignupConversion
+        expr: rate(user_signup_complete_total[1h]) / rate(user_signup_start_total[1h]) < 0.3
+        for: 1h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: Low signup conversion rate
+          description: "Signup conversion rate is below 30%"
+
+      - alert: HighSignupAbandonmentRate
+        expr: rate(user_signup_abandon_total[1h]) / rate(user_signup_start_total[1h]) > 0.5
+        for: 1h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: High signup abandonment rate
+          description: "Signup abandonment rate is above 50%"
+
+  - name: payment_alerts
+    rules:
+      - alert: HighPaymentFailureRate
+        expr: rate(payment_failure_total[5m]) / rate(payment_attempt_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          service: payments
+        annotations:
+          summary: High payment failure rate
+          description: "Payment failure rate is above 10%"
+
+      - alert: PaymentProcessingDelay
+        expr: rate(payment_processing_duration_seconds_sum[5m]) / rate(payment_processing_duration_seconds_count[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: payments
+        annotations:
+          summary: Payment processing delay
+          description: "Payment processing time is above 10 seconds"

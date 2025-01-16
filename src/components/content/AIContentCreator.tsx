@@ -12,105 +12,139 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ContentGenerationService } from '../../services/ContentGenerationService';
-import { APIUsageService } from '../../services/APIUsageService';
+import { ContentGenerationService, GeneratedContent } from '../../services/ContentGenerationService';
+import { APIUsageService, UsageQuota } from '../../services/APIUsageService';
 import { debounce } from 'lodash';
 
 interface AIContentCreatorProps {
   userId: string;
-  onContentGenerated: (content: any) => void;
+  onContentGenerated: (content: GeneratedContent) => void;
+}
+
+type ContentType = 'text' | 'image' | 'video';
+type AIProvider = 'openai' | 'anthropic' | 'google';
+
+interface ContentGenerationError extends Error {
+  provider?: string;
+  contentType?: ContentType;
+  details?: Record<string, unknown>;
+}
+
+interface QuotaCheckResult {
+  hasQuota: boolean;
+  remainingQuota?: number;
+  error?: string;
 }
 
 export function AIContentCreator({ userId, onContentGenerated }: AIContentCreatorProps) {
   const { t } = useTranslation();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'text' | 'image' | 'video'>('text');
-  const [generatedContent, setGeneratedContent] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<ContentType>('text');
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
   const [contentStyle, setContentStyle] = useState('');
+  const [error, setError] = useState<ContentGenerationError | null>(null);
 
   const contentGenService = ContentGenerationService.getInstance();
   const apiUsageService = APIUsageService.getInstance();
 
-  const checkQuota = async (provider: string) => {
-    const hasQuota = await apiUsageService.checkQuota(userId, provider);
-    if (!hasQuota) {
-      Alert.alert(
-        t('error'),
-        t('errors.quotaExceeded'),
-        [
-          {
-            text: t('viewUsage'),
-            onPress: () => {/* Navigate to usage stats */},
-          },
-          { text: t('ok'), style: 'cancel' },
-        ]
-      );
-      return false;
+  const checkQuota = async (provider: AIProvider): Promise<QuotaCheckResult> => {
+    try {
+      const quota: UsageQuota = await apiUsageService.checkQuota(userId, provider);
+      if (!quota.hasQuota) {
+        Alert.alert(
+          t('error'),
+          t('errors.quotaExceeded'),
+          [
+            {
+              text: t('viewUsage'),
+              onPress: () => {/* Navigate to usage stats */},
+            },
+            { text: t('ok'), style: 'cancel' },
+          ]
+        );
+        return { hasQuota: false, remainingQuota: quota.remaining };
+      }
+      return { hasQuota: true, remainingQuota: quota.remaining };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to check quota');
+      console.error('Error checking quota:', error);
+      return { hasQuota: false, error: error.message };
     }
-    return true;
   };
 
-  const generateContent = async () => {
+  const trackUsage = async (
+    provider: AIProvider,
+    operation: string,
+    units: number,
+    cost: number
+  ): Promise<void> => {
+    try {
+      await apiUsageService.trackUsage(userId, provider, operation, units, cost);
+    } catch (err) {
+      console.error('Error tracking usage:', err);
+      // Don't throw here, just log the error as this is not critical
+    }
+  };
+
+  const generateContent = async (): Promise<void> => {
     if (!prompt) {
       Alert.alert(t('error'), t('errors.promptRequired'));
       return;
     }
 
     setLoading(true);
+    setError(null);
+
     try {
-      let content;
+      const provider: AIProvider = 'openai'; // Could be made configurable
+      const quotaCheck = await checkQuota(provider);
+      
+      if (!quotaCheck.hasQuota) {
+        if (quotaCheck.error) {
+          throw new Error(quotaCheck.error);
+        }
+        return;
+      }
+
+      let content: GeneratedContent;
       switch (activeTab) {
         case 'text':
-          if (!(await checkQuota('openai'))) return;
           content = await contentGenService.generateCaption(prompt, contentStyle);
-          await apiUsageService.trackUsage(
-            userId,
-            'openai',
-            'generateCaption',
-            prompt.length,
-            0.002 * prompt.length
-          );
+          await trackUsage(provider, 'generateCaption', prompt.length, 0.002 * prompt.length);
           break;
 
         case 'image':
-          if (!(await checkQuota('openai'))) return;
           content = await contentGenService.generateImage(prompt, contentStyle);
-          await apiUsageService.trackUsage(
-            userId,
-            'openai',
-            'generateImage',
-            1,
-            0.02
-          );
+          await trackUsage(provider, 'generateImage', 1, 0.02);
           break;
 
         case 'video':
-          if (!(await checkQuota('openai'))) return;
           content = await contentGenService.generateVideoIdeas(prompt);
-          await apiUsageService.trackUsage(
-            userId,
-            'openai',
-            'generateVideoIdeas',
-            prompt.length,
-            0.002 * prompt.length
-          );
+          await trackUsage(provider, 'generateVideoIdeas', prompt.length, 0.002 * prompt.length);
           break;
+
+        default:
+          throw new Error('Invalid content type');
       }
 
       setGeneratedContent(content);
       onContentGenerated(content);
-    } catch (error) {
-      console.error('Error generating content:', error);
-      Alert.alert(t('error'), t('errors.contentGenerationFailed'));
+    } catch (err) {
+      console.error('Error generating content:', err);
+      const error: ContentGenerationError = err instanceof Error ? err : new Error('Failed to generate content');
+      error.contentType = activeTab;
+      error.provider = 'openai';
+      setError(error);
+      Alert.alert(t('error'), t('errors.generationFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   const debouncedGenerate = useCallback(
-    debounce(generateContent, 500),
-    [prompt, activeTab, contentStyle]
+    debounce(generateContent, 500, { leading: true, trailing: false }),
+    [prompt, contentStyle, activeTab]
   );
 
   const renderTextTab = () => (
@@ -123,7 +157,7 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       />
       {generatedContent && (
         <View style={styles.generatedContent}>
-          <Text style={styles.generatedText}>{generatedContent}</Text>
+          <Text style={styles.generatedText}>{generatedContent.text}</Text>
           <TouchableOpacity
             style={styles.copyButton}
             onPress={() => {/* Copy to clipboard */}}
@@ -146,7 +180,7 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       {generatedContent && (
         <View style={styles.generatedContent}>
           <Image
-            source={{ uri: generatedContent }}
+            source={{ uri: generatedContent.image }}
             style={styles.generatedImage}
             resizeMode="contain"
           />
@@ -169,11 +203,11 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       {generatedContent && (
         <View style={styles.generatedContent}>
           <ScrollView style={styles.ideaList}>
-            {generatedContent.map((idea: string, index: number) => (
+            {generatedContent.videoIdeas.map((idea: string, index: number) => (
               <TouchableOpacity
                 key={index}
                 style={styles.ideaItem}
-                onPress={() => onContentGenerated(idea)}
+                onPress={() => onContentGenerated({ videoIdeas: [idea] })}
               >
                 <Text style={styles.ideaText}>{idea}</Text>
                 <Ionicons name="chevron-forward" size={20} color="#666" />

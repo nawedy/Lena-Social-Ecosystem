@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ContentTemplateService } from '../../services/ContentTemplateService';
+import { ContentTemplateService, ContentTemplate, TemplateCategory } from '../../services/ContentTemplateService';
 import { ContentGenerationService } from '../../services/ContentGenerationService';
 
 interface TemplateCreatorProps {
@@ -20,6 +20,18 @@ interface TemplateCreatorProps {
   onTemplateCreated: () => void;
   onCancel: () => void;
 }
+
+interface TestResult {
+  content: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface ValidationError extends Error {
+  field?: string;
+}
+
+type TemplateType = 'text' | 'image' | 'video';
+type AIProvider = 'openai' | 'anthropic' | 'google' | 'custom';
 
 export function TemplateCreator({
   userId,
@@ -30,56 +42,59 @@ export function TemplateCreator({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
-  const [type, setType] = useState<'text' | 'image' | 'video'>('text');
+  const [type, setType] = useState<TemplateType>('text');
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isPublic, setIsPublic] = useState(true);
-  const [aiProvider, setAiProvider] = useState('openai');
+  const [aiProvider, setAiProvider] = useState<AIProvider>('openai');
   const [loading, setLoading] = useState(false);
-  const [testResult, setTestResult] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [categories, setCategories] = useState<TemplateCategory[]>([]);
   const [popularTags, setPopularTags] = useState<string[]>([]);
+  const [error, setError] = useState<ValidationError | null>(null);
 
   const templateService = ContentTemplateService.getInstance();
   const contentGenService = ContentGenerationService.getInstance();
 
   useEffect(() => {
-    loadCategories();
-    loadPopularTags();
+    void loadCategories();
+    void loadPopularTags();
   }, []);
 
-  const loadCategories = async () => {
+  const loadCategories = async (): Promise<void> => {
     try {
       const loadedCategories = await templateService.getTemplateCategories();
       setCategories(loadedCategories);
     } catch (error) {
       console.error('Error loading categories:', error);
+      setError(error instanceof Error ? error : new Error('Failed to load categories'));
     }
   };
 
-  const loadPopularTags = async () => {
+  const loadPopularTags = async (): Promise<void> => {
     try {
       const loadedTags = await templateService.getTemplateTags();
       setPopularTags(loadedTags);
     } catch (error) {
       console.error('Error loading tags:', error);
+      setError(error instanceof Error ? error : new Error('Failed to load tags'));
     }
   };
 
-  const handleAddTag = () => {
+  const handleAddTag = (): void => {
     if (tagInput && !tags.includes(tagInput)) {
       setTags([...tags, tagInput]);
       setTagInput('');
     }
   };
 
-  const handleRemoveTag = (tag: string) => {
+  const handleRemoveTag = (tag: string): void => {
     setTags(tags.filter(t => t !== tag));
   };
 
-  const testTemplate = async () => {
+  const testTemplate = async (): Promise<void> => {
     if (!prompt) {
       Alert.alert(t('error'), t('errors.promptRequired'));
       return;
@@ -87,61 +102,98 @@ export function TemplateCreator({
 
     setLoading(true);
     setTestResult(null);
+    setError(null);
 
     try {
-      let result;
+      let result: TestResult;
       switch (type) {
         case 'text':
-          result = await contentGenService.generateCaption(prompt, style);
+          result = {
+            content: await contentGenService.generateCaption(prompt, style),
+          };
           break;
         case 'image':
-          result = await contentGenService.generateImage(prompt, style);
+          result = {
+            content: await contentGenService.generateImage(prompt, style),
+          };
           break;
         case 'video':
-          result = await contentGenService.generateVideoIdeas(prompt);
-          result = Array.isArray(result) ? result[0] : result;
+          result = {
+            content: await contentGenService.generateVideoIdeas(prompt),
+          };
           break;
+        default:
+          throw new Error('Invalid template type');
       }
-
       setTestResult(result);
     } catch (error) {
       console.error('Error testing template:', error);
-      Alert.alert(t('error'), t('errors.templateTestFailed'));
+      setError(error instanceof Error ? error : new Error('Failed to test template'));
+      Alert.alert(t('error'), t('errors.testFailed'));
     } finally {
       setLoading(false);
     }
   };
 
-  const saveTemplate = async () => {
-    if (!name || !description || !category || !prompt) {
-      Alert.alert(t('error'), t('errors.allFieldsRequired'));
+  const validateTemplate = (): ValidationError | null => {
+    if (!name) {
+      return { name: 'ValidationError', message: t('errors.nameRequired'), field: 'name' };
+    }
+    if (!description) {
+      return { name: 'ValidationError', message: t('errors.descriptionRequired'), field: 'description' };
+    }
+    if (!category) {
+      return { name: 'ValidationError', message: t('errors.categoryRequired'), field: 'category' };
+    }
+    if (!prompt) {
+      return { name: 'ValidationError', message: t('errors.promptRequired'), field: 'prompt' };
+    }
+    if (tags.length === 0) {
+      return { name: 'ValidationError', message: t('errors.tagsRequired'), field: 'tags' };
+    }
+    return null;
+  };
+
+  const handleCreate = async (): Promise<void> => {
+    const validationError = validateTemplate();
+    if (validationError) {
+      Alert.alert(t('error'), validationError.message);
+      setError(validationError);
       return;
     }
 
     setLoading(true);
+    setError(null);
+
     try {
-      const templateData = {
+      const template: Omit<ContentTemplate, 'id'> = {
         name,
         description,
-        category,
+        categoryId: category,
         type,
         prompt,
         style,
         tags,
-        usageCount: 0,
-        rating: 0,
-        createdBy: userId,
         isPublic,
         aiProvider,
-        previewUrl: testResult && type === 'image' ? testResult : undefined,
+        createdBy: userId,
+        createdAt: new Date(),
+        lastModified: new Date(),
+        modifiedBy: userId,
+        version: 1,
+        isActive: true,
+        rating: 0,
+        usageCount: 0,
+        successRate: 0,
       };
 
-      await templateService.createTemplate(templateData);
-      Alert.alert(t('success'), t('templates.createSuccess'));
+      await templateService.createTemplate(template);
+      Alert.alert(t('success'), t('messages.templateCreated'));
       onTemplateCreated();
     } catch (error) {
-      console.error('Error saving template:', error);
-      Alert.alert(t('error'), t('errors.templateSaveFailed'));
+      console.error('Error creating template:', error);
+      setError(error instanceof Error ? error : new Error('Failed to create template'));
+      Alert.alert(t('error'), t('errors.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -154,7 +206,7 @@ export function TemplateCreator({
           <Ionicons name="close" size={24} color="#666" />
         </TouchableOpacity>
         <Text style={styles.title}>{t('templates.createNew')}</Text>
-        <TouchableOpacity onPress={saveTemplate} disabled={loading}>
+        <TouchableOpacity onPress={handleCreate} disabled={loading}>
           <Text style={[styles.saveButton, loading && styles.saveButtonDisabled]}>
             {t('save')}
           </Text>
@@ -193,20 +245,20 @@ export function TemplateCreator({
             >
               {categories.map(cat => (
                 <TouchableOpacity
-                  key={cat}
+                  key={cat.id}
                   style={[
                     styles.categoryChip,
-                    category === cat && styles.categoryChipSelected,
+                    category === cat.id && styles.categoryChipSelected,
                   ]}
-                  onPress={() => setCategory(cat)}
+                  onPress={() => setCategory(cat.id)}
                 >
                   <Text
                     style={[
                       styles.categoryChipText,
-                      category === cat && styles.categoryChipTextSelected,
+                      category === cat.id && styles.categoryChipTextSelected,
                     ]}
                   >
-                    {cat}
+                    {cat.name}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -385,33 +437,49 @@ export function TemplateCreator({
             <TouchableOpacity
               style={[
                 styles.providerButton,
-                aiProvider === 'stability' && styles.providerButtonSelected,
+                aiProvider === 'anthropic' && styles.providerButtonSelected,
               ]}
-              onPress={() => setAiProvider('stability')}
+              onPress={() => setAiProvider('anthropic')}
             >
               <Text
                 style={[
                   styles.providerButtonText,
-                  aiProvider === 'stability' && styles.providerButtonTextSelected,
+                  aiProvider === 'anthropic' && styles.providerButtonTextSelected,
                 ]}
               >
-                Stability AI
+                Anthropic
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.providerButton,
-                aiProvider === 'replicate' && styles.providerButtonSelected,
+                aiProvider === 'google' && styles.providerButtonSelected,
               ]}
-              onPress={() => setAiProvider('replicate')}
+              onPress={() => setAiProvider('google')}
             >
               <Text
                 style={[
                   styles.providerButtonText,
-                  aiProvider === 'replicate' && styles.providerButtonTextSelected,
+                  aiProvider === 'google' && styles.providerButtonTextSelected,
                 ]}
               >
-                Replicate
+                Google
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.providerButton,
+                aiProvider === 'custom' && styles.providerButtonSelected,
+              ]}
+              onPress={() => setAiProvider('custom')}
+            >
+              <Text
+                style={[
+                  styles.providerButtonText,
+                  aiProvider === 'custom' && styles.providerButtonTextSelected,
+                ]}
+              >
+                Custom
               </Text>
             </TouchableOpacity>
           </View>
@@ -441,12 +509,12 @@ export function TemplateCreator({
             </Text>
             {type === 'image' ? (
               <Image
-                source={{ uri: testResult }}
+                source={{ uri: testResult.content }}
                 style={styles.testResultImage}
                 resizeMode="contain"
               />
             ) : (
-              <Text style={styles.testResultText}>{testResult}</Text>
+              <Text style={styles.testResultText}>{testResult.content}</Text>
             )}
           </View>
         )}

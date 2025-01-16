@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1-arm64
+    platform: linux/arm64
     container_name: elasticsearch
     environment:
       - node.name=elasticsearch
@@ -29,15 +30,16 @@ services:
       retries: 3
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.1
+    image: docker.elastic.co/logstash/logstash:8.11.1-arm64
+    platform: linux/arm64
     container_name: logstash
     volumes:
       - ./config/logstash/pipeline:/usr/share/logstash/pipeline
       - ./config/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
     ports:
       - "5044:5044"
-      - "5000:5000/tcp"
-      - "5000:5000/udp"
+      - "5001:5000/tcp"
+      - "5001:5000/udp"
       - "9600:9600"
     environment:
       LS_JAVA_OPTS: "-Xmx512m -Xms512m"
@@ -47,7 +49,8 @@ services:
       - elasticsearch
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.1
+    image: docker.elastic.co/kibana/kibana:8.11.1-arm64
+    platform: linux/arm64
     container_name: kibana
     ports:
       - "5601:5601"
@@ -62,7 +65,8 @@ services:
       - elasticsearch
 
   apm-server:
-    image: docker.elastic.co/apm/apm-server:8.11.1
+    image: docker.elastic.co/apm/apm-server:8.11.1-arm64
+    platform: linux/arm64
     container_name: apm-server
     ports:
       - "8200:8200"
@@ -77,7 +81,8 @@ services:
       - kibana
 
   filebeat:
-    image: docker.elastic.co/beats/filebeat:8.11.1
+    image: docker.elastic.co/beats/filebeat:8.11.1-arm64
+    platform: linux/arm64
     container_name: filebeat
     user: root
     volumes:
@@ -96,7 +101,8 @@ services:
       - kibana
 
   metricbeat:
-    image: docker.elastic.co/beats/metricbeat:8.11.1
+    image: docker.elastic.co/beats/metricbeat:8.11.1-arm64
+    platform: linux/arm64
     container_name: metricbeat
     user: root
     volumes:
@@ -116,68 +122,32 @@ services:
       - elasticsearch
       - kibana
 
-  sentry:
-    image: sentry:latest
-    container_name: sentry
+  redis:
+    image: arm64v8/redis:alpine
+    platform: linux/arm64
+    container_name: redis
     ports:
-      - "9000:9000"
+      - "6379:6379"
+    networks:
+      - monitoring
+
+  postgres:
+    image: arm64v8/postgres:13
+    platform: linux/arm64
+    container_name: postgres
     environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_POSTGRES_HOST: db_primary
-      SENTRY_DB_USER: ${SENTRY_DB_USER}
-      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
-      SENTRY_REDIS_HOST: redis
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - sentry_data:/var/lib/sentry/files
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - monitoring
-      - db_network
-    depends_on:
-      - redis
-      - db_primary
-
-  sentry-worker:
-    image: sentry:latest
-    container_name: sentry-worker
-    command: run worker
-    environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_POSTGRES_HOST: db_primary
-      SENTRY_DB_USER: ${SENTRY_DB_USER}
-      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
-      SENTRY_REDIS_HOST: redis
-    networks:
-      - monitoring
-      - db_network
-    depends_on:
-      - redis
-      - sentry
-      - db_primary
-
-  sentry-cron:
-    image: sentry:latest
-    container_name: sentry-cron
-    command: run cron
-    environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_POSTGRES_HOST: db_primary
-      SENTRY_DB_USER: ${SENTRY_DB_USER}
-      SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
-      SENTRY_REDIS_HOST: redis
-    networks:
-      - monitoring
-      - db_network
-    depends_on:
-      - redis
-      - sentry
-      - db_primary
 
 volumes:
   elasticsearch_data:
-  sentry_data:
+  postgres_data:
 
 networks:
   monitoring:
-    external: true
-  db_network:
-    external: true
+    name: monitoring
+    driver: bridge

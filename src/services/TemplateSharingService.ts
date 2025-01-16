@@ -1,5 +1,22 @@
-import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore } from 'firebase/firestore';
+import { 
+  Firestore,
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  updateDoc,
+  setDoc,
+  addDoc,
+  increment,
+  deleteDoc,
+  DocumentData,
+  QueryDocumentSnapshot
+} from 'firebase/firestore';
 import { ContentTemplate } from './ContentTemplateService';
 
 export interface SharedTemplate extends ContentTemplate {
@@ -33,7 +50,7 @@ export interface TemplateShare {
 
 export class TemplateSharingService {
   private static instance: TemplateSharingService;
-  private db: FirebaseFirestore;
+  private db: Firestore;
 
   private constructor() {
     this.db = getFirestore();
@@ -56,14 +73,14 @@ export class TemplateSharingService {
       settings?: Partial<SharedTemplate['settings']>;
     } = {}
   ): Promise<TemplateShare> {
-    const templateRef = this.db.collection('templates').doc(templateId);
-    const template = await templateRef.get();
+    const templateRef = doc(this.db, 'templates', templateId);
+    const templateSnap = await getDoc(templateRef);
 
-    if (!template.exists) {
+    if (!templateSnap.exists()) {
       throw new Error('Template not found');
     }
 
-    const templateData = template.data() as ContentTemplate;
+    const templateData = templateSnap.data() as ContentTemplate;
     if (templateData.createdBy !== userId) {
       throw new Error('Only template owner can share');
     }
@@ -91,7 +108,7 @@ export class TemplateSharingService {
       },
     };
 
-    await this.db.collection('sharedTemplates').doc(shareId).set(shareData);
+    await setDoc(doc(this.db, 'sharedTemplates', shareId), shareData);
 
     const share: TemplateShare = {
       id: shareId,
@@ -104,12 +121,10 @@ export class TemplateSharingService {
       settings: shareData.settings,
     };
 
-    await this.db
-      .collection('templates')
-      .doc(templateId)
-      .collection('shares')
-      .doc(shareId)
-      .set(share);
+    await setDoc(
+      doc(this.db, 'templates', templateId, 'shares', shareId),
+      share
+    );
 
     return share;
   }
@@ -121,13 +136,14 @@ export class TemplateSharingService {
       userId?: string;
     } = {}
   ): Promise<SharedTemplate | null> {
-    const doc = await this.db.collection('sharedTemplates').doc(shareId).get();
+    const docRef = doc(this.db, 'sharedTemplates', shareId);
+    const docSnap = await getDoc(docRef);
 
-    if (!doc.exists) {
+    if (!docSnap.exists()) {
       return null;
     }
 
-    const template = { id: doc.id, ...doc.data() } as SharedTemplate;
+    const template = { id: docSnap.id, ...docSnap.data() } as SharedTemplate;
 
     // Check expiration
     if (template.expiresAt && template.expiresAt.getTime() < Date.now()) {
@@ -149,8 +165,8 @@ export class TemplateSharingService {
     }
 
     // Update access count
-    await doc.ref.update({
-      accessCount: FirebaseFirestore.FieldValue.increment(1),
+    await updateDoc(docRef, {
+      accessCount: increment(1),
     });
 
     return template;
@@ -188,28 +204,25 @@ export class TemplateSharingService {
       };
     }
 
-    const doc = await this.db.collection('templates').add(templateData);
+    const docRef = await addDoc(collection(this.db, 'templates'), templateData);
 
     // Update fork count
-    await this.db
-      .collection('sharedTemplates')
-      .doc(shareId)
-      .update({
-        forkCount: FirebaseFirestore.FieldValue.increment(1),
-      });
+    await updateDoc(doc(this.db, 'sharedTemplates', shareId), {
+      forkCount: increment(1),
+    });
 
-    return doc.id;
+    return docRef.id;
   }
 
   async listShares(
     templateId: string
   ): Promise<(TemplateShare & { active: boolean })[]> {
-    const snapshot = await this.db
-      .collection('templates')
-      .doc(templateId)
-      .collection('shares')
-      .orderBy('sharedAt', 'desc')
-      .get();
+    const snapshot = await getDocs(
+      query(
+        collection(this.db, 'templates', templateId, 'shares'),
+        orderBy('sharedAt', 'desc')
+      )
+    );
 
     return snapshot.docs.map(doc => {
       const share = { id: doc.id, ...doc.data() } as TemplateShare;
@@ -223,13 +236,8 @@ export class TemplateSharingService {
 
   async revokeShare(templateId: string, shareId: string): Promise<void> {
     await Promise.all([
-      this.db.collection('sharedTemplates').doc(shareId).delete(),
-      this.db
-        .collection('templates')
-        .doc(templateId)
-        .collection('shares')
-        .doc(shareId)
-        .delete(),
+      deleteDoc(doc(this.db, 'sharedTemplates', shareId)),
+      deleteDoc(doc(this.db, 'templates', templateId, 'shares', shareId))
     ]);
   }
 
@@ -237,22 +245,19 @@ export class TemplateSharingService {
     shareId: string,
     settings: Partial<SharedTemplate['settings']>
   ): Promise<void> {
-    await this.db
-      .collection('sharedTemplates')
-      .doc(shareId)
-      .update({
-        settings: FirebaseFirestore.FieldValue.arrayUnion(settings),
-      });
+    await updateDoc(doc(this.db, 'sharedTemplates', shareId), {
+      settings,
+    });
   }
 
   async trackSharedTemplateUsage(
     shareId: string,
     userId: string
   ): Promise<void> {
-    const sharedRef = this.db.collection('sharedTemplates').doc(shareId);
-    const shared = await sharedRef.get();
+    const sharedRef = doc(this.db, 'sharedTemplates', shareId);
+    const shared = await getDoc(sharedRef);
 
-    if (!shared.exists) {
+    if (!shared.exists()) {
       throw new Error('Shared template not found');
     }
 
@@ -261,22 +266,18 @@ export class TemplateSharingService {
       return;
     }
 
-    await this.db
-      .collection('sharedTemplates')
-      .doc(shareId)
-      .collection('usage')
-      .add({
-        userId,
-        timestamp: new Date(),
-      });
+    await addDoc(collection(sharedRef, 'usage'), {
+      userId,
+      timestamp: new Date(),
+    });
   }
 
   private generateShareId(): string {
-    return Math.random().toString(36).substring(2, 15);
+    return Math.random().toString(36).substr(2, 9);
   }
 
   private generateShareUrl(shareId: string): string {
-    return `https://tiktok-toe.app/template/share/${shareId}`;
+    return `${process.env.NEXT_PUBLIC_APP_URL}/templates/shared/${shareId}`;
   }
 
   async getSharedTemplateAnalytics(
@@ -288,20 +289,19 @@ export class TemplateSharingService {
     uniqueUsers: number;
     usageByDay: { date: string; count: number }[];
   }> {
-    const sharedRef = this.db.collection('sharedTemplates').doc(shareId);
-    const shared = await sharedRef.get();
+    const sharedRef = doc(this.db, 'sharedTemplates', shareId);
+    const shared = await getDoc(sharedRef);
 
-    if (!shared.exists) {
+    if (!shared.exists()) {
       throw new Error('Shared template not found');
     }
 
     const template = shared.data() as SharedTemplate;
 
     // Get usage data
-    const usageSnapshot = await sharedRef
-      .collection('usage')
-      .orderBy('timestamp', 'desc')
-      .get();
+    const usageSnapshot = await getDocs(
+      query(collection(sharedRef, 'usage'), orderBy('timestamp', 'desc'))
+    );
 
     const usage = usageSnapshot.docs.map(doc => ({
       userId: doc.data().userId,

@@ -1,5 +1,21 @@
-import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore } from 'firebase/firestore';
+import { 
+  Firestore,
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  writeBatch,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  DocumentData,
+  QueryDocumentSnapshot
+} from 'firebase/firestore';
 
 export interface TemplateCategory {
   id: string;
@@ -28,7 +44,7 @@ export interface CategoryStats {
 
 export class TemplateCategoryService {
   private static instance: TemplateCategoryService;
-  private db: FirebaseFirestore;
+  private db: Firestore;
 
   private constructor() {
     this.db = getFirestore();
@@ -54,17 +70,15 @@ export class TemplateCategoryService {
       modifiedBy: userId,
     };
 
-    const doc = await this.db.collection('templateCategories').add(categoryData);
-    return doc.id;
+    const docRef = await addDoc(collection(this.db, 'templateCategories'), categoryData);
+    return docRef.id;
   }
 
   async getCategory(categoryId: string): Promise<TemplateCategory | null> {
-    const doc = await this.db
-      .collection('templateCategories')
-      .doc(categoryId)
-      .get();
+    const docRef = doc(this.db, 'templateCategories', categoryId);
+    const docSnap = await getDoc(docRef);
 
-    return doc.exists ? { id: doc.id, ...doc.data() } as TemplateCategory : null;
+    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as TemplateCategory : null;
   }
 
   async updateCategory(
@@ -78,36 +92,37 @@ export class TemplateCategoryService {
       modifiedBy: userId,
     };
 
-    await this.db
-      .collection('templateCategories')
-      .doc(categoryId)
-      .update(updateData);
+    const docRef = doc(this.db, 'templateCategories', categoryId);
+    await updateDoc(docRef, updateData);
   }
 
   async deleteCategory(categoryId: string): Promise<void> {
     // Check if category has templates
-    const templates = await this.db
-      .collection('templates')
-      .where('categoryId', '==', categoryId)
-      .limit(1)
-      .get();
+    const templatesQuery = query(
+      collection(this.db, 'templates'),
+      where('categoryId', '==', categoryId),
+      limit(1)
+    );
+    const templates = await getDocs(templatesQuery);
 
     if (!templates.empty) {
       throw new Error('Cannot delete category with templates');
     }
 
     // Check if category has subcategories
-    const subcategories = await this.db
-      .collection('templateCategories')
-      .where('parent', '==', categoryId)
-      .limit(1)
-      .get();
+    const subcategoriesQuery = query(
+      collection(this.db, 'templateCategories'),
+      where('parent', '==', categoryId),
+      limit(1)
+    );
+    const subcategories = await getDocs(subcategoriesQuery);
 
     if (!subcategories.empty) {
       throw new Error('Cannot delete category with subcategories');
     }
 
-    await this.db.collection('templateCategories').doc(categoryId).delete();
+    const docRef = doc(this.db, 'templateCategories', categoryId);
+    await deleteDoc(docRef);
   }
 
   async listCategories(options: {
@@ -115,24 +130,28 @@ export class TemplateCategoryService {
     includeInactive?: boolean;
     searchTerm?: string;
   } = {}): Promise<TemplateCategory[]> {
-    let query = this.db.collection('templateCategories');
+    const queryConstraints = [];
 
     if (options.parent !== undefined) {
-      query = query.where('parent', '==', options.parent) as any;
+      queryConstraints.push(where('parent', '==', options.parent));
     }
 
     if (!options.includeInactive) {
-      query = query.where('isActive', '==', true) as any;
+      queryConstraints.push(where('isActive', '==', true));
     }
 
     if (options.searchTerm) {
-      query = query.where('name', '>=', options.searchTerm)
-        .where('name', '<=', options.searchTerm + '\uf8ff') as any;
+      queryConstraints.push(
+        where('name', '>=', options.searchTerm),
+        where('name', '<=', options.searchTerm + '\uf8ff')
+      );
     }
 
-    query = query.orderBy('order') as any;
+    queryConstraints.push(orderBy('order'));
 
-    const snapshot = await query.get();
+    const q = query(collection(this.db, 'templateCategories'), ...queryConstraints);
+    const snapshot = await getDocs(q);
+    
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -177,8 +196,8 @@ export class TemplateCategoryService {
     newParent: string | null,
     newOrder: number
   ): Promise<void> {
-    const batch = this.db.batch();
-    const categoryRef = this.db.collection('templateCategories').doc(categoryId);
+    const batch = writeBatch(this.db);
+    const categoryRef = doc(this.db, 'templateCategories', categoryId);
 
     // Update the moved category
     batch.update(categoryRef, {
@@ -188,14 +207,15 @@ export class TemplateCategoryService {
     });
 
     // Get and update affected categories
-    const affected = await this.db
-      .collection('templateCategories')
-      .where('parent', '==', newParent)
-      .where('order', '>=', newOrder)
-      .where('id', '!=', categoryId)
-      .get();
+    const affectedQuery = query(
+      collection(this.db, 'templateCategories'),
+      where('parent', '==', newParent),
+      where('order', '>=', newOrder),
+      where('id', '!=', categoryId)
+    );
+    const affected = await getDocs(affectedQuery);
 
-    affected.docs.forEach(doc => {
+    affected.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       batch.update(doc.ref, {
         order: doc.data().order + 1,
       });
@@ -205,34 +225,54 @@ export class TemplateCategoryService {
   }
 
   async getCategoryStats(categoryId: string): Promise<CategoryStats> {
-    const templates = await this.db
-      .collection('templates')
-      .where('categoryId', '==', categoryId)
-      .get();
+    const templatesQuery = query(
+      collection(this.db, 'templates'),
+      where('categoryId', '==', categoryId)
+    );
+    const templates = await getDocs(templatesQuery);
 
-    const templateData = templates.docs.map(doc => doc.data());
-    const activeTemplates = templateData.filter(t => t.isActive);
+    const stats: CategoryStats = {
+      totalTemplates: templates.size,
+      activeTemplates: 0,
+      averageRating: 0,
+      totalUsage: 0,
+      popularTags: [],
+    };
 
-    const tags = templateData.flatMap(t => t.tags || []);
-    const tagCounts = tags.reduce((acc, tag) => {
-      acc[tag] = (acc[tag] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const tagCounts = new Map<string, number>();
+    let totalRating = 0;
+    let ratedTemplates = 0;
 
-    const popularTags = Object.entries(tagCounts)
+    templates.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+      const data = doc.data();
+      
+      if (data.isActive) {
+        stats.activeTemplates++;
+      }
+
+      if (data.rating) {
+        totalRating += data.rating;
+        ratedTemplates++;
+      }
+
+      if (data.usage) {
+        stats.totalUsage += data.usage;
+      }
+
+      if (data.tags) {
+        data.tags.forEach((tag: string) => {
+          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        });
+      }
+    });
+
+    stats.averageRating = ratedTemplates > 0 ? totalRating / ratedTemplates : 0;
+    stats.popularTags = Array.from(tagCounts.entries())
       .map(([tag, count]) => ({ tag, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    return {
-      totalTemplates: templates.size,
-      activeTemplates: activeTemplates.length,
-      averageRating:
-        templateData.reduce((sum, t) => sum + (t.rating || 0), 0) /
-        templates.size,
-      totalUsage: templateData.reduce((sum, t) => sum + (t.usageCount || 0), 0),
-      popularTags,
-    };
+    return stats;
   }
 
   async suggestCategories(
@@ -287,14 +327,15 @@ export class TemplateCategoryService {
     targetId: string,
     userId: string
   ): Promise<void> {
-    const batch = this.db.batch();
+    const batch = writeBatch(this.db);
 
     // Update all templates in source categories
     for (const sourceId of sourceIds) {
-      const templates = await this.db
-        .collection('templates')
-        .where('categoryId', '==', sourceId)
-        .get();
+      const templatesQuery = query(
+        collection(this.db, 'templates'),
+        where('categoryId', '==', sourceId)
+      );
+      const templates = await getDocs(templatesQuery);
 
       templates.docs.forEach(doc => {
         batch.update(doc.ref, {
@@ -305,7 +346,7 @@ export class TemplateCategoryService {
       });
 
       // Mark source category as inactive
-      batch.update(this.db.collection('templateCategories').doc(sourceId), {
+      batch.update(doc(this.db, 'templateCategories', sourceId), {
         isActive: false,
         lastModified: new Date(),
         modifiedBy: userId,
@@ -313,12 +354,13 @@ export class TemplateCategoryService {
     }
 
     // Update template count for target category
-    const targetTemplates = await this.db
-      .collection('templates')
-      .where('categoryId', '==', targetId)
-      .get();
+    const targetTemplatesQuery = query(
+      collection(this.db, 'templates'),
+      where('categoryId', '==', targetId)
+    );
+    const targetTemplates = await getDocs(targetTemplatesQuery);
 
-    batch.update(this.db.collection('templateCategories').doc(targetId), {
+    batch.update(doc(this.db, 'templateCategories', targetId), {
       templateCount: targetTemplates.size,
       lastModified: new Date(),
       modifiedBy: userId,
@@ -331,10 +373,10 @@ export class TemplateCategoryService {
     parent: string | null,
     orderedIds: string[]
   ): Promise<void> {
-    const batch = this.db.batch();
+    const batch = writeBatch(this.db);
 
     orderedIds.forEach((id, index) => {
-      batch.update(this.db.collection('templateCategories').doc(id), {
+      batch.update(doc(this.db, 'templateCategories', id), {
         order: index,
         parent,
       });
@@ -347,9 +389,9 @@ export class TemplateCategoryService {
     categories: Omit<TemplateCategory, 'id'>[],
     userId: string
   ): Promise<string[]> {
-    const batch = this.db.batch();
+    const batch = writeBatch(this.db);
     const categoryRefs = categories.map(category => {
-      const ref = this.db.collection('templateCategories').doc();
+      const ref = doc(this.db, 'templateCategories');
       batch.set(ref, {
         ...category,
         createdAt: new Date(),
@@ -367,14 +409,14 @@ export class TemplateCategoryService {
   async exportCategories(
     categoryIds?: string[]
   ): Promise<Omit<TemplateCategory, 'id'>[]> {
-    let query = this.db.collection('templateCategories');
+    let queryConstraints = [];
 
     if (categoryIds && categoryIds.length > 0) {
       // Firebase doesn't support 'in' queries with more than 10 items
       const chunks = this.chunkArray(categoryIds, 10);
       const snapshots = await Promise.all(
         chunks.map(chunk =>
-          query.where('id', 'in', chunk).get()
+          getDocs(query(collection(this.db, 'templateCategories'), where('id', 'in', chunk)))
         )
       );
 
@@ -387,7 +429,7 @@ export class TemplateCategoryService {
         });
     }
 
-    const snapshot = await query.get();
+    const snapshot = await getDocs(collection(this.db, 'templateCategories'));
     return snapshot.docs.map(doc => {
       const data = doc.data();
       delete data.id;

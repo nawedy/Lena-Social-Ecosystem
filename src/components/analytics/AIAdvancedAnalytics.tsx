@@ -46,11 +46,14 @@ interface ErrorAnalytics {
   resolution: string;
 }
 
+type ViewType = 'prompts' | 'responses' | 'costs' | 'errors';
+type TimeframeType = 'hour' | 'day' | 'week' | 'month';
+
 export function AIAdvancedAnalytics() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'prompts' | 'responses' | 'costs' | 'errors'>('prompts');
-  const [timeframe, setTimeframe] = useState<'hour' | 'day' | 'week' | 'month'>('day');
+  const [view, setView] = useState<ViewType>('prompts');
+  const [timeframe, setTimeframe] = useState<TimeframeType>('day');
   const [promptAnalytics, setPromptAnalytics] = useState<PromptAnalytics[]>([]);
   const [responseAnalytics, setResponseAnalytics] = useState<ResponseAnalytics[]>([]);
   const [costBreakdown, setCostBreakdown] = useState<CostBreakdown[]>([]);
@@ -64,19 +67,20 @@ export function AIAdvancedAnalytics() {
     setLoading(true);
     try {
       const analytics = AnalyticsService.getInstance();
-      const data = await analytics.getAdvancedAnalytics(view, timeframe);
+      const data = await analytics.getAdvancedAnalytics();
+      
       switch (view) {
         case 'prompts':
-          setPromptAnalytics(data);
+          setPromptAnalytics(data.prompts || []);
           break;
         case 'responses':
-          setResponseAnalytics(data);
+          setResponseAnalytics(data.responses || []);
           break;
         case 'costs':
-          setCostBreakdown(data);
+          setCostBreakdown(data.costs || []);
           break;
         case 'errors':
-          setErrorAnalytics(data);
+          setErrorAnalytics(data.errors || []);
           break;
       }
     } catch (error) {
@@ -84,6 +88,23 @@ export function AIAdvancedAnalytics() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const chartConfig = {
+    backgroundColor: '#ffffff',
+    backgroundGradientFrom: '#ffffff',
+    backgroundGradientTo: '#ffffff',
+    decimalPlaces: 2,
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForDots: {
+      r: '6',
+      strokeWidth: '2',
+      stroke: '#ffa726',
+    },
   };
 
   const renderPromptAnalytics = () => (
@@ -99,65 +120,67 @@ export function AIAdvancedAnalytics() {
           }}
           width={Dimensions.get('window').width - 32}
           height={220}
-          chartConfig={{
-            backgroundColor: '#fff',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
-            decimalPlaces: 2,
-            color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`,
-          }}
+          chartConfig={chartConfig}
           bezier
           style={styles.chart}
         />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.promptComplexity')}</Text>
+        <Text style={styles.sectionTitle}>{t('analytics.promptMetrics')}</Text>
         <RadarChart
           data={{
-            labels: ['Length', 'Keywords', 'Structure', 'Context', 'Clarity'],
-            datasets: [{
-              data: promptAnalytics.map(p => [
+            labels: ['Length', 'Complexity', 'Keywords', 'Effect'],
+            data: [
+              promptAnalytics.map(p => [
                 p.averageLength / 100,
-                p.topKeywords.length / 10,
                 p.complexity,
+                p.topKeywords.length / 10,
                 p.effectiveness,
-                p.complexity * p.effectiveness,
-              ]),
-            }],
+              ])[0] || [0, 0, 0, 0],
+            ],
           }}
           width={Dimensions.get('window').width - 32}
-          height={300}
-          chartConfig={{
-            backgroundColor: '#fff',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
-            decimalPlaces: 2,
-            color: (opacity = 1) => `rgba(75, 192, 192, ${opacity})`,
-          }}
+          height={220}
+          chartConfig={chartConfig}
           style={styles.chart}
         />
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('analytics.topKeywords')}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {promptAnalytics.flatMap(p => p.topKeywords)
-            .reduce((acc, keyword) => {
-              acc[keyword] = (acc[keyword] || 0) + 1;
-              return acc;
-            }, {} as Record<string, number>)
-            .entries()
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 10)
-            .map(([keyword, count]) => (
-              <View key={keyword} style={styles.keywordCard}>
-                <Text style={styles.keywordText}>{keyword}</Text>
-                <Text style={styles.keywordCount}>{count}</Text>
-              </View>
-            ))
-          }
-        </ScrollView>
+        <StackedBarChart
+          data={{
+            labels: promptAnalytics
+              .flatMap(p => p.topKeywords)
+              .reduce((acc: Record<string, number>, keyword) => {
+                acc[keyword] = (acc[keyword] || 0) + 1;
+                return acc;
+              }, {})
+              .entries()
+              .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([keyword]) => keyword),
+            legend: ['Frequency'],
+            data: [
+              promptAnalytics
+                .flatMap(p => p.topKeywords)
+                .reduce((acc: Record<string, number>, keyword) => {
+                  acc[keyword] = (acc[keyword] || 0) + 1;
+                  return acc;
+                }, {})
+                .entries()
+                .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([, count]) => [count]),
+            ],
+            barColors: ['#dfe4ea'],
+          }}
+          width={Dimensions.get('window').width - 32}
+          height={220}
+          chartConfig={chartConfig}
+          style={styles.chart}
+        />
       </View>
     </ScrollView>
   );
@@ -165,108 +188,58 @@ export function AIAdvancedAnalytics() {
   const renderResponseAnalytics = () => (
     <ScrollView>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.responseQuality')}</Text>
+        <Text style={styles.sectionTitle}>{t('analytics.responseSentiment')}</Text>
         <StackedBarChart
           data={{
-            labels: responseAnalytics.map((_, i) => i.toString()),
-            legend: ['Relevance', 'Coherence', 'Creativity'],
-            data: responseAnalytics.map(r => [
-              r.relevance,
-              r.coherence,
-              r.creativity,
-            ]),
+            labels: Object.keys(
+              responseAnalytics.reduce((acc: Record<number, number>, r) => {
+                acc[r.sentiment] = (acc[r.sentiment] || 0) + 1;
+                return acc;
+              }, {})
+            ).sort((a, b) => Number(a) - Number(b)),
+            legend: ['Count'],
+            data: [
+              Object.values(
+                responseAnalytics.reduce((acc: Record<number, number>, r) => {
+                  acc[r.sentiment] = (acc[r.sentiment] || 0) + 1;
+                  return acc;
+                }, {})
+              ),
+            ],
+            barColors: ['#dfe4ea'],
           }}
           width={Dimensions.get('window').width - 32}
           height={220}
-          chartConfig={{
-            backgroundColor: '#fff',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
-            decimalPlaces: 2,
-            color: (opacity = 1) => `rgba(153, 102, 255, ${opacity})`,
-          }}
+          chartConfig={chartConfig}
           style={styles.chart}
         />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.sentimentDistribution')}</Text>
-        <View style={styles.sentimentContainer}>
-          {responseAnalytics.reduce((acc, r) => {
-            const sentiment = Math.round(r.sentiment * 2) / 2;
-            acc[sentiment] = (acc[sentiment] || 0) + 1;
-            return acc;
-          }, {} as Record<number, number>)
-            .entries()
-            .sort(([a], [b]) => Number(a) - Number(b))
-            .map(([sentiment, count]) => (
-              <View key={sentiment} style={styles.sentimentBar}>
-                <Text style={styles.sentimentLabel}>
-                  {getSentimentLabel(Number(sentiment))}
-                </Text>
-                <View
-                  style={[
-                    styles.sentimentFill,
-                    { width: `${(count / responseAnalytics.length) * 100}%` },
-                    { backgroundColor: getSentimentColor(Number(sentiment)) },
-                  ]}
-                />
-                <Text style={styles.sentimentCount}>{count}</Text>
-              </View>
-            ))
-          }
-        </View>
       </View>
     </ScrollView>
   );
 
-  const renderCostAnalytics = () => (
+  const renderCostBreakdown = () => (
     <ScrollView>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('analytics.costBreakdown')}</Text>
         <StackedBarChart
           data={{
-            labels: costBreakdown.map((_, i) => i.toString()),
-            legend: ['Prompt', 'Completion'],
-            data: costBreakdown.map(c => [c.promptCost, c.completionCost]),
+            labels: ['Prompts', 'Completions', 'Total', 'Savings'],
+            legend: ['Cost'],
+            data: [
+              costBreakdown.map(c => [
+                c.promptCost,
+                c.completionCost,
+                c.totalCost,
+                c.savingsOpportunity,
+              ])[0] || [0, 0, 0, 0],
+            ],
+            barColors: ['#dfe4ea'],
           }}
           width={Dimensions.get('window').width - 32}
           height={220}
-          chartConfig={{
-            backgroundColor: '#fff',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
-            decimalPlaces: 2,
-            color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
-          }}
+          chartConfig={chartConfig}
           style={styles.chart}
         />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.savingsOpportunities')}</Text>
-        <View style={styles.savingsContainer}>
-          {costBreakdown.map((c, i) => (
-            <View key={i} style={styles.savingsCard}>
-              <Text style={styles.savingsLabel}>
-                {t('analytics.opportunity')} #{i + 1}
-              </Text>
-              <Text style={styles.savingsAmount}>
-                ${c.savingsOpportunity.toFixed(2)}
-              </Text>
-              <View style={styles.savingsBar}>
-                <View
-                  style={[
-                    styles.savingsFill,
-                    {
-                      width: `${(c.savingsOpportunity / c.totalCost) * 100}%`,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          ))}
-        </View>
       </View>
     </ScrollView>
   );
@@ -275,120 +248,80 @@ export function AIAdvancedAnalytics() {
     <ScrollView>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('analytics.errorDistribution')}</Text>
-        <BarChart
+        <StackedBarChart
           data={{
             labels: errorAnalytics.map(e => e.type),
-            datasets: [{
-              data: errorAnalytics.map(e => e.count),
-            }],
+            legend: ['Count'],
+            data: [errorAnalytics.map(e => e.count)],
+            barColors: ['#dfe4ea'],
           }}
           width={Dimensions.get('window').width - 32}
           height={220}
-          chartConfig={{
-            backgroundColor: '#fff',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
-            decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(220, 53, 69, ${opacity})`,
-          }}
+          chartConfig={chartConfig}
           style={styles.chart}
         />
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.errorImpact')}</Text>
-        {errorAnalytics.map((error, i) => (
-          <View key={i} style={styles.errorCard}>
-            <View style={styles.errorHeader}>
-              <Text style={styles.errorType}>{error.type}</Text>
-              <Text style={styles.errorCount}>{error.count}</Text>
-            </View>
-            <View style={styles.errorImpactBar}>
-              <View
-                style={[
-                  styles.errorImpactFill,
-                  { width: `${error.impact * 100}%` },
-                ]}
-              />
-            </View>
-            <Text style={styles.errorResolution}>{error.resolution}</Text>
-          </View>
-        ))}
       </View>
     </ScrollView>
   );
 
-  const getSentimentLabel = (sentiment: number): string => {
-    if (sentiment < -0.5) return t('analytics.sentiment.negative');
-    if (sentiment > 0.5) return t('analytics.sentiment.positive');
-    return t('analytics.sentiment.neutral');
-  };
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      );
+    }
 
-  const getSentimentColor = (sentiment: number): string => {
-    if (sentiment < -0.5) return '#dc3545';
-    if (sentiment > 0.5) return '#28a745';
-    return '#ffc107';
+    switch (view) {
+      case 'prompts':
+        return renderPromptAnalytics();
+      case 'responses':
+        return renderResponseAnalytics();
+      case 'costs':
+        return renderCostBreakdown();
+      case 'errors':
+        return renderErrorAnalytics();
+      default:
+        return null;
+    }
   };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('analytics.advanced')}</Text>
-        <View style={styles.viewSelector}>
-          {(['prompts', 'responses', 'costs', 'errors'] as const).map(v => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {(['prompts', 'responses', 'costs', 'errors'] as ViewType[]).map((v) => (
             <TouchableOpacity
               key={v}
-              style={[styles.viewButton, view === v && styles.activeView]}
+              style={[styles.tab, view === v && styles.activeTab]}
               onPress={() => setView(v)}
             >
-              <Text
-                style={[
-                  styles.viewButtonText,
-                  view === v && styles.activeViewText,
-                ]}
-              >
-                {t(`analytics.views.${v}`)}
+              <Text style={[styles.tabText, view === v && styles.activeTabText]}>
+                {t(`analytics.${v}`)}
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
-        <View style={styles.timeframeSelector}>
-          {(['hour', 'day', 'week', 'month'] as const).map(t => (
+        </ScrollView>
+      </View>
+
+      <View style={styles.timeframeContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {(['hour', 'day', 'week', 'month'] as TimeframeType[]).map((t) => (
             <TouchableOpacity
               key={t}
-              style={[
-                styles.timeframeButton,
-                timeframe === t && styles.activeTimeframe,
-              ]}
+              style={[styles.timeframeButton, timeframe === t && styles.activeTimeframe]}
               onPress={() => setTimeframe(t)}
             >
-              <Text
-                style={[
-                  styles.timeframeText,
-                  timeframe === t && styles.activeTimeframeText,
-                ]}
-              >
+              <Text style={[styles.timeframeText, timeframe === t && styles.activeTimeframeText]}>
                 {t(`analytics.timeframe.${t}`)}
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       </View>
 
-      <View style={styles.content}>
-        {view === 'prompts' && renderPromptAnalytics()}
-        {view === 'responses' && renderResponseAnalytics()}
-        {view === 'costs' && renderCostAnalytics()}
-        {view === 'errors' && renderErrorAnalytics()}
-      </View>
+      {renderContent()}
     </View>
   );
 }
@@ -398,182 +331,67 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  viewSelector: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  viewButton: {
-    flex: 1,
     paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e1e1',
+  },
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     marginHorizontal: 4,
-    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
   },
-  activeView: {
-    backgroundColor: '#007AFF',
+  activeTab: {
+    backgroundColor: '#e1e1e1',
   },
-  viewButtonText: {
+  tabText: {
     fontSize: 14,
     color: '#666',
   },
-  activeViewText: {
-    color: '#fff',
+  activeTabText: {
+    color: '#000',
+    fontWeight: 'bold',
   },
-  timeframeSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 20,
-    padding: 4,
+  timeframeContainer: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e1e1',
   },
   timeframeButton: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginHorizontal: 4,
+    borderRadius: 12,
   },
   activeTimeframe: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#e1e1e1',
   },
   timeframeText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
   },
   activeTimeframeText: {
-    color: '#fff',
-  },
-  content: {
-    flex: 1,
+    color: '#000',
+    fontWeight: 'bold',
   },
   section: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e1e1e1',
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 16,
   },
   chart: {
     marginVertical: 8,
     borderRadius: 16,
   },
-  keywordCard: {
-    backgroundColor: '#f8f9fa',
-    padding: 12,
-    borderRadius: 8,
-    marginRight: 8,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  keywordText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  keywordCount: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-  },
-  sentimentContainer: {
-    marginTop: 16,
-  },
-  sentimentBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  sentimentLabel: {
-    width: 80,
-    fontSize: 12,
-  },
-  sentimentFill: {
-    height: 20,
-    borderRadius: 4,
-  },
-  sentimentCount: {
-    marginLeft: 8,
-    fontSize: 12,
-    color: '#666',
-  },
-  savingsContainer: {
-    marginTop: 16,
-  },
-  savingsCard: {
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  savingsLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  savingsAmount: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#28a745',
-    marginVertical: 8,
-  },
-  savingsBar: {
-    height: 4,
-    backgroundColor: '#e9ecef',
-    borderRadius: 2,
-  },
-  savingsFill: {
-    height: '100%',
-    backgroundColor: '#28a745',
-    borderRadius: 2,
-  },
-  errorCard: {
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  errorHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  errorType: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  errorCount: {
-    fontSize: 12,
-    color: '#dc3545',
-    fontWeight: '500',
-  },
-  errorImpactBar: {
-    height: 4,
-    backgroundColor: '#e9ecef',
-    borderRadius: 2,
-    marginBottom: 8,
-  },
-  errorImpactFill: {
-    height: '100%',
-    backgroundColor: '#dc3545',
-    borderRadius: 2,
-  },
-  errorResolution: {
-    fontSize: 12,
-    color: '#666',
   },
 });
