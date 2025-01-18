@@ -51,9 +51,11 @@ export function TemplateLibrary({
   const [error, setError] = useState<TemplateLibraryError | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const templateService = ContentTemplateService.getInstance();
+  const _templateService = ContentTemplateService.getInstance();
 
-  const loadTemplates = async (options?: Partial<TemplateListOptions>): Promise<void> => {
+  const _loadTemplates = async (
+    options?: Partial<TemplateListOptions>
+  ): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -66,7 +68,7 @@ export function TemplateLibrary({
         ...options,
       };
 
-      const loadedTemplates = await templateService.listTemplates(listOptions);
+      const _loadedTemplates = await templateService.listTemplates(listOptions);
       setTemplates(loadedTemplates);
     } catch (err) {
       console.error('Error loading templates:', err);
@@ -77,16 +79,16 @@ export function TemplateLibrary({
         details: { selectedCategory, selectedType },
       };
       setError(error);
-      Alert.alert(t('error'), t('errors.loadTemplatesFailed'));
+      Alert.window.alert(t('error'), t('errors.loadTemplatesFailed'));
     } finally {
       setLoading(false);
     }
   };
 
-  const loadCategories = async (): Promise<void> => {
+  const _loadCategories = async (): Promise<void> => {
     try {
       setError(null);
-      const loadedCategories = await templateService.getTemplateCategories();
+      const _loadedCategories = await templateService.getTemplateCategories();
       setCategories(loadedCategories);
     } catch (err) {
       console.error('Error loading categories:', err);
@@ -96,36 +98,36 @@ export function TemplateLibrary({
         operation: 'load',
       };
       setError(error);
-      Alert.alert(t('error'), t('errors.loadCategoriesFailed'));
+      Alert.window.alert(t('error'), t('errors.loadCategoriesFailed'));
     }
   };
 
-  const handleSearch = useCallback(
+  const _handleSearch = useCallback(
     debounce(async (query: string): Promise<void> => {
       try {
         setError(null);
         if (query.length >= 2) {
-          const results = await templateService.searchTemplates(query);
+          const _results = await templateService.searchTemplates(query);
           setTemplates(results);
         } else if (query.length === 0) {
           await loadTemplates();
         }
       } catch (err) {
-      console.error('Error searching templates:', err);
-      const error: TemplateLibraryError = {
-        name: 'SearchError',
-        message: 'Failed to search templates',
-        operation: 'search',
-        details: { query },
-      };
-      setError(error);
-      Alert.alert(t('error'), t('errors.searchFailed'));
-    }
-  }, 300),
+        console.error('Error searching templates:', err);
+        const error: TemplateLibraryError = {
+          name: 'SearchError',
+          message: 'Failed to search templates',
+          operation: 'search',
+          details: { query },
+        };
+        setError(error);
+        Alert.window.alert(t('error'), t('errors.searchFailed'));
+      }
+    }, 300),
     []
   );
 
-  const handleRefresh = async (): Promise<void> => {
+  const _handleRefresh = async (): Promise<void> => {
     setRefreshing(true);
     await loadTemplates();
     setRefreshing(false);
@@ -149,14 +151,16 @@ export function TemplateLibrary({
           resizeMode="cover"
         />
       ) : (
-        <View style={[styles.templatePreview, styles.templatePreviewPlaceholder]}>
+        <View
+          style={[styles.templatePreview, styles.templatePreviewPlaceholder]}
+        >
           <Ionicons
             name={
               item.type === 'text'
                 ? 'document-text'
                 : item.type === 'image'
-                ? 'image'
-                : 'videocam'
+                  ? 'image'
+                  : 'videocam'
             }
             size={32}
             color="#666"
@@ -168,7 +172,8 @@ export function TemplateLibrary({
           {item.name}
         </Text>
         <Text style={styles.templateStats}>
-          {t('usageCount', { count: item.usageCount })} • {t('rating', { rating: item.rating })}
+          {t('usageCount', { count: item.usageCount })} •{' '}
+          {t('rating', { rating: item.rating })}
         </Text>
       </View>
     </TouchableOpacity>
@@ -188,14 +193,16 @@ export function TemplateLibrary({
             resizeMode="cover"
           />
         ) : (
-          <View style={[styles.listItemPreview, styles.templatePreviewPlaceholder]}>
+          <View
+            style={[styles.listItemPreview, styles.templatePreviewPlaceholder]}
+          >
             <Ionicons
               name={
                 item.type === 'text'
                   ? 'document-text'
                   : item.type === 'image'
-                  ? 'image'
-                  : 'videocam'
+                    ? 'image'
+                    : 'videocam'
               }
               size={24}
               color="#666"
@@ -210,7 +217,8 @@ export function TemplateLibrary({
             {item.description}
           </Text>
           <Text style={styles.templateStats}>
-            {t('usageCount', { count: item.usageCount })} • {t('rating', { rating: item.rating })}
+            {t('usageCount', { count: item.usageCount })} •{' '}
+            {t('rating', { rating: item.rating })}
           </Text>
         </View>
       </View>
@@ -274,7 +282,8 @@ export function TemplateLibrary({
             <Text
               style={[
                 styles.categoryChipText,
-                selectedCategory === category && styles.categoryChipTextSelected,
+                selectedCategory === category &&
+                  styles.categoryChipTextSelected,
               ]}
             >
               {category}
@@ -285,13 +294,14 @@ export function TemplateLibrary({
 
       <View style={styles.typeFilters}>
         <TouchableOpacity
-          style={[
-            styles.typeChip,
-            !selectedType && styles.typeChipSelected,
-          ]}
+          style={[styles.typeChip, !selectedType && styles.typeChipSelected]}
           onPress={() => setSelectedType(null)}
         >
-          <Ionicons name="apps" size={20} color={!selectedType ? '#fff' : '#666'} />
+          <Ionicons
+            name="apps"
+            size={20}
+            color={!selectedType ? '#fff' : '#666'}
+          />
           <Text
             style={[
               styles.typeChipText,
@@ -373,7 +383,9 @@ export function TemplateLibrary({
       ) : (
         <FlatList
           data={templates}
-          renderItem={viewMode === 'grid' ? renderTemplateGrid : renderTemplateList}
+          renderItem={
+            viewMode === 'grid' ? renderTemplateGrid : renderTemplateList
+          }
           keyExtractor={item => item.id}
           numColumns={viewMode === 'grid' ? 2 : 1}
           key={viewMode} // Force re-render when changing view mode
@@ -388,9 +400,9 @@ export function TemplateLibrary({
 }
 
 const { width } = Dimensions.get('window');
-const gridItemWidth = (width - 48) / 2;
+const _gridItemWidth = (width - 48) / 2;
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

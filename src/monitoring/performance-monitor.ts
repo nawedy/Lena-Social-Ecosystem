@@ -49,28 +49,27 @@ export class PerformanceMonitor {
   }
 
   public async monitorPerformance(): Promise<void> {
-    const transaction = this.apm.startTransaction('monitor-performance', 'monitoring');
+    const transaction = this.apm.startTransaction(
+      'monitor-performance',
+      'monitoring'
+    );
 
     try {
       // Collect metrics from all services
-      const [
-        apiMetrics,
-        dbMetrics,
-        cacheMetrics,
-        networkMetrics
-      ] = await Promise.all([
-        this.collectApiMetrics(),
-        this.collectDatabaseMetrics(),
-        this.collectCacheMetrics(),
-        this.collectNetworkMetrics()
-      ]);
+      const [apiMetrics, dbMetrics, cacheMetrics, networkMetrics] =
+        await Promise.all([
+          this.collectApiMetrics(),
+          this.collectDatabaseMetrics(),
+          this.collectCacheMetrics(),
+          this.collectNetworkMetrics(),
+        ]);
 
       // Analyze service health
       const serviceHealth = this.analyzeServiceHealth([
         ...apiMetrics,
         ...dbMetrics,
         ...cacheMetrics,
-        ...networkMetrics
+        ...networkMetrics,
       ]);
 
       // Handle any issues
@@ -81,7 +80,6 @@ export class PerformanceMonitor {
 
       // Update dashboards
       this.updateDashboards(serviceHealth);
-
     } catch (error) {
       this.logger.error('Performance monitoring failed', { error });
       this.apm.captureError(error);
@@ -105,8 +103,8 @@ export class PerformanceMonitor {
         tags: { service: 'api' },
         thresholds: {
           warning: 200,
-          critical: 500
-        }
+          critical: 500,
+        },
       });
 
       // Error rate metrics
@@ -118,8 +116,8 @@ export class PerformanceMonitor {
         tags: { service: 'api' },
         thresholds: {
           warning: 0.01,
-          critical: 0.05
-        }
+          critical: 0.05,
+        },
       });
 
       // Request rate metrics
@@ -131,8 +129,8 @@ export class PerformanceMonitor {
         tags: { service: 'api' },
         thresholds: {
           warning: 1000,
-          critical: 2000
-        }
+          critical: 2000,
+        },
       });
 
       return metrics;
@@ -156,8 +154,8 @@ export class PerformanceMonitor {
         tags: { service: 'database' },
         thresholds: {
           warning: 100,
-          critical: 250
-        }
+          critical: 250,
+        },
       });
 
       // Connection pool metrics
@@ -169,8 +167,8 @@ export class PerformanceMonitor {
         tags: { service: 'database' },
         thresholds: {
           warning: 80,
-          critical: 90
-        }
+          critical: 90,
+        },
       });
 
       // Disk usage metrics
@@ -182,8 +180,8 @@ export class PerformanceMonitor {
         tags: { service: 'database' },
         thresholds: {
           warning: 75,
-          critical: 90
-        }
+          critical: 90,
+        },
       });
 
       return metrics;
@@ -207,8 +205,8 @@ export class PerformanceMonitor {
         tags: { service: 'cache' },
         thresholds: {
           warning: 0.85,
-          critical: 0.70
-        }
+          critical: 0.7,
+        },
       });
 
       // Memory usage metrics
@@ -220,8 +218,8 @@ export class PerformanceMonitor {
         tags: { service: 'cache' },
         thresholds: {
           warning: 80,
-          critical: 90
-        }
+          critical: 90,
+        },
       });
 
       // Eviction rate metrics
@@ -233,8 +231,8 @@ export class PerformanceMonitor {
         tags: { service: 'cache' },
         thresholds: {
           warning: 0.01,
-          critical: 0.05
-        }
+          critical: 0.05,
+        },
       });
 
       return metrics;
@@ -258,8 +256,8 @@ export class PerformanceMonitor {
         tags: { service: 'network' },
         thresholds: {
           warning: 50,
-          critical: 100
-        }
+          critical: 100,
+        },
       });
 
       // Bandwidth usage metrics
@@ -271,8 +269,8 @@ export class PerformanceMonitor {
         tags: { service: 'network' },
         thresholds: {
           warning: 80,
-          critical: 90
-        }
+          critical: 90,
+        },
       });
 
       // Packet loss metrics
@@ -284,8 +282,8 @@ export class PerformanceMonitor {
         tags: { service: 'network' },
         thresholds: {
           warning: 0.001,
-          critical: 0.01
-        }
+          critical: 0.01,
+        },
       });
 
       return metrics;
@@ -294,9 +292,7 @@ export class PerformanceMonitor {
     }
   }
 
-  private analyzeServiceHealth(
-    metrics: PerformanceMetric[]
-  ): ServiceHealth[] {
+  private analyzeServiceHealth(metrics: PerformanceMetric[]): ServiceHealth[] {
     const serviceMetrics = this.groupMetricsByService(metrics);
     const health: ServiceHealth[] = [];
 
@@ -328,7 +324,7 @@ export class PerformanceMonitor {
         status: this.determineStatus(issues),
         metrics: serviceMetrics,
         issues,
-        recommendations: [...new Set(recommendations)]
+        recommendations: [...new Set(recommendations)],
       });
     }
 
@@ -338,15 +334,20 @@ export class PerformanceMonitor {
   private groupMetricsByService(
     metrics: PerformanceMetric[]
   ): Record<string, PerformanceMetric[]> {
-    return metrics.reduce((acc, metric) => {
-      const service = metric.tags.service;
-      acc[service] = acc[service] || [];
-      acc[service].push(metric);
-      return acc;
-    }, {} as Record<string, PerformanceMetric[]>);
+    return metrics.reduce(
+      (acc, metric) => {
+        const service = metric.tags.service;
+        acc[service] = acc[service] || [];
+        acc[service].push(metric);
+        return acc;
+      },
+      {} as Record<string, PerformanceMetric[]>
+    );
   }
 
-  private determineStatus(issues: string[]): 'healthy' | 'degraded' | 'unhealthy' {
+  private determineStatus(
+    issues: string[]
+  ): 'healthy' | 'degraded' | 'unhealthy' {
     const criticalCount = issues.filter(i => i.startsWith('Critical')).length;
     const warningCount = issues.filter(i => i.startsWith('Warning')).length;
 
@@ -451,7 +452,7 @@ export class PerformanceMonitor {
           this.logger.warn('Service health issues detected', {
             service: health.service,
             status: health.status,
-            issues: health.issues
+            issues: health.issues,
           });
 
           // Create incidents
@@ -481,9 +482,7 @@ export class PerformanceMonitor {
     // Implementation for triggering remediation
   }
 
-  private async storeMetrics(
-    serviceHealth: ServiceHealth[]
-  ): Promise<void> {
+  private async storeMetrics(serviceHealth: ServiceHealth[]): Promise<void> {
     const span = this.apm.startSpan('store-metrics');
 
     try {
@@ -493,13 +492,7 @@ export class PerformanceMonitor {
         for (const metric of health.metrics) {
           await this.db.query(
             'INSERT INTO performance_metrics (service, metric_name, value, timestamp, tags) VALUES ($1, $2, $3, $4, $5)',
-            [
-              health.service,
-              metric.name,
-              metric.value,
-              timestamp,
-              metric.tags
-            ]
+            [health.service, metric.name, metric.value, timestamp, metric.tags]
           );
         }
       }
@@ -545,12 +538,16 @@ export class PerformanceMonitor {
       return `
 # Service Health Report
 
-${serviceHealth.rows.map(row => `
+${serviceHealth.rows
+  .map(
+    row => `
 ## ${row.service} - ${row.metric_name}
 - Average: ${row.avg_value.toFixed(2)}
 - Maximum: ${row.max_value.toFixed(2)}
 - Minimum: ${row.min_value.toFixed(2)}
-`).join('\n')}
+`
+  )
+  .join('\n')}
       `;
     } finally {
       span?.end();

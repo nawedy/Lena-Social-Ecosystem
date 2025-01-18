@@ -1,0 +1,46 @@
+apiVersion: sql.cnrm.cloud.google.com/v1beta1
+kind: SQLInstance
+metadata:
+  name: tiktoktoe-db
+  namespace: tiktoktoe
+spec:
+  databaseVersion: POSTGRES_14
+  region: us-central1
+  settings:
+    tier: db-f1-micro
+    availabilityType: REGIONAL
+    backupConfiguration:
+      enabled: true
+      startTime: "02:00"
+    ipConfiguration:
+      requireSsl: true
+    insights:
+      queryInsightsEnabled: true
+    maintenanceWindow:
+      day: 7
+      hour: 3
+    diskAutoresize: true
+    diskSize: 10
+---
+apiVersion: sql.cnrm.cloud.google.com/v1beta1
+kind: SQLDatabase
+metadata:
+  name: tiktoktoe
+  namespace: tiktoktoe
+spec:
+  instanceRef:
+    name: tiktoktoe-db
+---
+apiVersion: sql.cnrm.cloud.google.com/v1beta1
+kind: SQLUser
+metadata:
+  name: tiktoktoe-user
+  namespace: tiktoktoe
+spec:
+  instanceRef:
+    name: tiktoktoe-db
+  password:
+    valueFrom:
+      secretKeyRef:
+        name: db-credentials
+        key: password

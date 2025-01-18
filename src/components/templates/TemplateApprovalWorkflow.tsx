@@ -41,16 +41,16 @@ export function TemplateApprovalWorkflow({
     new Set()
   );
 
-  const approvalService = TemplateApprovalService.getInstance();
+  const _approvalService = TemplateApprovalService.getInstance();
 
   useEffect(() => {
     loadRequest();
   }, [requestId]);
 
-  const loadRequest = async () => {
+  const _loadRequest = async () => {
     setLoading(true);
     try {
-      const data = await approvalService.getApprovalRequest(requestId);
+      const _data = await approvalService.getApprovalRequest(requestId);
       setRequest(data);
     } catch (error) {
       console.error('Error loading approval request:', error);
@@ -59,7 +59,7 @@ export function TemplateApprovalWorkflow({
     }
   };
 
-  const handleStatusUpdate = async (status: ApprovalStatus) => {
+  const _handleStatusUpdate = async (status: ApprovalStatus) => {
     try {
       await approvalService.updateApprovalStatus(
         requestId,
@@ -72,11 +72,11 @@ export function TemplateApprovalWorkflow({
       onStatusChange?.(status);
     } catch (error) {
       console.error('Error updating status:', error);
-      Alert.alert(t('error.title'), t('error.updateStatus'));
+      Alert.window.alert(t('error.title'), t('error.updateStatus'));
     }
   };
 
-  const handleAddComment = async () => {
+  const _handleAddComment = async () => {
     if (!comment.trim()) return;
 
     try {
@@ -85,13 +85,13 @@ export function TemplateApprovalWorkflow({
       await loadRequest();
     } catch (error) {
       console.error('Error adding comment:', error);
-      Alert.alert(t('error.title'), t('error.addComment'));
+      Alert.window.alert(t('error.title'), t('error.addComment'));
     }
   };
 
-  const handleRequestChanges = async () => {
+  const _handleRequestChanges = async () => {
     if (changes.length === 0) {
-      Alert.alert(t('error.title'), t('error.noChanges'));
+      Alert.window.alert(t('error.title'), t('error.noChanges'));
       return;
     }
 
@@ -102,22 +102,22 @@ export function TemplateApprovalWorkflow({
       await loadRequest();
     } catch (error) {
       console.error('Error requesting changes:', error);
-      Alert.alert(t('error.title'), t('error.requestChanges'));
+      Alert.window.alert(t('error.title'), t('error.requestChanges'));
     }
   };
 
-  const handleAddChange = () => {
+  const _handleAddChange = () => {
     if (!newChange.trim()) return;
     setChanges([...changes, newChange.trim()]);
     setNewChange('');
   };
 
-  const handleRemoveChange = (index: number) => {
+  const _handleRemoveChange = (index: number) => {
     setChanges(changes.filter((_, i) => i !== index));
   };
 
-  const toggleCommentExpansion = (commentId: string) => {
-    const newExpanded = new Set(expandedComments);
+  const _toggleCommentExpansion = (commentId: string) => {
+    const _newExpanded = new Set(expandedComments);
     if (newExpanded.has(commentId)) {
       newExpanded.delete(commentId);
     } else {
@@ -126,13 +126,13 @@ export function TemplateApprovalWorkflow({
     setExpandedComments(newExpanded);
   };
 
-  const renderStatusBadge = (status: ApprovalStatus) => (
+  const _renderStatusBadge = (status: ApprovalStatus) => (
     <View style={[styles.statusBadge, getStatusStyle(status)]}>
       <Text style={styles.statusText}>{t(`status.${status}`)}</Text>
     </View>
   );
 
-  const renderCommentType = (type: ApprovalComment['type']) => {
+  const _renderCommentType = (type: ApprovalComment['type']) => {
     let icon: string;
     let color: string;
 
@@ -168,9 +168,7 @@ export function TemplateApprovalWorkflow({
   if (!request) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>
-          {t('error.requestNotFound')}
-        </Text>
+        <Text style={styles.errorText}>{t('error.requestNotFound')}</Text>
       </View>
     );
   }
@@ -213,9 +211,7 @@ export function TemplateApprovalWorkflow({
             <View key={comment.id} style={styles.commentCard}>
               <View style={styles.commentHeader}>
                 {renderCommentType(comment.type)}
-                <Text style={styles.commentAuthor}>
-                  {comment.userId}
-                </Text>
+                <Text style={styles.commentAuthor}>{comment.userId}</Text>
                 <Text style={styles.commentTime}>
                   {new Date(comment.timestamp).toLocaleString()}
                 </Text>
@@ -226,7 +222,8 @@ export function TemplateApprovalWorkflow({
                 <Text
                   style={[
                     styles.commentText,
-                    !expandedComments.has(comment.id) && styles.commentCollapsed,
+                    !expandedComments.has(comment.id) &&
+                      styles.commentCollapsed,
                   ]}
                 >
                   {comment.message}
@@ -268,9 +265,7 @@ export function TemplateApprovalWorkflow({
             {changes.map((change, index) => (
               <View key={index} style={styles.changeItem}>
                 <Text style={styles.changeText}>{change}</Text>
-                <TouchableOpacity
-                  onPress={() => handleRemoveChange(index)}
-                >
+                <TouchableOpacity onPress={() => handleRemoveChange(index)}>
                   <Ionicons name="close" size={20} color="#dc3545" />
                 </TouchableOpacity>
               </View>
@@ -301,9 +296,7 @@ export function TemplateApprovalWorkflow({
             style={[styles.button, styles.rejectButton]}
             onPress={() => handleStatusUpdate('rejected')}
           >
-            <Text style={styles.buttonText}>
-              {t('approval.reject')}
-            </Text>
+            <Text style={styles.buttonText}>{t('approval.reject')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.changesButton]}
@@ -317,9 +310,7 @@ export function TemplateApprovalWorkflow({
             style={[styles.button, styles.approveButton]}
             onPress={() => handleStatusUpdate('approved')}
           >
-            <Text style={styles.buttonText}>
-              {t('approval.approve')}
-            </Text>
+            <Text style={styles.buttonText}>{t('approval.approve')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -327,7 +318,7 @@ export function TemplateApprovalWorkflow({
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

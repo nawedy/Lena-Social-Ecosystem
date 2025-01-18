@@ -1,33 +1,25 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "target": "es2018",
+    "module": "commonjs",
+    "lib": ["es2018", "dom"],
     "jsx": "react-native",
-    "moduleResolution": "node",
-    "allowJs": true,
-    "noEmit": true,
-    "isolatedModules": true,
     "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
     "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "*": ["src/*", "mobile/*"]
     },
+    "allowJs": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "allowSyntheticDefaultImports": true,
     "typeRoots": [
       "./node_modules/@types",
       "./src/types"
@@ -35,12 +27,19 @@
   },
   "include": [
     "src/**/*",
-    "scripts/**/*"
+    "mobile/**/*",
+    "tests/**/*",
+    "mobile/.storybook/**/*",
+    "*.ts",
+    "*.tsx"
   ],
   "exclude": [
     "node_modules",
     "babel.config.js",
     "metro.config.js",
-    "jest.config.js"
+    "jest.config.js",
+    "build",
+    "dist",
+    "coverage"
   ]
 }

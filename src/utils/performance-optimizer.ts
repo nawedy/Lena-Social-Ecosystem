@@ -57,7 +57,10 @@ export class PerformanceOptimizer {
   }
 
   public async analyzePerformance(): Promise<OptimizationRecommendation[]> {
-    const transaction = this.apm.startTransaction('analyze-performance', 'optimization');
+    const transaction = this.apm.startTransaction(
+      'analyze-performance',
+      'optimization'
+    );
 
     try {
       const [
@@ -65,13 +68,13 @@ export class PerformanceOptimizer {
         slowQueries,
         cacheStats,
         networkLatency,
-        errorRates
+        errorRates,
       ] = await Promise.all([
         this.getResourceMetrics(),
         this.analyzeSlowQueries(),
         this.analyzeCacheEfficiency(),
         this.measureNetworkLatency(),
-        this.analyzeErrorRates()
+        this.analyzeErrorRates(),
       ]);
 
       const recommendations: OptimizationRecommendation[] = [];
@@ -106,20 +109,20 @@ export class PerformanceOptimizer {
       return {
         cpu: {
           usage: metrics.cpu.usage,
-          limit: metrics.cpu.limit
+          limit: metrics.cpu.limit,
         },
         memory: {
           usage: metrics.memory.usage,
-          limit: metrics.memory.limit
+          limit: metrics.memory.limit,
         },
         network: {
           inbound: metrics.network.inbound,
-          outbound: metrics.network.outbound
+          outbound: metrics.network.outbound,
         },
         disk: {
           read: metrics.disk.read,
-          write: metrics.disk.write
-        }
+          write: metrics.disk.write,
+        },
       };
     } finally {
       span?.end();
@@ -139,7 +142,8 @@ export class PerformanceOptimizer {
         priority: 'high',
         description: 'High CPU utilization detected',
         impact: 'May cause increased response times and system instability',
-        action: 'Consider scaling up CPU resources or optimizing CPU-intensive operations'
+        action:
+          'Consider scaling up CPU resources or optimizing CPU-intensive operations',
       });
     } else if (cpuUtilization < 20) {
       recommendations.push({
@@ -147,19 +151,20 @@ export class PerformanceOptimizer {
         priority: 'medium',
         description: 'Low CPU utilization detected',
         impact: 'Potential resource waste and increased costs',
-        action: 'Consider scaling down CPU resources or consolidating services'
+        action: 'Consider scaling down CPU resources or consolidating services',
       });
     }
 
     // Memory Analysis
-    const memoryUtilization = (metrics.memory.usage / metrics.memory.limit) * 100;
+    const memoryUtilization =
+      (metrics.memory.usage / metrics.memory.limit) * 100;
     if (memoryUtilization > 85) {
       recommendations.push({
         type: 'memory',
         priority: 'high',
         description: 'High memory utilization detected',
         impact: 'Risk of OOM kills and service disruption',
-        action: 'Increase memory limits or optimize memory usage'
+        action: 'Increase memory limits or optimize memory usage',
       });
     } else if (memoryUtilization < 30) {
       recommendations.push({
@@ -167,7 +172,7 @@ export class PerformanceOptimizer {
         priority: 'medium',
         description: 'Low memory utilization detected',
         impact: 'Inefficient resource allocation',
-        action: 'Consider reducing memory limits to optimize costs'
+        action: 'Consider reducing memory limits to optimize costs',
       });
     }
 
@@ -208,7 +213,7 @@ export class PerformanceOptimizer {
           priority: 'high',
           description: `Slow query detected (${query.avg_time.toFixed(2)}ms)`,
           impact: 'Significant impact on application performance',
-          action: 'Optimize query or add appropriate indexes'
+          action: 'Optimize query or add appropriate indexes',
         });
       }
     }
@@ -221,13 +226,14 @@ export class PerformanceOptimizer {
 
     try {
       const info = await this.redis.info();
-      const hitRate = parseInt(info.keyspace_hits) / 
+      const hitRate =
+        parseInt(info.keyspace_hits) /
         (parseInt(info.keyspace_hits) + parseInt(info.keyspace_misses));
 
       return {
         hitRate,
         memory: info.used_memory,
-        evicted: info.evicted_keys
+        evicted: info.evicted_keys,
       };
     } finally {
       span?.end();
@@ -245,7 +251,7 @@ export class PerformanceOptimizer {
         priority: 'medium',
         description: 'Low cache hit rate detected',
         impact: 'Increased database load and response times',
-        action: 'Review cache strategy and TTL settings'
+        action: 'Review cache strategy and TTL settings',
       });
     }
 
@@ -255,7 +261,7 @@ export class PerformanceOptimizer {
         priority: 'high',
         description: 'High cache eviction rate detected',
         impact: 'Reduced cache effectiveness',
-        action: 'Increase cache memory or optimize cache usage'
+        action: 'Increase cache memory or optimize cache usage',
       });
     }
 
@@ -270,7 +276,7 @@ export class PerformanceOptimizer {
       return {
         p50: latencyMetrics.p50,
         p95: latencyMetrics.p95,
-        p99: latencyMetrics.p99
+        p99: latencyMetrics.p99,
       };
     } finally {
       span?.end();
@@ -288,7 +294,7 @@ export class PerformanceOptimizer {
         priority: 'high',
         description: 'High network latency detected',
         impact: 'Poor user experience and increased response times',
-        action: 'Optimize network configuration or consider CDN usage'
+        action: 'Optimize network configuration or consider CDN usage',
       });
     }
 
@@ -302,16 +308,14 @@ export class PerformanceOptimizer {
       const errors = await this.metrics.getErrorRates();
       return {
         rate: errors.rate,
-        topErrors: errors.top
+        topErrors: errors.top,
       };
     } finally {
       span?.end();
     }
   }
 
-  private analyzeApplicationErrors(
-    errors: any
-  ): OptimizationRecommendation[] {
+  private analyzeApplicationErrors(errors: any): OptimizationRecommendation[] {
     const recommendations: OptimizationRecommendation[] = [];
 
     if (errors.rate > 0.01) {
@@ -320,7 +324,7 @@ export class PerformanceOptimizer {
         priority: 'high',
         description: 'High error rate detected',
         impact: 'Poor user experience and potential data issues',
-        action: 'Investigate and fix top error sources'
+        action: 'Investigate and fix top error sources',
       });
     }
 
@@ -333,18 +337,21 @@ export class PerformanceOptimizer {
     const priorityMap = {
       high: 3,
       medium: 2,
-      low: 1
+      low: 1,
     };
 
-    return recommendations.sort((a, b) => 
-      priorityMap[b.priority] - priorityMap[a.priority]
+    return recommendations.sort(
+      (a, b) => priorityMap[b.priority] - priorityMap[a.priority]
     );
   }
 
   public async applyOptimizations(
     recommendations: OptimizationRecommendation[]
   ): Promise<void> {
-    const transaction = this.apm.startTransaction('apply-optimizations', 'optimization');
+    const transaction = this.apm.startTransaction(
+      'apply-optimizations',
+      'optimization'
+    );
 
     try {
       for (const recommendation of recommendations) {
@@ -427,7 +434,10 @@ export class PerformanceOptimizer {
   }
 
   public async generateOptimizationReport(): Promise<string> {
-    const transaction = this.apm.startTransaction('generate-optimization-report', 'reporting');
+    const transaction = this.apm.startTransaction(
+      'generate-optimization-report',
+      'reporting'
+    );
 
     try {
       const recommendations = await this.analyzePerformance();
@@ -439,8 +449,8 @@ export class PerformanceOptimizer {
 # Performance Optimization Report
 
 ## Resource Utilization
-- CPU: ${(metrics.cpu.usage / metrics.cpu.limit * 100).toFixed(2)}%
-- Memory: ${(metrics.memory.usage / metrics.memory.limit * 100).toFixed(2)}%
+- CPU: ${((metrics.cpu.usage / metrics.cpu.limit) * 100).toFixed(2)}%
+- Memory: ${((metrics.memory.usage / metrics.memory.limit) * 100).toFixed(2)}%
 - Network I/O: ${metrics.network.inbound}/${metrics.network.outbound} MB/s
 - Disk I/O: ${metrics.disk.read}/${metrics.disk.write} MB/s
 
@@ -454,12 +464,16 @@ export class PerformanceOptimizer {
 - Evictions: ${cacheStats.evicted}
 
 ## Recommendations
-${recommendations.map(r => `
+${recommendations
+  .map(
+    r => `
 ### ${r.type.toUpperCase()} (${r.priority})
 ${r.description}
 Impact: ${r.impact}
 Action: ${r.action}
-`).join('\n')}
+`
+  )
+  .join('\n')}
       `;
     } finally {
       transaction?.end();

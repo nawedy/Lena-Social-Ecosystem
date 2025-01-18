@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 declare module '*/services/AnalyticsService' {
   export interface AnalyticsEvent {
     rule?: string;
@@ -15,7 +17,11 @@ declare module '*/services/AnalyticsService' {
 
 declare module '*/services/metrics' {
   export interface MetricsService {
-    recordMetric(name: string, value: number, labels?: Record<string, string>): void;
+    recordMetric(
+      name: string,
+      value: number,
+      labels?: Record<string, string>
+    ): void;
     getMetric(name: string): Promise<number>;
   }
 }
@@ -119,22 +125,26 @@ declare module 'expo-secure-store' {
 
 declare module 'expo-linear-gradient' {
   import { ViewProps } from 'react-native';
-  export class LinearGradient extends React.Component<ViewProps & {
-    colors: string[];
-    start?: { x: number; y: number };
-    end?: { x: number; y: number };
-    locations?: number[];
-  }> {}
+  export class LinearGradient extends React.Component<
+    ViewProps & {
+      colors: string[];
+      start?: { x: number; y: number };
+      end?: { x: number; y: number };
+      locations?: number[];
+    }
+  > {}
 }
 
 declare module 'expo-camera' {
   import { ViewProps } from 'react-native';
-  export class Camera extends React.Component<ViewProps & {
-    type?: number;
-    flashMode?: number;
-    autoFocus?: boolean;
-    zoom?: number;
-  }> {
+  export class Camera extends React.Component<
+    ViewProps & {
+      type?: number;
+      flashMode?: number;
+      autoFocus?: boolean;
+      zoom?: number;
+    }
+  > {
     static Constants: {
       Type: { front: number; back: number };
       FlashMode: { on: number; off: number; auto: number; torch: number };
@@ -165,4 +175,37 @@ declare module '@react-native-async-storage/async-storage' {
   export function multiGet(keys: string[]): Promise<[string, string | null][]>;
   export function multiSet(keyValuePairs: string[][]): Promise<void>;
   export function multiRemove(keys: string[]): Promise<void>;
+}
+
+declare module './services' {
+  export interface ATProtoService {
+    getAgent(): Promise<any>;
+    agent: any;
+  }
+
+  export interface SecurityService {
+    validateAccountAccess(accountId: string): Promise<boolean>;
+  }
+
+  export interface NotificationService {
+    sendToTeam(message: string, data?: any): Promise<void>;
+  }
+
+  export interface TikTokMigrationService {
+    getContentInventory(): Promise<any[]>;
+    migrateContent(content: any): Promise<void>;
+  }
+
+  export interface ContentModerationService {
+    moderateText(text: string): Promise<boolean>;
+    moderateImage(image: Buffer): Promise<boolean>;
+    moderateVideo(video: Buffer): Promise<boolean>;
+  }
+
+  export interface AnalyticsService {
+    getContentPerformance(): Promise<any[]>;
+    getAudienceInsights(): Promise<any[]>;
+    getCompetitorAnalysis(): Promise<any[]>;
+    getPredictiveInsights(): Promise<any[]>;
+  }
 }

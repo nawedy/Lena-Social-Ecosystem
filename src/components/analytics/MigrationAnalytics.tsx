@@ -52,26 +52,26 @@ export function MigrationAnalytics() {
     loadAnalytics();
   }, [timeframe]);
 
-  const loadAnalytics = async () => {
-    const analytics = AnalyticsService.getInstance();
-    
+  const _loadAnalytics = async () => {
+    const _analytics = AnalyticsService.getInstance();
+
     // Load migration statistics
-    const migrationStats = await analytics.getMigrationStats(timeframe);
+    const _migrationStats = await analytics.getMigrationStats(timeframe);
     setStats(migrationStats);
 
     // Load migration trends
-    const migrationTrends = await analytics.getMigrationTrends(timeframe);
+    const _migrationTrends = await analytics.getMigrationTrends(timeframe);
     setTrends(migrationTrends);
 
     // Load content statistics
-    const contentStatistics = await analytics.getContentStats(timeframe);
+    const _contentStatistics = await analytics.getContentStats(timeframe);
     setContentStats(contentStatistics);
   };
 
-  const renderSuccessRate = () => {
+  const _renderSuccessRate = () => {
     if (!stats) return null;
 
-    const data = {
+    const _data = {
       labels: [t('analytics.migration.success')],
       data: [stats.successfulMigrations / stats.totalMigrations],
     };
@@ -99,9 +99,7 @@ export function MigrationAnalytics() {
             <Text style={styles.statLabel}>
               {t('analytics.migration.total')}
             </Text>
-            <Text style={styles.statValue}>
-              {stats.totalMigrations}
-            </Text>
+            <Text style={styles.statValue}>{stats.totalMigrations}</Text>
           </View>
           <View style={styles.stat}>
             <Text style={styles.statLabel}>
@@ -124,10 +122,10 @@ export function MigrationAnalytics() {
     );
   };
 
-  const renderMigrationTrends = () => {
+  const _renderMigrationTrends = () => {
     if (trends.length === 0) return null;
 
-    const data = {
+    const _data = {
       labels: trends.map(t => t.date),
       datasets: [
         {
@@ -170,14 +168,16 @@ export function MigrationAnalytics() {
     );
   };
 
-  const renderContentStats = () => {
+  const _renderContentStats = () => {
     if (contentStats.length === 0) return null;
 
-    const data = {
+    const _data = {
       labels: contentStats.map(s => s.type),
-      datasets: [{
-        data: contentStats.map(s => s.count),
-      }],
+      datasets: [
+        {
+          data: contentStats.map(s => s.count),
+        },
+      ],
     };
 
     return (
@@ -222,10 +222,10 @@ export function MigrationAnalytics() {
     );
   };
 
-  const renderEngagementMetrics = () => {
+  const _renderEngagementMetrics = () => {
     if (!stats) return null;
 
-    const data = {
+    const _data = {
       name: t('analytics.migration.engagement'),
       color: 'rgba(0, 123, 255, 1)',
       legendFontColor: '#7F7F7F',
@@ -270,9 +270,7 @@ export function MigrationAnalytics() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>
-          {t('analytics.migration.title')}
-        </Text>
+        <Text style={styles.title}>{t('analytics.migration.title')}</Text>
         <View style={styles.timeframeSelector}>
           {(['day', 'week', 'month'] as const).map(t => (
             <TouchableOpacity
@@ -304,7 +302,7 @@ export function MigrationAnalytics() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

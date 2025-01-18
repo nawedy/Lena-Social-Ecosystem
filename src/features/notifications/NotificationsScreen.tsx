@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -16,7 +22,9 @@ interface NotificationsScreenProps {
   navigation: any;
 }
 
-export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation }) => {
+export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
+  navigation,
+}) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -25,7 +33,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
     fetchNotifications();
   }, []);
 
-  const fetchNotifications = async () => {
+  const _fetchNotifications = async () => {
     try {
       // TODO: Implement notification fetching logic
       setNotifications([
@@ -46,20 +54,22 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
     }
   };
 
-  const markAsRead = async (notificationId: string) => {
+  const _markAsRead = async (notificationId: string) => {
     try {
       // TODO: Implement mark as read logic
-      setNotifications(notifications.map(n => 
-        n.id === notificationId ? { ...n, read: true } : n
-      ));
+      setNotifications(
+        notifications.map(n =>
+          n.id === notificationId ? { ...n, read: true } : n
+        )
+      );
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
   };
 
-  const handleNotificationPress = (notification: Notification) => {
+  const _handleNotificationPress = (notification: Notification) => {
     markAsRead(notification.id);
-    
+
     // Navigate based on notification type
     switch (notification.type) {
       case 'like':
@@ -75,8 +85,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
     }
   };
 
-  const renderNotification = ({ item }: { item: Notification }) => {
-    const getNotificationText = (notification: Notification) => {
+  const _renderNotification = ({ item }: { item: Notification }) => {
+    const _getNotificationText = (notification: Notification) => {
       switch (notification.type) {
         case 'like':
           return 'liked your post';
@@ -137,7 +147,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

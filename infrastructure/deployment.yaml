@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tiktok-toe
+  labels:
+    app: tiktok-toe
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tiktok-toe
+  template:
+    metadata:
+      labels:
+        app: tiktok-toe
+    spec:
+      containers:
+      - name: tiktok-toe
+        image: gcr.io/tiktok-toe/app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: GOOGLE_CLOUD_PROJECT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: project-id
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tiktok-toe-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: tiktok-toe
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tiktok-toe-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tiktok-toe
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tiktok-toe-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    networking.gke.io/managed-certificates: "tiktok-toe-cert"
+spec:
+  rules:
+  - host: tiktok-toe.app
+    http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: tiktok-toe-service
+            port:
+              number: 80
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: tiktok-toe-backend-config
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    timeoutSec: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 3
+    type: HTTP
+    requestPath: /health
+  cdn:
+    enabled: true
+    cachePolicy:
+      includeHost: true
+      includeProtocol: true
+      includeQueryString: false
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: MonitoringConfig
+metadata:
+  name: tiktok-toe-monitoring
+spec:
+  metrics:
+  - name: "http/server/response_latencies"
+    filter: "resource.type = \"k8s_container\""
+  - name: "http/server/request_count"
+    filter: "resource.type = \"k8s_container\""
+  alertPolicies:
+  - name: "High Error Rate"
+    conditions:
+    - displayName: "Error Rate > 5%"
+      condition:
+        threshold: 0.05
+        comparison: COMPARISON_GT
+        duration: "300s"
+        filter: "metric.type = \"http/server/error_count\""
+  - name: "High Latency"
+    conditions:
+    - displayName: "P95 Latency > 500ms"
+      condition:
+        threshold: 500
+        comparison: COMPARISON_GT
+        duration: "300s"
+        filter: "metric.type = \"http/server/response_latencies\""

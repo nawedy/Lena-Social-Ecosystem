@@ -62,9 +62,12 @@ export class BetaTestingService {
     return BetaTestingService.instance;
   }
 
-  async inviteBetaTester(email: string, tiktokUsername?: string): Promise<string> {
+  async inviteBetaTester(
+    email: string,
+    tiktokUsername?: string
+  ): Promise<string> {
     const inviteCode = generateInviteCode();
-    
+
     const betaTester: BetaTester = {
       id: generateInviteCode(), // Use as unique ID
       email,
@@ -83,25 +86,28 @@ export class BetaTestingService {
         deviceInfo: {
           platform: '',
           browser: '',
-          version: ''
-        }
-      }
+          version: '',
+        },
+      },
     };
 
     await this.db.collection('beta_testers').doc(betaTester.id).set(betaTester);
-    
+
     await this.sendInvitationEmail(email, inviteCode);
-    
+
     this.analytics.trackEvent('beta_tester_invited', {
       email,
       tiktokUsername,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     return inviteCode;
   }
 
-  private async sendInvitationEmail(email: string, inviteCode: string): Promise<void> {
+  private async sendInvitationEmail(
+    email: string,
+    inviteCode: string
+  ): Promise<void> {
     const emailTemplate = {
       subject: 'Welcome to TikTokToe Beta Testing Program!',
       body: `
@@ -122,14 +128,18 @@ export class BetaTestingService {
           <li>Beta Tester Community: https://discord.gg/tiktok-toe-beta</li>
         </ul>
         <p>Questions? Contact our beta support team at beta@tiktok-toe.app</p>
-      `
+      `,
     };
 
     await sendEmail(email, emailTemplate.subject, emailTemplate.body);
   }
 
-  async activateBetaTester(inviteCode: string, deviceInfo: UserMetrics['deviceInfo']): Promise<boolean> {
-    const snapshot = await this.db.collection('beta_testers')
+  async activateBetaTester(
+    inviteCode: string,
+    deviceInfo: UserMetrics['deviceInfo']
+  ): Promise<boolean> {
+    const snapshot = await this.db
+      .collection('beta_testers')
       .where('inviteCode', '==', inviteCode)
       .where('status', '==', 'invited')
       .get();
@@ -143,32 +153,38 @@ export class BetaTestingService {
       status: 'active',
       joinedAt: Timestamp.now(),
       lastActive: Timestamp.now(),
-      'metrics.deviceInfo': deviceInfo
+      'metrics.deviceInfo': deviceInfo,
     });
 
     this.analytics.trackEvent('beta_tester_activated', {
       testerId: betaTester.id,
       deviceInfo,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     return true;
   }
 
-  async submitFeedback(testerId: string, feedback: Omit<Feedback, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<string> {
+  async submitFeedback(
+    testerId: string,
+    feedback: Omit<Feedback, 'id' | 'createdAt' | 'updatedAt' | 'status'>
+  ): Promise<string> {
     const feedbackId = generateInviteCode();
-    
+
     const newFeedback: Feedback = {
       ...feedback,
       id: feedbackId,
       status: 'new',
       createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
+      updatedAt: Timestamp.now(),
     };
 
-    await this.db.collection('beta_testers').doc(testerId).update({
-      feedback: firebase.firestore.FieldValue.arrayUnion(newFeedback)
-    });
+    await this.db
+      .collection('beta_testers')
+      .doc(testerId)
+      .update({
+        feedback: firebase.firestore.FieldValue.arrayUnion(newFeedback),
+      });
 
     this.analytics.trackEvent('beta_feedback_submitted', {
       testerId,
@@ -176,7 +192,7 @@ export class BetaTestingService {
       type: feedback.type,
       category: feedback.category,
       severity: feedback.severity,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     // Notify team of new feedback
@@ -186,23 +202,33 @@ export class BetaTestingService {
         feedbackId,
         type: feedback.type,
         title: feedback.title,
-        severity: feedback.severity
+        severity: feedback.severity,
       });
     }
 
     return feedbackId;
   }
 
-  async updateMetrics(testerId: string, metrics: Partial<UserMetrics>): Promise<void> {
-    await this.db.collection('beta_testers').doc(testerId).update({
-      'metrics.gamesPlayed': firebase.firestore.FieldValue.increment(metrics.gamesPlayed || 0),
-      'metrics.gamesWon': firebase.firestore.FieldValue.increment(metrics.gamesWon || 0),
-      'metrics.averageGameDuration': metrics.averageGameDuration,
-      'metrics.migrationSuccess': metrics.migrationSuccess,
-      'metrics.migrationDuration': metrics.migrationDuration,
-      'metrics.lastLogin': Timestamp.now(),
-      'metrics.featureUsage': metrics.featureUsage
-    });
+  async updateMetrics(
+    testerId: string,
+    metrics: Partial<UserMetrics>
+  ): Promise<void> {
+    await this.db
+      .collection('beta_testers')
+      .doc(testerId)
+      .update({
+        'metrics.gamesPlayed': firebase.firestore.FieldValue.increment(
+          metrics.gamesPlayed || 0
+        ),
+        'metrics.gamesWon': firebase.firestore.FieldValue.increment(
+          metrics.gamesWon || 0
+        ),
+        'metrics.averageGameDuration': metrics.averageGameDuration,
+        'metrics.migrationSuccess': metrics.migrationSuccess,
+        'metrics.migrationDuration': metrics.migrationDuration,
+        'metrics.lastLogin': Timestamp.now(),
+        'metrics.featureUsage': metrics.featureUsage,
+      });
   }
 
   async getBetaTesterStats(): Promise<{
@@ -217,20 +243,25 @@ export class BetaTestingService {
     const stats = {
       totalTesters: testers.length,
       activeTesters: testers.filter(t => t.status === 'active').length,
-      averageMigrationSuccess: testers.filter(t => t.metrics.migrationSuccess).length / testers.length,
-      topFeatures: this.calculateTopFeatures(testers)
+      averageMigrationSuccess:
+        testers.filter(t => t.metrics.migrationSuccess).length / testers.length,
+      topFeatures: this.calculateTopFeatures(testers),
     };
 
     return stats;
   }
 
-  private calculateTopFeatures(testers: BetaTester[]): Array<{ feature: string; usage: number }> {
+  private calculateTopFeatures(
+    testers: BetaTester[]
+  ): Array<{ feature: string; usage: number }> {
     const featureUsage: Record<string, number> = {};
-    
+
     testers.forEach(tester => {
-      Object.entries(tester.metrics.featureUsage).forEach(([feature, count]) => {
-        featureUsage[feature] = (featureUsage[feature] || 0) + count;
-      });
+      Object.entries(tester.metrics.featureUsage).forEach(
+        ([feature, count]) => {
+          featureUsage[feature] = (featureUsage[feature] || 0) + count;
+        }
+      );
     });
 
     return Object.entries(featureUsage)

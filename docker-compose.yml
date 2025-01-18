@@ -9,81 +9,37 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DB_HOST=db
-      - REDIS_HOST=redis
+      - BSKY_HANDLE=${BSKY_HANDLE}
+      - BSKY_APP_PASSWORD=${BSKY_APP_PASSWORD}
+      - BSKY_API_URL=${BSKY_API_URL}
+      - BSKY_RATE_LIMIT=${BSKY_RATE_LIMIT}
+      - BSKY_RATE_WINDOW=${BSKY_RATE_WINDOW}
+    volumes:
+      - ./data:/app/data
+    networks:
+      - app-network
     depends_on:
-      - db
       - redis
 
-  db:
-    image: postgres:14-alpine
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
-
   redis:
-    image: redis:6-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-    volumes:
-      - redis-data:/data
-
-  nginx:
-    image: nginx:alpine
+    image: redis:7-alpine
+    platform: linux/arm64
+    container_name: redis
     ports:
-      - "80:80"
-      - "443:443"
+      - "6379:6379"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
-      - ./nginx/www:/var/www/html
-    depends_on:
-      - app
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./config/prometheus:/etc/prometheus
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    ports:
-      - "9091:9090"
-    restart: unless-stopped
-
-  alertmanager:
-    image: prom/alertmanager:latest
-    volumes:
-      - ./config/alertmanager:/etc/alertmanager
-    command:
-      - '--config.file=/etc/alertmanager/config.yml'
-      - '--storage.path=/alertmanager'
-    ports:
-      - "9094:9093"
-    restart: unless-stopped
-
-  grafana:
-    image: grafana/grafana:latest
-    volumes:
-      - ./config/grafana:/etc/grafana
-      - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-    ports:
-      - "3003:3000"
-    depends_on:
-      - prometheus
-    restart: unless-stopped
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  db-data:
-  redis-data:
-  prometheus_data:
-  grafana_data:
+  redis_data:

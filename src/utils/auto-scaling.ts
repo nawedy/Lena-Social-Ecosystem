@@ -39,7 +39,7 @@ export class AutoScalingService {
   ) {
     const kc = new k8s.KubeConfig();
     kc.loadFromDefault();
-    
+
     this.k8sApi = kc.makeApiClient(k8s.AppsV1Api);
     this.metricsApi = kc.makeApiClient(k8s.CustomObjectsApi);
     this.apm = apm;
@@ -48,14 +48,17 @@ export class AutoScalingService {
     this.logger = logger;
     this.rules = new Map();
     this.lastScaleTime = new Map();
-    
+
     this.initializeRules();
   }
 
   private initializeRules() {
     // Load scaling rules from configuration
-    const rules = this.config.get('scaling.rules') as Record<string, ScalingRule>;
-    
+    const rules = this.config.get('scaling.rules') as Record<
+      string,
+      ScalingRule
+    >;
+
     for (const [service, rule] of Object.entries(rules)) {
       this.rules.set(service, rule);
       this.lastScaleTime.set(service, new Date(0)); // Initialize with epoch
@@ -64,7 +67,7 @@ export class AutoScalingService {
 
   public async startAutoScaling() {
     const interval = this.config.get('scaling.checkInterval') || 30000; // 30 seconds default
-    
+
     setInterval(async () => {
       try {
         await this.checkAndScale();
@@ -76,16 +79,19 @@ export class AutoScalingService {
   }
 
   private async checkAndScale() {
-    const transaction = this.apm.startTransaction('auto-scaling-check', 'auto-scaling');
+    const transaction = this.apm.startTransaction(
+      'auto-scaling-check',
+      'auto-scaling'
+    );
 
     try {
       for (const [service, rule] of this.rules.entries()) {
         const span = this.apm.startSpan(`check-service:${service}`);
-        
+
         try {
           const metrics = await this.getServiceMetrics(service);
           const deployment = await this.getDeployment(service);
-          
+
           if (!deployment || !metrics) {
             continue;
           }
@@ -112,12 +118,12 @@ export class AutoScalingService {
 
   private async getServiceMetrics(service: string): Promise<ResourceMetrics> {
     const span = this.apm.startSpan('get-service-metrics');
-    
+
     try {
       const [cpu, memory, requests] = await Promise.all([
         this.metrics.getServiceCPU(service),
         this.metrics.getServiceMemory(service),
-        this.metrics.getServiceRequests(service)
+        this.metrics.getServiceRequests(service),
       ]);
 
       return { cpu, memory, requests };
@@ -128,7 +134,7 @@ export class AutoScalingService {
 
   private async getDeployment(service: string) {
     const span = this.apm.startSpan('get-deployment');
-    
+
     try {
       const namespace = this.config.get('kubernetes.namespace');
       const response = await this.k8sApi.readNamespacedDeployment(
@@ -151,14 +157,14 @@ export class AutoScalingService {
     currentReplicas: number
   ): number {
     const span = this.apm.startSpan('make-scaling-decision');
-    
+
     try {
       const currentTime = new Date();
       const lastScale = this.lastScaleTime.get(service) || new Date(0);
-      
+
       // Check cooldown periods
       const timeSinceLastScale = currentTime.getTime() - lastScale.getTime();
-      
+
       let metricValue: number;
       switch (rule.metric) {
         case 'cpu':
@@ -182,10 +188,7 @@ export class AutoScalingService {
         currentReplicas < rule.maxReplicas &&
         timeSinceLastScale > rule.scaleUpCooldown
       ) {
-        newReplicas = Math.min(
-          currentReplicas + 1,
-          rule.maxReplicas
-        );
+        newReplicas = Math.min(currentReplicas + 1, rule.maxReplicas);
       }
       // Scale down
       else if (
@@ -193,10 +196,7 @@ export class AutoScalingService {
         currentReplicas > rule.minReplicas &&
         timeSinceLastScale > rule.scaleDownCooldown
       ) {
-        newReplicas = Math.max(
-          currentReplicas - 1,
-          rule.minReplicas
-        );
+        newReplicas = Math.max(currentReplicas - 1, rule.minReplicas);
       }
 
       if (newReplicas !== currentReplicas) {
@@ -205,7 +205,7 @@ export class AutoScalingService {
           currentReplicas,
           newReplicas,
           metric: rule.metric,
-          value: metricValue
+          value: metricValue,
         });
       }
 
@@ -217,14 +217,14 @@ export class AutoScalingService {
 
   private async scaleDeployment(service: string, replicas: number) {
     const span = this.apm.startSpan('scale-deployment');
-    
+
     try {
       const namespace = this.config.get('kubernetes.namespace');
-      
+
       const patch = {
         spec: {
-          replicas: replicas
-        }
+          replicas: replicas,
+        },
       };
 
       await this.k8sApi.patchNamespacedDeployment(
@@ -236,24 +236,24 @@ export class AutoScalingService {
         undefined,
         undefined,
         {
-          headers: { 'Content-Type': 'application/strategic-merge-patch+json' }
+          headers: { 'Content-Type': 'application/strategic-merge-patch+json' },
         }
       );
 
       this.lastScaleTime.set(service, new Date());
-      
+
       // Record scaling event
       this.metrics.recordScalingEvent(service, replicas);
-      
+
       this.logger.info('Deployment scaled', {
         service,
-        replicas
+        replicas,
       });
     } catch (error) {
       this.logger.error('Failed to scale deployment', {
         service,
         replicas,
-        error
+        error,
       });
       this.apm.captureError(error);
       throw error;
@@ -264,13 +264,13 @@ export class AutoScalingService {
 
   public async getScalingMetrics(service: string) {
     const span = this.apm.startSpan('get-scaling-metrics');
-    
+
     try {
       const namespace = this.config.get('kubernetes.namespace');
-      
+
       const [deployment, metrics] = await Promise.all([
         this.k8sApi.readNamespacedDeployment(service, namespace),
-        this.getServiceMetrics(service)
+        this.getServiceMetrics(service),
       ]);
 
       const rule = this.rules.get(service);
@@ -284,8 +284,8 @@ export class AutoScalingService {
         status: {
           ready: deployment.body.status.readyReplicas,
           available: deployment.body.status.availableReplicas,
-          unavailable: deployment.body.status.unavailableReplicas
-        }
+          unavailable: deployment.body.status.unavailableReplicas,
+        },
       };
     } finally {
       span?.end();
@@ -294,7 +294,7 @@ export class AutoScalingService {
 
   public async updateScalingRule(service: string, rule: Partial<ScalingRule>) {
     const span = this.apm.startSpan('update-scaling-rule');
-    
+
     try {
       const currentRule = this.rules.get(service);
       if (!currentRule) {
@@ -309,7 +309,7 @@ export class AutoScalingService {
 
       this.logger.info('Scaling rule updated', {
         service,
-        rule: updatedRule
+        rule: updatedRule,
       });
 
       return updatedRule;

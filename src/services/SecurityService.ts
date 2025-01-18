@@ -194,7 +194,9 @@ export class SecurityService {
         userId: username,
         ip,
         userAgent,
-        details: { error: error instanceof Error ? error.message : 'Unknown error' },
+        details: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
         severity: 'medium',
       });
 
@@ -204,7 +206,10 @@ export class SecurityService {
 
   public async validateToken(token: string): Promise<TokenPayload> {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload;
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET!
+      ) as TokenPayload;
       const session = this.sessions.get(decoded.sessionId);
 
       if (!session) {
@@ -263,7 +268,9 @@ export class SecurityService {
     }
   }
 
-  public async logSecurityEvent(event: Omit<SecurityEvent, 'id' | 'timestamp'>): Promise<void> {
+  public async logSecurityEvent(
+    event: Omit<SecurityEvent, 'id' | 'timestamp'>
+  ): Promise<void> {
     const securityEvent: SecurityEvent = {
       id: crypto.randomUUID(),
       timestamp: new Date(),

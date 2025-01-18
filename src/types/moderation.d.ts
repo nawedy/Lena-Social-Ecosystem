@@ -59,12 +59,15 @@ export interface ModerationStats {
   appeals: number;
   averageResponseTime: number;
   categoryBreakdown: Record<string, number>;
-  moderatorPerformance?: Record<string, {
-    reviewed: number;
-    approved: number;
-    rejected: number;
-    averageResponseTime: number;
-  }>;
+  moderatorPerformance?: Record<
+    string,
+    {
+      reviewed: number;
+      approved: number;
+      rejected: number;
+      averageResponseTime: number;
+    }
+  >;
 }
 
 export interface ModerationFilter {

@@ -1,7 +1,7 @@
-import * as apm from '@elastic/apm-rum';
-import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
-import { MeterProvider } from '@opentelemetry/metrics';
-import * as Sentry from '@sentry/node';
+import { Logging } from '@google-cloud/logging';
+import { Monitoring } from '@google-cloud/monitoring';
+import { ErrorReporting } from '@google-cloud/error-reporting';
+import { Trace } from '@google-cloud/trace-agent';
 
 export interface AnalyticsEvent {
   rule?: string;
@@ -12,103 +12,145 @@ export interface AnalyticsEvent {
 
 export class AnalyticsService {
   private static instance: AnalyticsService;
-  private apmService: typeof apm;
-  private prometheusExporter: PrometheusExporter;
-  private meterProvider: MeterProvider;
+  private initialized: boolean = false;
+  private logging: Logging;
+  private monitoring: Monitoring;
+  private errorReporting: ErrorReporting;
+  private tracer: typeof Trace;
 
   private constructor() {
-    // Initialize APM
-    this.apmService = apm;
-    this.apmService.init({
-      serviceName: 'tiktoktoe',
-      serverUrl: process.env.APM_SERVER_URL || 'http://localhost:8200',
-      environment: process.env.NODE_ENV || 'development',
-    });
-
-    // Initialize Prometheus exporter
-    this.prometheusExporter = new PrometheusExporter({
-      port: 9464,
-      endpoint: '/metrics',
-    });
-
-    // Initialize OpenTelemetry meter provider
-    this.meterProvider = new MeterProvider();
-
-    // Initialize Sentry
-    Sentry.init({
-      dsn: process.env.SENTRY_DSN,
-      environment: process.env.NODE_ENV || 'development',
-    });
+    this.logging = new Logging();
+    this.monitoring = new Monitoring();
+    this.errorReporting = new ErrorReporting();
+    this.tracer = require('@google-cloud/trace-agent').start();
   }
 
-  public static getInstance(): AnalyticsService {
+  static getInstance(): AnalyticsService {
     if (!AnalyticsService.instance) {
       AnalyticsService.instance = new AnalyticsService();
     }
     return AnalyticsService.instance;
   }
 
-  public trackEvent(event: AnalyticsEvent): void {
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+
     try {
-      const transaction = this.apmService.startTransaction(
-        event.rule || 'unknown',
-        event.trigger || 'custom'
-      );
+      // Initialize logging
+      const log = this.logging.log('tiktoktoe-app');
+      await log.write({ message: 'AnalyticsService initialized' });
 
-      if (transaction) {
-        transaction.addLabels({
-          account: event.account,
-          ...event.data,
-        });
+      // Initialize monitoring
+      await this.monitoring.projectPath(process.env.GOOGLE_CLOUD_PROJECT || '');
 
-        // Record metric in Prometheus
-        const meter = this.meterProvider.getMeter('events');
-        const counter = meter.createCounter('event_count');
-        counter.add(1, {
-          rule: event.rule,
-          trigger: event.trigger,
-          account: event.account,
-        });
+      this.initialized = true;
+    } catch (error) {
+      console.error('Failed to initialize AnalyticsService:', error);
+      throw error;
+    }
+  }
 
-        transaction.end();
-      }
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  async trackEvent(
+    eventName: string,
+    metadata: Record<string, any> = {}
+  ): Promise<void> {
+    const log = this.logging.log('tiktoktoe-events');
+    await log.write({
+      severity: 'INFO',
+      message: eventName,
+      metadata,
+      timestamp: new Date(),
+    });
+  }
+
+  async trackMetric(
+    name: string,
+    value: number,
+    labels: Record<string, string> = {}
+  ): Promise<void> {
+    const metricType = `custom.googleapis.com/tiktoktoe/${name}`;
+
+    const dataPoint = {
+      interval: {
+        endTime: {
+          seconds: Date.now() / 1000,
+        },
+      },
+      value: {
+        doubleValue: value,
+      },
+    };
+
+    const timeSeriesData = {
+      metric: {
+        type: metricType,
+        labels,
+      },
+      resource: {
+        type: 'global',
+        labels: {
+          project_id: process.env.GOOGLE_CLOUD_PROJECT || '',
+        },
+      },
+      points: [dataPoint],
+    };
+
+    await this.monitoring.createTimeSeries({
+      name: this.monitoring.projectPath(process.env.GOOGLE_CLOUD_PROJECT || ''),
+      timeSeries: [timeSeriesData],
+    });
+  }
+
+  async trackError(
+    error: Error,
+    metadata: Record<string, any> = {}
+  ): Promise<void> {
+    // Report to Error Reporting
+    this.errorReporting.report(error);
+
+    // Also log to Cloud Logging
+    const log = this.logging.log('tiktoktoe-errors');
+    await log.write({
+      severity: 'ERROR',
+      message: error.message,
+      metadata: {
+        ...metadata,
+        stack: error.stack,
+      },
+      timestamp: new Date(),
+    });
+  }
+
+  async trackEventAnalytics(event: AnalyticsEvent): Promise<void> {
+    try {
+      await this.trackEvent(event.rule || 'unknown', {
+        trigger: event.trigger,
+        account: event.account,
+        data: event.data,
+      });
     } catch (error) {
       console.error('Error tracking event:', error);
       this.trackError(error as Error);
     }
   }
 
-  public trackError(error: Error): void {
-    try {
-      // Track error in APM
-      this.apmService.captureError(error);
-
-      // Track error in Sentry
-      Sentry.captureException(error);
-
-      // Record error metric in Prometheus
-      const meter = this.meterProvider.getMeter('errors');
-      const counter = meter.createCounter('error_count');
-      counter.add(1, {
-        type: error.name,
-        message: error.message,
-      });
-    } catch (e) {
-      console.error('Error tracking error:', e);
-    }
-  }
-
-  public async getMetrics(): Promise<Record<string, number>> {
+  async getMetrics(): Promise<Record<string, number>> {
     try {
       const metrics: Record<string, number> = {};
 
-      // Get metrics from APM
-      const apmMetrics = await this.getAPMMetrics();
-      Object.assign(metrics, apmMetrics);
-
-      // Get metrics from Prometheus
-      const prometheusMetrics = await this.getPrometheusMetrics();
-      Object.assign(metrics, prometheusMetrics);
+      // Get metrics from Cloud Monitoring
+      const metricDescriptors = await this.monitoring.getMetricDescriptors({
+        filter: 'metric.type = starts_with("custom.googleapis.com/tiktoktoe/")',
+      });
+      for (const descriptor of metricDescriptors) {
+        const metricType = descriptor.metricDescriptor.type;
+        const metricName = metricType.split('/').pop();
+        metrics[metricName] = await this.getMetricValue(metricType);
+      }
 
       return metrics;
     } catch (error) {
@@ -118,17 +160,31 @@ export class AnalyticsService {
     }
   }
 
-  private async getAPMMetrics(): Promise<Record<string, number>> {
-    // TODO: Implement APM metrics retrieval
-    return {};
+  private async getMetricValue(metricType: string): Promise<number> {
+    const [response] = await this.monitoring.getMetricDescriptor({
+      name: this.monitoring.projectPath(process.env.GOOGLE_CLOUD_PROJECT || ''),
+      filter: `metric.type = "${metricType}"`,
+    });
+    const metricDescriptor = response[0];
+    if (!metricDescriptor) return 0;
+
+    const [timeSeries] = await this.monitoring.getTimeSeries({
+      name: this.monitoring.projectPath(process.env.GOOGLE_CLOUD_PROJECT || ''),
+      filter: `metric.type = "${metricType}"`,
+      interval: {
+        startTime: {
+          seconds: Date.now() / 1000 - 60,
+        },
+        endTime: {
+          seconds: Date.now() / 1000,
+        },
+      },
+    });
+    const dataPoint = timeSeries[0].points[0];
+    return dataPoint.value.doubleValue || 0;
   }
 
-  private async getPrometheusMetrics(): Promise<Record<string, number>> {
-    // TODO: Implement Prometheus metrics retrieval
-    return {};
-  }
-
-  public async getAdvancedAnalytics(): Promise<Record<string, any>> {
+  async getAdvancedAnalytics(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const contentPerformance = await this.getContentPerformance();
@@ -150,7 +206,7 @@ export class AnalyticsService {
     }
   }
 
-  public async getAIInsights(): Promise<Record<string, any>> {
+  async getAIInsights(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const contentPerformance = await this.getContentPerformance();
@@ -168,7 +224,7 @@ export class AnalyticsService {
     }
   }
 
-  public async getAIMetrics(): Promise<Record<string, any>> {
+  async getAIMetrics(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const predictiveInsights = await this.getPredictiveInsights();
@@ -184,7 +240,7 @@ export class AnalyticsService {
     }
   }
 
-  public async getMigrationStats(): Promise<Record<string, any>> {
+  async getMigrationStats(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const contentStats = await this.getContentStats();
@@ -200,7 +256,7 @@ export class AnalyticsService {
     }
   }
 
-  public async getMigrationTrends(): Promise<Record<string, any>> {
+  async getMigrationTrends(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const contentStats = await this.getContentStats();
@@ -218,7 +274,7 @@ export class AnalyticsService {
     }
   }
 
-  public async getContentStats(): Promise<Record<string, any>> {
+  async getContentStats(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const contentPerformance = await this.getContentPerformance();
@@ -234,7 +290,7 @@ export class AnalyticsService {
     }
   }
 
-  public async getTestMetrics(): Promise<Record<string, any>> {
+  async getTestMetrics(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const predictiveInsights = await this.getPredictiveInsights();
@@ -250,7 +306,7 @@ export class AnalyticsService {
     }
   }
 
-  public async getTestTimeSeries(): Promise<Record<string, any>> {
+  async getTestTimeSeries(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const contentPerformance = await this.getContentPerformance();
@@ -268,7 +324,7 @@ export class AnalyticsService {
     }
   }
 
-  public async getTestHistory(): Promise<Record<string, any>> {
+  async getTestHistory(): Promise<Record<string, any>> {
     try {
       const metrics = await this.getMetrics();
       const contentPerformance = await this.getContentPerformance();

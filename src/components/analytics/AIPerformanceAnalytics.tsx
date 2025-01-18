@@ -37,19 +37,21 @@ export function AIPerformanceAnalytics() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
   const [metrics, setMetrics] = useState<Record<string, AIMetrics>>({});
-  const [timeSeriesData, setTimeSeriesData] = useState<Record<string, TimeSeriesData>>({});
+  const [timeSeriesData, setTimeSeriesData] = useState<
+    Record<string, TimeSeriesData>
+  >({});
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
-  const analyticsService = AnalyticsService.getInstance();
+  const _analyticsService = AnalyticsService.getInstance();
 
   useEffect(() => {
     loadAnalytics();
   }, [period]);
 
-  const loadAnalytics = async () => {
+  const _loadAnalytics = async () => {
     setLoading(true);
     try {
-      const data = await analyticsService.getAIMetrics(period);
+      const _data = await analyticsService.getAIMetrics(period);
       setMetrics(data.metrics);
       setTimeSeriesData(data.timeSeries);
     } catch (error) {
@@ -59,9 +61,11 @@ export function AIPerformanceAnalytics() {
     }
   };
 
-  const renderProviderComparison = () => (
+  const _renderProviderComparison = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{t('analytics.providerComparison')}</Text>
+      <Text style={styles.sectionTitle}>
+        {t('analytics.providerComparison')}
+      </Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <BarChart
           data={{
@@ -88,7 +92,7 @@ export function AIPerformanceAnalytics() {
     </View>
   );
 
-  const renderCostAnalysis = () => (
+  const _renderCostAnalysis = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('analytics.costAnalysis')}</Text>
       <PieChart
@@ -111,7 +115,7 @@ export function AIPerformanceAnalytics() {
     </View>
   );
 
-  const renderPerformanceMetrics = () => (
+  const _renderPerformanceMetrics = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('analytics.performance')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -155,7 +159,7 @@ export function AIPerformanceAnalytics() {
     </View>
   );
 
-  const renderUsageTrends = () => (
+  const _renderUsageTrends = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('analytics.usageTrends')}</Text>
       {selectedProvider && timeSeriesData[selectedProvider] && (
@@ -184,7 +188,7 @@ export function AIPerformanceAnalytics() {
     </View>
   );
 
-  const renderErrorAnalysis = () => (
+  const _renderErrorAnalysis = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('analytics.errorAnalysis')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -213,7 +217,7 @@ export function AIPerformanceAnalytics() {
     </View>
   );
 
-  const getProviderColor = (provider: string, opacity: number = 1) => {
+  const _getProviderColor = (provider: string, opacity: number = 1) => {
     const colors: Record<string, string> = {
       openai: `rgba(0, 122, 255, ${opacity})`,
       anthropic: `rgba(75, 192, 192, ${opacity})`,
@@ -240,7 +244,10 @@ export function AIPerformanceAnalytics() {
         <Text style={styles.title}>{t('analytics.aiPerformance')}</Text>
         <View style={styles.periodSelector}>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'day' && styles.activePeriod]}
+            style={[
+              styles.periodButton,
+              period === 'day' && styles.activePeriod,
+            ]}
             onPress={() => setPeriod('day')}
           >
             <Text
@@ -253,7 +260,10 @@ export function AIPerformanceAnalytics() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'week' && styles.activePeriod]}
+            style={[
+              styles.periodButton,
+              period === 'week' && styles.activePeriod,
+            ]}
             onPress={() => setPeriod('week')}
           >
             <Text
@@ -295,7 +305,7 @@ export function AIPerformanceAnalytics() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

@@ -66,9 +66,12 @@ export class MonitoringService {
       description: 'Total number of HTTP requests',
     });
 
-    this.responseTimeHistogram = meter.createHistogram('http_response_time_seconds', {
-      description: 'HTTP response time in seconds',
-    });
+    this.responseTimeHistogram = meter.createHistogram(
+      'http_response_time_seconds',
+      {
+        description: 'HTTP response time in seconds',
+      }
+    );
   }
 
   public static getInstance(config?: MonitoringConfig): MonitoringService {

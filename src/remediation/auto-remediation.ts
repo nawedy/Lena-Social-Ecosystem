@@ -43,35 +43,35 @@ export class AutoRemediation {
           metric: 'error_rate',
           operator: 'gt',
           threshold: 0.05,
-          duration: 300
+          duration: 300,
         },
         actions: [
           {
             type: 'restart',
             params: {
-              gracePeriod: 30
-            }
-          }
+              gracePeriod: 30,
+            },
+          },
         ],
-        cooldown: 900
+        cooldown: 900,
       },
       {
         condition: {
           metric: 'memory_leak_detected',
           operator: 'eq',
           threshold: 1,
-          duration: 300
+          duration: 300,
         },
         actions: [
           {
             type: 'restart',
             params: {
-              gracePeriod: 60
-            }
-          }
+              gracePeriod: 60,
+            },
+          },
         ],
-        cooldown: 3600
-      }
+        cooldown: 3600,
+      },
     ],
     database: [
       {
@@ -79,35 +79,35 @@ export class AutoRemediation {
           metric: 'connection_errors',
           operator: 'gt',
           threshold: 100,
-          duration: 300
+          duration: 300,
         },
         actions: [
           {
             type: 'failover',
             params: {
-              waitForSync: true
-            }
-          }
+              waitForSync: true,
+            },
+          },
         ],
-        cooldown: 3600
+        cooldown: 3600,
       },
       {
         condition: {
           metric: 'slow_queries',
           operator: 'gt',
           threshold: 50,
-          duration: 300
+          duration: 300,
         },
         actions: [
           {
             type: 'optimize',
             params: {
-              target: 'queries'
-            }
-          }
+              target: 'queries',
+            },
+          },
         ],
-        cooldown: 1800
-      }
+        cooldown: 1800,
+      },
     ],
     cache: [
       {
@@ -115,19 +115,19 @@ export class AutoRemediation {
           metric: 'memory_fragmentation',
           operator: 'gt',
           threshold: 50,
-          duration: 300
+          duration: 300,
         },
         actions: [
           {
             type: 'flush',
             params: {
-              mode: 'async'
-            }
-          }
+              mode: 'async',
+            },
+          },
         ],
-        cooldown: 3600
-      }
-    ]
+        cooldown: 3600,
+      },
+    ],
   };
 
   private lastRemediationTime: Record<string, number> = {};
@@ -149,7 +149,10 @@ export class AutoRemediation {
   }
 
   public async checkAndRemediate(): Promise<void> {
-    const transaction = this.apm.startTransaction('check-and-remediate', 'remediation');
+    const transaction = this.apm.startTransaction(
+      'check-and-remediate',
+      'remediation'
+    );
 
     try {
       // Check remediation for each service
@@ -178,7 +181,7 @@ export class AutoRemediation {
       if (this.isInCooldown(service)) {
         this.logger.info('Service in remediation cooldown', {
           service,
-          lastRemediationTime: this.lastRemediationTime[service]
+          lastRemediationTime: this.lastRemediationTime[service],
         });
         return;
       }
@@ -206,7 +209,8 @@ export class AutoRemediation {
       switch (service) {
         case 'api':
           metrics.error_rate = await this.metrics.getErrorRate(service);
-          metrics.memory_leak_detected = await this.metrics.checkMemoryLeak(service);
+          metrics.memory_leak_detected =
+            await this.metrics.checkMemoryLeak(service);
           break;
 
         case 'database':
@@ -215,7 +219,8 @@ export class AutoRemediation {
           break;
 
         case 'cache':
-          metrics.memory_fragmentation = await this.metrics.getMemoryFragmentation();
+          metrics.memory_fragmentation =
+            await this.metrics.getMemoryFragmentation();
           break;
       }
 
@@ -267,7 +272,7 @@ export class AutoRemediation {
       this.logger.info('Applying remediation', {
         service,
         rule,
-        metrics
+        metrics,
       });
 
       const results: RemediationResult[] = [];
@@ -279,14 +284,14 @@ export class AutoRemediation {
           results.push({
             success: true,
             action,
-            metrics
+            metrics,
           });
         } catch (error) {
           results.push({
             success: false,
             action,
             error,
-            metrics
+            metrics,
           });
           break;
         }
@@ -298,7 +303,7 @@ export class AutoRemediation {
       // Log remediation results
       this.logger.info('Remediation completed', {
         service,
-        results
+        results,
       });
 
       // Record metrics
@@ -306,13 +311,13 @@ export class AutoRemediation {
         service,
         rule,
         results,
-        metrics
+        metrics,
       });
     } catch (error) {
       this.logger.error('Failed to apply remediation', {
         error,
         service,
-        rule
+        rule,
       });
       this.apm.captureError(error);
       throw error;
@@ -355,10 +360,7 @@ export class AutoRemediation {
     }
   }
 
-  private async restartService(
-    service: string,
-    params: any
-  ): Promise<void> {
+  private async restartService(service: string, params: any): Promise<void> {
     const span = this.apm.startSpan('restart-service');
 
     try {
@@ -368,10 +370,7 @@ export class AutoRemediation {
     }
   }
 
-  private async scaleService(
-    service: string,
-    params: any
-  ): Promise<void> {
+  private async scaleService(service: string, params: any): Promise<void> {
     const span = this.apm.startSpan('scale-service');
 
     try {
@@ -381,10 +380,7 @@ export class AutoRemediation {
     }
   }
 
-  private async failoverService(
-    service: string,
-    params: any
-  ): Promise<void> {
+  private async failoverService(service: string, params: any): Promise<void> {
     const span = this.apm.startSpan('failover-service');
 
     try {
@@ -406,10 +402,7 @@ export class AutoRemediation {
     }
   }
 
-  private async optimizeService(
-    service: string,
-    params: any
-  ): Promise<void> {
+  private async optimizeService(service: string, params: any): Promise<void> {
     const span = this.apm.startSpan('optimize-service');
 
     try {
@@ -421,10 +414,7 @@ export class AutoRemediation {
     }
   }
 
-  private async sendNotification(
-    service: string,
-    params: any
-  ): Promise<void> {
+  private async sendNotification(service: string, params: any): Promise<void> {
     const span = this.apm.startSpan('send-notification');
 
     try {
@@ -462,17 +452,25 @@ export class AutoRemediation {
 Total Remediation Events: ${events.length}
 
 ### Remediation Events:
-${events.map(event => `
+${events
+  .map(
+    event => `
 - Time: ${event.timestamp}
   * Rule: ${event.rule.condition.metric} ${event.rule.condition.operator} ${event.rule.condition.threshold}
-  * Actions: ${event.results.map(r => `
+  * Actions: ${event.results
+    .map(
+      r => `
     - ${r.action.type} (${r.success ? 'Success' : 'Failed'})
-      ${r.error ? `Error: ${r.error.message}` : ''}`).join('\n')}
+      ${r.error ? `Error: ${r.error.message}` : ''}`
+    )
+    .join('\n')}
   * Metrics:
     ${Object.entries(event.metrics)
       .map(([key, value]) => `- ${key}: ${value}`)
       .join('\n    ')}
-`).join('\n')}
+`
+  )
+  .join('\n')}
 `);
       }
 

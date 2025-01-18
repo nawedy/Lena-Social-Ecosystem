@@ -1,34 +1,57 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { Button } from '../Button';
+import Button from '../Button';
 
 describe('Button', () => {
-  it('renders correctly', () => {
-    const { getByText } = render(<Button title="Test Button" onPress={() => {}} />);
+  const mockOnPress = jest.fn();
+
+  beforeEach(() => {
+    mockOnPress.mockClear();
+  });
+
+  it('renders correctly with title', () => {
+    const { getByText } = render(
+      <Button title="Test Button" onPress={mockOnPress} />
+    );
+
     expect(getByText('Test Button')).toBeTruthy();
   });
 
   it('calls onPress when pressed', () => {
-    const onPress = jest.fn();
-    const { getByText } = render(<Button title="Test Button" onPress={onPress} />);
-    
+    const { getByText } = render(
+      <Button title="Test Button" onPress={mockOnPress} />
+    );
+
     fireEvent.press(getByText('Test Button'));
-    expect(onPress).toHaveBeenCalledTimes(1);
+    expect(mockOnPress).toHaveBeenCalledTimes(1);
   });
 
-  it('applies custom styles', () => {
+  it('applies custom style', () => {
+    const customStyle = { backgroundColor: 'red' };
     const { getByTestId } = render(
       <Button
         title="Test Button"
-        onPress={() => {}}
-        style={{ backgroundColor: 'red' }}
-        testID="custom-button"
+        onPress={mockOnPress}
+        style={customStyle}
+        testID="button"
       />
     );
-    
-    const button = getByTestId('custom-button');
-    expect(button.props.style).toMatchObject({
-      backgroundColor: 'red',
-    });
+
+    const button = getByTestId('button');
+    expect(button.props.style).toEqual(expect.arrayContaining([customStyle]));
+  });
+
+  it('disables the button when disabled prop is true', () => {
+    const { getByTestId } = render(
+      <Button
+        title="Test Button"
+        onPress={mockOnPress}
+        disabled={true}
+        testID="button"
+      />
+    );
+
+    const button = getByTestId('button');
+    expect(button.props.disabled).toBe(true);
   });
 });

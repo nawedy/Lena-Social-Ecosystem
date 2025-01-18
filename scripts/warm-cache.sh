@@ -37,11 +37,13 @@ curl -s http://localhost:3000/static/js/main.js > /dev/null
 curl -s http://localhost:3000/static/css/main.css > /dev/null
 curl -s http://localhost:3000/static/media/logo.png > /dev/null
 
-# Warm up API endpoints
-warm_endpoint "templates/popular"
-warm_endpoint "templates/categories"
-warm_endpoint "templates/featured"
-warm_endpoint "templates/recent"
+# Warm up AT Protocol endpoints
+echo "Warming AT Protocol endpoints..."
+warm_endpoint "bsky/feed"
+warm_endpoint "bsky/trending"
+warm_endpoint "bsky/suggested"
+warm_endpoint "bsky/following"
+warm_endpoint "bsky/followers"
 
 # Warm up beta-specific endpoints
 warm_endpoint "beta/features"

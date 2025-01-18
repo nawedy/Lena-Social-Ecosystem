@@ -56,16 +56,16 @@ export function TestingAnalyticsDashboard() {
   const [selectedTest, setSelectedTest] = useState<string | null>(null);
   const [testHistory, setTestHistory] = useState<TestReport[]>([]);
 
-  const analyticsService = AnalyticsService.getInstance();
+  const _analyticsService = AnalyticsService.getInstance();
 
   useEffect(() => {
     loadAnalytics();
   }, [period]);
 
-  const loadAnalytics = async () => {
+  const _loadAnalytics = async () => {
     setLoading(true);
     try {
-      const dateRange = getDateRange(period);
+      const _dateRange = getDateRange(period);
       const [metricsData, timeSeriesData, history] = await Promise.all([
         fetchMetrics(dateRange),
         fetchTimeSeriesData(dateRange),
@@ -82,11 +82,9 @@ export function TestingAnalyticsDashboard() {
     }
   };
 
-  const getDateRange = (
-    period: 'day' | 'week' | 'month'
-  ): AnalyticsPeriod => {
-    const end = new Date();
-    const start = new Date();
+  const _getDateRange = (period: 'day' | 'week' | 'month'): AnalyticsPeriod => {
+    const _end = new Date();
+    const _start = new Date();
 
     switch (period) {
       case 'day':
@@ -103,39 +101,41 @@ export function TestingAnalyticsDashboard() {
     return { startDate: start, endDate: end };
   };
 
-  const fetchMetrics = async (period: AnalyticsPeriod): Promise<TestMetrics> => {
-    const data = await analyticsService.getTestMetrics(
+  const _fetchMetrics = async (
+    period: AnalyticsPeriod
+  ): Promise<TestMetrics> => {
+    const _data = await analyticsService.getTestMetrics(
       period.startDate,
       period.endDate
     );
     return data;
   };
 
-  const fetchTimeSeriesData = async (
+  const _fetchTimeSeriesData = async (
     period: AnalyticsPeriod
   ): Promise<TimeSeriesData> => {
-    const data = await analyticsService.getTestTimeSeries(
+    const _data = await analyticsService.getTestTimeSeries(
       period.startDate,
       period.endDate
     );
     return data;
   };
 
-  const fetchTestHistory = async (
+  const _fetchTestHistory = async (
     period: AnalyticsPeriod
   ): Promise<TestReport[]> => {
-    const data = await analyticsService.getTestHistory(
+    const _data = await analyticsService.getTestHistory(
       period.startDate,
       period.endDate
     );
     return data;
   };
 
-  const renderMetricsCards = () => (
+  const _renderMetricsCards = () => (
     <View style={styles.metricsContainer}>
       <View style={styles.metricCard}>
         <Text style={styles.metricValue}>
-          {metrics?.totalRuns.toLocaleString()}
+          {metrics?.totalRuns?.toLocaleString()}
         </Text>
         <Text style={styles.metricLabel}>{t('analytics.totalRuns')}</Text>
       </View>
@@ -160,13 +160,11 @@ export function TestingAnalyticsDashboard() {
     </View>
   );
 
-  const renderCharts = () => (
+  const _renderCharts = () => (
     <View style={styles.chartsContainer}>
       {timeSeriesData && (
         <>
-          <Text style={styles.chartTitle}>
-            {t('analytics.executionTrend')}
-          </Text>
+          <Text style={styles.chartTitle}>{t('analytics.executionTrend')}</Text>
           <LineChart
             data={timeSeriesData}
             width={Dimensions.get('window').width - 32}
@@ -192,13 +190,14 @@ export function TestingAnalyticsDashboard() {
             data={[
               {
                 name: t('analytics.passed'),
-                population: metrics?.totalRuns! * (metrics?.passRate! / 100),
+                population: metrics?.totalRuns * (metrics?.passRate / 100) || 0,
                 color: '#28a745',
                 legendFontColor: '#7F7F7F',
               },
               {
                 name: t('analytics.failed'),
-                population: metrics?.totalRuns! * (metrics?.failureRate! / 100),
+                population:
+                  metrics?.totalRuns * (metrics?.failureRate / 100) || 0,
                 color: '#dc3545',
                 legendFontColor: '#7F7F7F',
               },
@@ -222,12 +221,10 @@ export function TestingAnalyticsDashboard() {
     </View>
   );
 
-  const renderFailureAnalysis = () => (
+  const _renderFailureAnalysis = () => (
     <View style={styles.failuresContainer}>
-      <Text style={styles.sectionTitle}>
-        {t('analytics.topFailures')}
-      </Text>
-      {metrics?.topFailures.map(failure => (
+      <Text style={styles.sectionTitle}>{t('analytics.topFailures')}</Text>
+      {metrics?.topFailures?.map(failure => (
         <TouchableOpacity
           key={failure.testCaseId}
           style={styles.failureItem}
@@ -240,18 +237,17 @@ export function TestingAnalyticsDashboard() {
             </Text>
           </View>
           <Text style={styles.failureTime}>
-            {t('analytics.lastFailure')}: {new Date(failure.lastFailure).toLocaleString()}
+            {t('analytics.lastFailure')}:{' '}
+            {new Date(failure.lastFailure).toLocaleString()}
           </Text>
         </TouchableOpacity>
       ))}
     </View>
   );
 
-  const renderTestHistory = () => (
+  const _renderTestHistory = () => (
     <View style={styles.historyContainer}>
-      <Text style={styles.sectionTitle}>
-        {t('analytics.testHistory')}
-      </Text>
+      <Text style={styles.sectionTitle}>{t('analytics.testHistory')}</Text>
       {testHistory.map(report => (
         <View key={report.runId} style={styles.historyItem}>
           <View style={styles.historyHeader}>
@@ -302,7 +298,10 @@ export function TestingAnalyticsDashboard() {
         <Text style={styles.title}>{t('analytics.title')}</Text>
         <View style={styles.periodSelector}>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'day' && styles.activePeriod]}
+            style={[
+              styles.periodButton,
+              period === 'day' && styles.activePeriod,
+            ]}
             onPress={() => setPeriod('day')}
           >
             <Text
@@ -315,7 +314,10 @@ export function TestingAnalyticsDashboard() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'week' && styles.activePeriod]}
+            style={[
+              styles.periodButton,
+              period === 'week' && styles.activePeriod,
+            ]}
             onPress={() => setPeriod('week')}
           >
             <Text
@@ -356,7 +358,7 @@ export function TestingAnalyticsDashboard() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

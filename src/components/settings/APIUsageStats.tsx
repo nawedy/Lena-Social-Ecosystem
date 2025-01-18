@@ -27,20 +27,20 @@ export function APIUsageStats({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [usageData, setUsageData] = useState<UsageData[]>([]);
   const [selectedProvider, setSelectedProvider] = useState('all');
-  const apiUsageService = APIUsageService.getInstance();
+  const _apiUsageService = APIUsageService.getInstance();
 
   useEffect(() => {
     loadUsageData();
   }, [period, selectedProvider]);
 
-  const loadUsageData = async () => {
+  const _loadUsageData = async () => {
     setLoading(true);
     try {
-      const providers = ['openai', 'stability', 'replicate'];
+      const _providers = ['openai', 'stability', 'replicate'];
       let allUsage: UsageData[] = [];
 
       for (const provider of providers) {
-        const stats = await apiUsageService.getUsageStats(
+        const _stats = await apiUsageService.getUsageStats(
           userId,
           provider,
           period
@@ -56,7 +56,9 @@ export function APIUsageStats({ userId }: { userId: string }) {
       }
 
       if (selectedProvider !== 'all') {
-        allUsage = allUsage.filter(usage => usage.provider === selectedProvider);
+        allUsage = allUsage.filter(
+          usage => usage.provider === selectedProvider
+        );
       }
 
       setUsageData(allUsage);
@@ -67,8 +69,8 @@ export function APIUsageStats({ userId }: { userId: string }) {
     }
   };
 
-  const renderUsageChart = () => {
-    const chartData = {
+  const _renderUsageChart = () => {
+    const _chartData = {
       labels: usageData.map(data => data.operation.substring(0, 8)),
       datasets: [
         {
@@ -100,7 +102,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
     );
   };
 
-  const getTotalUsage = () => {
+  const _getTotalUsage = () => {
     return usageData.reduce(
       (acc, curr) => ({
         tokens: acc.tokens + curr.tokens,
@@ -111,8 +113,8 @@ export function APIUsageStats({ userId }: { userId: string }) {
     );
   };
 
-  const renderProviderSelector = () => {
-    const providers = ['all', 'openai', 'stability', 'replicate'];
+  const _renderProviderSelector = () => {
+    const _providers = ['all', 'openai', 'stability', 'replicate'];
 
     return (
       <View style={styles.providerSelector}>
@@ -128,7 +130,8 @@ export function APIUsageStats({ userId }: { userId: string }) {
             <Text
               style={[
                 styles.providerButtonText,
-                selectedProvider === provider && styles.providerButtonTextSelected,
+                selectedProvider === provider &&
+                  styles.providerButtonTextSelected,
               ]}
             >
               {provider === 'all' ? t('all') : provider}
@@ -139,7 +142,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
     );
   };
 
-  const renderPeriodSelector = () => (
+  const _renderPeriodSelector = () => (
     <View style={styles.periodSelector}>
       <TouchableOpacity
         style={[
@@ -184,7 +187,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
     );
   }
 
-  const totals = getTotalUsage();
+  const _totals = getTotalUsage();
 
   return (
     <ScrollView style={styles.container}>
@@ -204,9 +207,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
         </View>
         <View style={styles.statBox}>
           <Text style={styles.statLabel}>{t('settings.totalCost')}</Text>
-          <Text style={styles.statValue}>
-            ${totals.cost.toFixed(2)}
-          </Text>
+          <Text style={styles.statValue}>${totals.cost.toFixed(2)}</Text>
         </View>
       </View>
 
@@ -227,9 +228,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
               <Text style={styles.detailText}>
                 {data.tokens.toLocaleString()} {t('settings.tokens')}
               </Text>
-              <Text style={styles.detailText}>
-                ${data.cost.toFixed(2)}
-              </Text>
+              <Text style={styles.detailText}>${data.cost.toFixed(2)}</Text>
             </View>
           </View>
         ))}
@@ -238,7 +237,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,

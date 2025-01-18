@@ -178,7 +178,9 @@ export class TemplateTestAutomation {
     const startTime = Date.now();
 
     try {
-      const template = await this.templateService.getTemplate(testCase.templateId);
+      const template = await this.templateService.getTemplate(
+        testCase.templateId
+      );
       if (!template) {
         throw new Error(`Template not found: ${testCase.templateId}`);
       }
@@ -191,7 +193,10 @@ export class TemplateTestAutomation {
       const endTime = Date.now();
       const executionTime = endTime - startTime;
 
-      const success = this.validateTestResult(result.content, testCase.expectedOutput);
+      const success = this.validateTestResult(
+        result.content,
+        testCase.expectedOutput
+      );
 
       const testResult: TestResult = {
         testCaseId: testCase.id,
@@ -235,7 +240,7 @@ export class TemplateTestAutomation {
       try {
         const result = await this.performAction(step, env);
         const metrics = await this.collectMetrics(startTime);
-        
+
         return {
           testCaseId: step.name,
           success: true,
@@ -351,20 +356,24 @@ export class TemplateTestAutomation {
 
     if (Array.isArray(actual)) {
       // Compare arrays
-      return actual.length === expected.length &&
+      return (
+        actual.length === expected.length &&
         actual.every((item, index) =>
           this.compareOutputs(item, expected[index], tolerance)
-        );
+        )
+      );
     }
 
     if (typeof actual === 'object') {
       // Compare objects recursively
       const actualKeys = Object.keys(actual);
       const expectedKeys = Object.keys(expected);
-      return actualKeys.length === expectedKeys.length &&
+      return (
+        actualKeys.length === expectedKeys.length &&
         actualKeys.every(key =>
           this.compareOutputs(actual[key], expected[key], tolerance)
-        );
+        )
+      );
     }
 
     return actual === expected;
@@ -516,7 +525,8 @@ export class TemplateTestAutomation {
     return {
       total: results.length,
       passed: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success && !r.error?.includes('skipped')).length,
+      failed: results.filter(r => !r.success && !r.error?.includes('skipped'))
+        .length,
       skipped: results.filter(r => r.error?.includes('skipped')).length,
       totalTime,
       totalCost,
@@ -607,7 +617,7 @@ Total Cost: $${summary.totalCost.toFixed(4)}
     if (!suite.schedule) return;
 
     const { frequency, startTime, daysOfWeek } = suite.schedule;
-    
+
     // Add scheduling logic here
     // For example, using node-cron:
     /*

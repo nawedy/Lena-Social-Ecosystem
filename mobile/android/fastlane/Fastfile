@@ -1,0 +1,164 @@
+default_platform(:android)
+
+platform :android do
+  desc "Submit a new Beta Build to Play Store Beta"
+  lane :beta do
+    # Ensure clean git status
+    ensure_git_status_clean
+    
+    # Increment version code
+    increment_version_code(
+      gradle_file_path: "app/build.gradle"
+    )
+    
+    # Build the release APK
+    gradle(
+      task: "clean assembleRelease",
+      properties: {
+        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_FILE"],
+        "android.injected.signing.store.password" => ENV["ANDROID_KEYSTORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
+      }
+    )
+    
+    # Upload to Play Store Beta
+    upload_to_play_store(
+      track: 'beta',
+      json_key: 'fastlane/play-store-credentials.json',
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: 'draft',
+      aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+    )
+  end
+  
+  desc "Deploy a new version to the Play Store"
+  lane :deploy do
+    # Ensure clean git status
+    ensure_git_status_clean
+    
+    # Increment version code and name if needed
+    current_version = get_version_name(
+      gradle_file_path: "app/build.gradle"
+    )
+    
+    if ENV['CI']
+      increment_version_code(
+        gradle_file_path: "app/build.gradle"
+      )
+    else
+      # Interactive version bump for manual deployments
+      version_bump_type = UI.select(
+        "What kind of version bump would you like?",
+        ["patch", "minor", "major"]
+      )
+      
+      increment_version_name(
+        gradle_file_path: "app/build.gradle",
+        bump_type: version_bump_type
+      )
+    end
+    
+    # Run tests
+    gradle(task: "test")
+    
+    # Build release AAB
+    gradle(
+      task: "clean bundleRelease",
+      properties: {
+        "android.injected.signing.store.file" => ENV["ANDROID_KEYSTORE_FILE"],
+        "android.injected.signing.store.password" => ENV["ANDROID_KEYSTORE_PASSWORD"],
+        "android.injected.signing.key.alias" => ENV["ANDROID_KEY_ALIAS"],
+        "android.injected.signing.key.password" => ENV["ANDROID_KEY_PASSWORD"],
+      }
+    )
+    
+    # Upload to Play Store
+    upload_to_play_store(
+      track: 'production',
+      json_key: 'fastlane/play-store-credentials.json',
+      skip_upload_metadata: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: 'completed',
+      aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH]
+    )
+    
+    # Tag the release
+    add_git_tag(
+      tag: "android/#{get_version_name}/#{get_version_code}"
+    )
+    push_git_tags
+  end
+  
+  desc "Create app in Play Store if needed"
+  lane :create_app do
+    supply_init(
+      json_key: 'fastlane/play-store-credentials.json',
+      package_name: "com.tiktotoe.app"
+    )
+  end
+  
+  desc "Promote beta to production"
+  lane :promote_to_production do
+    upload_to_play_store(
+      track: 'beta',
+      track_promote_to: 'production',
+      json_key: 'fastlane/play-store-credentials.json',
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      version_code: ENV["VERSION_CODE"]
+    )
+  end
+  
+  # Helper to increment version code
+  private_lane :increment_version_code do |options|
+    path = options[:gradle_file_path]
+    s = File.read(path)
+    versionCode = s[/versionCode\s+(\d+)/, 1].to_i
+    s[/versionCode\s+\d+/, "versionCode #{versionCode + 1}"]
+    f = File.new(path, 'w')
+    f.write(s)
+    f.close
+  end
+  
+  # Helper to increment version name
+  private_lane :increment_version_name do |options|
+    path = options[:gradle_file_path]
+    s = File.read(path)
+    versionName = s[/versionName\s+"([\d\.]+)"/, 1]
+    version_array = versionName.split('.')
+    
+    case options[:bump_type]
+    when "patch"
+      version_array[2] = version_array[2].to_i + 1
+    when "minor"
+      version_array[1] = version_array[1].to_i + 1
+      version_array[2] = 0
+    when "major"
+      version_array[0] = version_array[0].to_i + 1
+      version_array[1] = 0
+      version_array[2] = 0
+    end
+    
+    new_version = version_array.join('.')
+    s[/versionName\s+"[\d\.]+"/, "versionName \"#{new_version}\""]
+    f = File.new(path, 'w')
+    f.write(s)
+    f.close
+  end
+  
+  error do |lane, exception, options|
+    if ENV['CI']
+      # Send error notification to Slack
+      slack(
+        message: "Android build failed in lane #{lane}: #{exception.message}",
+        success: false,
+        slack_url: ENV["SLACK_WEBHOOK_URL"]
+      )
+    end
+  end
+end

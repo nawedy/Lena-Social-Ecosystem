@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { formatDistanceToNow } from 'date-fns';
 import { ApiService } from '../../../services/api';
+import { useATProto } from '../../../contexts/ATProtoContext';
+import FastImage from 'react-native-fast-image';
 
 interface PostCardProps {
   post: {
@@ -29,35 +33,79 @@ interface PostCardProps {
     likes: number;
     reposts: number;
   };
+  onError?: (error: Error) => void;
 }
 
-export function PostCard({ post }: PostCardProps) {
-  const handleLike = async () => {
+export function PostCard({ post, onError }: PostCardProps) {
+  const { agent } = useATProto();
+  const [isLiking, setIsLiking] = useState(false);
+  const [isReposting, setIsReposting] = useState(false);
+  const [localLikes, setLocalLikes] = useState(post.likes);
+  const [localReposts, setLocalReposts] = useState(post.reposts);
+  const [mediaLoading, setMediaLoading] = useState<Record<number, boolean>>({});
+
+  const _handleError = useCallback(
+    (error: Error, action: string) => {
+      const _message = `Failed to ${action}: ${error.message}`;
+      onError?.(error);
+      Alert.window.alert('Error', message);
+    },
+    [onError]
+  );
+
+  const _handleLike = async () => {
+    if (isLiking || !agent) return;
+
+    setIsLiking(true);
     try {
-      const api = ApiService.getInstance();
-      await api.getAgent().like(post.uri, post.cid);
+      await agent.like(post.uri, post.cid);
+      setLocalLikes(prev => prev + 1);
     } catch (error) {
-      console.error('Failed to like post:', error);
+      handleError(
+        error instanceof Error ? error : new Error('Unknown error'),
+        'like post'
+      );
+    } finally {
+      setIsLiking(false);
     }
   };
 
-  const handleRepost = async () => {
+  const _handleRepost = async () => {
+    if (isReposting || !agent) return;
+
+    setIsReposting(true);
     try {
-      const api = ApiService.getInstance();
-      await api.getAgent().repost(post.uri, post.cid);
+      await agent.repost(post.uri, post.cid);
+      setLocalReposts(prev => prev + 1);
     } catch (error) {
-      console.error('Failed to repost:', error);
+      handleError(
+        error instanceof Error ? error : new Error('Unknown error'),
+        'repost'
+      );
+    } finally {
+      setIsReposting(false);
     }
+  };
+
+  const _handleMediaLoad = (index: number) => {
+    setMediaLoading(prev => ({ ...prev, [index]: false }));
+  };
+
+  const _handleMediaLoadStart = (index: number) => {
+    setMediaLoading(prev => ({ ...prev, [index]: true }));
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        {post.author.avatar && (
-          <Image
+        {post.author.avatar ? (
+          <FastImage
             source={{ uri: post.author.avatar }}
             style={styles.avatar}
+            defaultSource={require('../../../assets/default-avatar.png')}
           />
+        ) : (
+          <View style={[styles.avatar, styles.placeholderAvatar]} />
         )}
         <View style={styles.authorInfo}>
           <Text style={styles.displayName}>
@@ -75,34 +123,63 @@ export function PostCard({ post }: PostCardProps) {
       {post.media && post.media.length > 0 && (
         <View style={styles.mediaContainer}>
           {post.media.map((media, index) => (
-            <Image
-              key={index}
-              source={{ uri: media.url }}
-              style={styles.media}
-              resizeMode="cover"
-            />
+            <View key={index} style={styles.mediaWrapper}>
+              <FastImage
+                source={{ uri: media.url }}
+                style={styles.media}
+                resizeMode={FastImage.resizeMode.cover}
+                onLoadStart={() => handleMediaLoadStart(index)}
+                onLoad={() => handleMediaLoad(index)}
+              />
+              {mediaLoading[index] && (
+                <ActivityIndicator
+                  style={styles.mediaLoader}
+                  size="large"
+                  color="#0000ff"
+                />
+              )}
+            </View>
           ))}
         </View>
       )}
 
       <View style={styles.actions}>
-        <TouchableOpacity onPress={handleLike} style={styles.actionButton}>
-          <Text>❤️ {post.likes}</Text>
+        <TouchableOpacity
+          onPress={handleLike}
+          style={[styles.actionButton, isLiking && styles.actionButtonDisabled]}
+          disabled={isLiking}
+        >
+          {isLiking ? (
+            <ActivityIndicator size="small" color="#999" />
+          ) : (
+            <Text>❤️ {localLikes}</Text>
+          )}
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleRepost} style={styles.actionButton}>
-          <Text>🔄 {post.reposts}</Text>
+        <TouchableOpacity
+          onPress={handleRepost}
+          style={[
+            styles.actionButton,
+            isReposting && styles.actionButtonDisabled,
+          ]}
+          disabled={isReposting}
+        >
+          {isReposting ? (
+            <ActivityIndicator size="small" color="#999" />
+          ) : (
+            <Text>🔄 {localReposts}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     padding: 15,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -114,6 +191,9 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
+  },
+  placeholderAvatar: {
+    backgroundColor: '#eee',
   },
   authorInfo: {
     flex: 1,
@@ -132,25 +212,47 @@ const styles = StyleSheet.create({
   },
   content: {
     fontSize: 16,
-    marginBottom: 10,
     lineHeight: 22,
+    marginBottom: 10,
   },
   mediaContainer: {
-    marginBottom: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -5,
+  },
+  mediaWrapper: {
+    position: 'relative',
+    width: '100%',
+    aspectRatio: 16 / 9,
+    marginVertical: 5,
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   media: {
-    width: Dimensions.get('window').width - 30,
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 5,
+    width: '100%',
+    height: '100%',
+  },
+  mediaLoader: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -12 }, { translateY: -12 }],
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginTop: 10,
     paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 8,
+    borderRadius: 20,
+  },
+  actionButtonDisabled: {
+    opacity: 0.5,
   },
 });

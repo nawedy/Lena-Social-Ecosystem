@@ -1,134 +1,124 @@
 import { RBACService, Role, Permission } from '../../services/RBACService';
 
+// Mock analytics service
+jest.mock('../../services/AnalyticsService');
+
 describe('RBACService', () => {
   let rbacService: RBACService;
-  const adminUserId = 'admin_user';
   const testUserId = 'test_user';
+  const adminUserId = 'admin_user';
 
-  beforeEach(() => {
+  beforeEach(async () => {
     rbacService = RBACService.getInstance();
+    await rbacService.initialize();
+
+    // Setup test data
+    await rbacService.setUserRole(adminUserId, Role.ADMIN);
+    await rbacService.setUserRole(testUserId, Role.USER);
   });
 
-  describe('Role Assignment', () => {
-    it('should allow admin to assign roles', async () => {
-      // Setup admin role
-      await rbacService.assignRole('system', adminUserId, Role.ADMIN);
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-      // Test role assignment
-      await expect(
-        rbacService.assignRole(adminUserId, testUserId, Role.VIEWER)
-      ).resolves.not.toThrow();
-
-      // Verify role assignment
-      const permissions = await rbacService.getUserPermissions(testUserId);
-      expect(permissions).toContain(Permission.VIEW_ANALYTICS);
+  describe('Role Management', () => {
+    it('should assign roles correctly', async () => {
+      const userId = 'new_user';
+      await rbacService.setUserRole(userId, Role.USER);
+      const role = await rbacService.getUserRole(userId);
+      expect(role).toBe(Role.USER);
     });
 
-    it('should prevent non-admin from assigning roles', async () => {
-      await rbacService.assignRole('system', testUserId, Role.VIEWER);
-
-      await expect(
-        rbacService.assignRole(testUserId, 'other_user', Role.VIEWER)
-      ).rejects.toThrow('Access denied');
+    it('should handle role updates', async () => {
+      await rbacService.setUserRole(testUserId, Role.ADMIN);
+      const role = await rbacService.getUserRole(testUserId);
+      expect(role).toBe(Role.ADMIN);
     });
 
-    it('should handle role expiration', async () => {
-      await rbacService.assignRole('system', adminUserId, Role.ADMIN);
-
-      const expiresAt = new Date(Date.now() + 1000); // 1 second from now
-      await rbacService.assignRole(adminUserId, testUserId, Role.VIEWER, {}, expiresAt);
-
-      // Initially should have permissions
-      let permissions = await rbacService.getUserPermissions(testUserId);
-      expect(permissions).toContain(Permission.VIEW_ANALYTICS);
-
-      // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 1100));
-
-      // Should no longer have permissions
-      permissions = await rbacService.getUserPermissions(testUserId);
-      expect(permissions).not.toContain(Permission.VIEW_ANALYTICS);
+    it('should prevent assigning invalid roles', async () => {
+      await expect(
+        rbacService.setUserRole(testUserId, 'invalid_role' as Role)
+      ).rejects.toThrow();
     });
   });
 
-  describe('Permission Validation', () => {
-    it('should validate permissions correctly', async () => {
-      await rbacService.assignRole('system', testUserId, Role.ANALYST);
-
-      // Should allow permitted actions
-      await expect(
-        rbacService.validateAccess(testUserId, 'analytics', Permission.VIEW_ANALYTICS)
-      ).resolves.toBe(true);
-
-      // Should deny unpermitted actions
-      await expect(
-        rbacService.validateAccess(testUserId, 'system', Permission.MANAGE_SYSTEM)
-      ).rejects.toThrow('Access denied');
-    });
-
-    it('should handle role inheritance', async () => {
-      await rbacService.assignRole('system', testUserId, Role.MANAGER);
-
-      const permissions = await rbacService.getUserPermissions(testUserId);
-      expect(permissions).toContain(Permission.VIEW_ANALYTICS);
-      expect(permissions).toContain(Permission.MANAGE_ACCOUNTS);
-      expect(permissions).not.toContain(Permission.MANAGE_SYSTEM);
-    });
-  });
-
-  describe('Account Access', () => {
-    it('should return accessible accounts', async () => {
-      const scope = {
-        accounts: ['account1', 'account2'],
-      };
-
-      await rbacService.assignRole('system', testUserId, Role.ANALYST, scope);
-
-      const accounts = await rbacService.getAccessibleAccounts(
+  describe('Permission Management', () => {
+    it('should grant permissions correctly', async () => {
+      await rbacService.grantPermission(testUserId, Permission.READ);
+      const hasPermission = await rbacService.hasPermission(
         testUserId,
-        Permission.VIEW_ANALYTICS
+        Permission.READ
       );
+      expect(hasPermission).toBe(true);
+    });
 
-      expect(accounts).toContain('account1');
-      expect(accounts).toContain('account2');
-      expect(accounts).toHaveLength(2);
+    it('should revoke permissions correctly', async () => {
+      await rbacService.grantPermission(testUserId, Permission.WRITE);
+      await rbacService.revokePermission(testUserId, Permission.WRITE);
+      const hasPermission = await rbacService.hasPermission(
+        testUserId,
+        Permission.WRITE
+      );
+      expect(hasPermission).toBe(false);
+    });
+
+    it('should handle multiple permissions', async () => {
+      await rbacService.grantPermission(testUserId, Permission.READ);
+      await rbacService.grantPermission(testUserId, Permission.WRITE);
+
+      expect(await rbacService.hasPermission(testUserId, Permission.READ)).toBe(
+        true
+      );
+      expect(
+        await rbacService.hasPermission(testUserId, Permission.WRITE)
+      ).toBe(true);
+      expect(
+        await rbacService.hasPermission(testUserId, Permission.DELETE)
+      ).toBe(false);
     });
   });
 
-  describe('Audit Logging', () => {
-    it('should log role assignments', async () => {
-      await rbacService.assignRole('system', adminUserId, Role.ADMIN);
-      await rbacService.assignRole(adminUserId, testUserId, Role.VIEWER);
-
-      const logs = await rbacService.getAuditLogs(adminUserId, {
-        actions: ['assign_role'],
-      });
-
-      expect(logs.length).toBeGreaterThan(0);
-      expect(logs[0].action).toBe('assign_role');
-      expect(logs[0].metadata.status).toBe('success');
+  describe('Role-based Permissions', () => {
+    it('should grant admin all permissions', async () => {
+      const permissions = Object.values(Permission);
+      for (const permission of permissions) {
+        const hasPermission = await rbacService.hasPermission(
+          adminUserId,
+          permission
+        );
+        expect(hasPermission).toBe(true);
+      }
     });
 
-    it('should log access denials', async () => {
-      await rbacService.assignRole('system', testUserId, Role.VIEWER);
+    it('should limit user permissions', async () => {
+      expect(await rbacService.hasPermission(testUserId, Permission.READ)).toBe(
+        true
+      );
+      expect(
+        await rbacService.hasPermission(testUserId, Permission.WRITE)
+      ).toBe(false);
+      expect(
+        await rbacService.hasPermission(testUserId, Permission.DELETE)
+      ).toBe(false);
+    });
+  });
 
-      try {
-        await rbacService.validateAccess(
+  describe('Error Handling', () => {
+    it('should handle non-existent users', async () => {
+      const hasPermission = await rbacService.hasPermission(
+        'non_existent_user',
+        Permission.READ
+      );
+      expect(hasPermission).toBe(false);
+    });
+
+    it('should handle invalid permissions', async () => {
+      await expect(
+        rbacService.grantPermission(
           testUserId,
-          'system',
-          Permission.MANAGE_SYSTEM
-        );
-      } catch (error) {
-        // Expected error
-      }
-
-      const logs = await rbacService.getAuditLogs(adminUserId, {
-        actions: ['access_denied'],
-      });
-
-      expect(logs.length).toBeGreaterThan(0);
-      expect(logs[0].action).toBe('access_denied');
-      expect(logs[0].metadata.status).toBe('failure');
+          'invalid_permission' as Permission
+        )
+      ).rejects.toThrow();
     });
   });
 });

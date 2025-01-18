@@ -87,7 +87,12 @@ interface MigrationStats {
 }
 
 interface MigrationHook {
-  event: 'pre_migration' | 'post_migration' | 'error' | 'progress' | 'completion';
+  event:
+    | 'pre_migration'
+    | 'post_migration'
+    | 'error'
+    | 'progress'
+    | 'completion';
   handler: (job: MigrationJob) => Promise<void>;
 }
 
@@ -351,10 +356,7 @@ export class EnhancedMigrationService {
     }
   }
 
-  private async processItem(
-    job: MigrationJob,
-    item: any
-  ): Promise<void> {
+  private async processItem(job: MigrationJob, item: any): Promise<void> {
     const startTime = Date.now();
 
     try {
@@ -397,7 +399,6 @@ export class EnhancedMigrationService {
       // Update performance metrics
       const duration = Date.now() - startTime;
       this.updateItemPerformance(job, duration);
-
     } catch (error) {
       throw error;
     }
@@ -442,10 +443,7 @@ export class EnhancedMigrationService {
     // Implementation for updating performance metrics
   }
 
-  private updateItemPerformance(
-    job: MigrationJob,
-    duration: number
-  ): void {
+  private updateItemPerformance(job: MigrationJob, duration: number): void {
     // Implementation for updating item performance
   }
 }

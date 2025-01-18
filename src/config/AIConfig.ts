@@ -36,12 +36,14 @@ export const StabilityConfig = z.object({
 // Load balancing configuration
 export const LoadBalancingConfig = z.object({
   strategy: z.enum(['round-robin', 'weighted', 'latency-based', 'cost-based']),
-  providers: z.array(z.object({
-    name: z.string(),
-    weight: z.number().min(0).max(1),
-    maxConcurrent: z.number().positive(),
-    cooldown: z.number().nonnegative(),
-  })),
+  providers: z.array(
+    z.object({
+      name: z.string(),
+      weight: z.number().min(0).max(1),
+      maxConcurrent: z.number().positive(),
+      cooldown: z.number().nonnegative(),
+    })
+  ),
   failover: z.object({
     enabled: z.boolean(),
     maxAttempts: z.number().positive(),
@@ -67,18 +69,28 @@ export const RateLimitConfig = z.object({
 export const ContentFilterConfig = z.object({
   enabled: z.boolean(),
   mode: z.enum(['strict', 'moderate', 'permissive']),
-  filters: z.array(z.object({
-    type: z.enum(['toxicity', 'profanity', 'bias', 'personal-info', 'custom']),
-    threshold: z.number().min(0).max(1),
-    action: z.enum(['block', 'flag', 'replace']),
-    replacement: z.string().optional(),
-  })),
-  customPatterns: z.array(z.object({
-    pattern: z.string(),
-    flags: z.string(),
-    action: z.enum(['block', 'flag', 'replace']),
-    replacement: z.string().optional(),
-  })),
+  filters: z.array(
+    z.object({
+      type: z.enum([
+        'toxicity',
+        'profanity',
+        'bias',
+        'personal-info',
+        'custom',
+      ]),
+      threshold: z.number().min(0).max(1),
+      action: z.enum(['block', 'flag', 'replace']),
+      replacement: z.string().optional(),
+    })
+  ),
+  customPatterns: z.array(
+    z.object({
+      pattern: z.string(),
+      flags: z.string(),
+      action: z.enum(['block', 'flag', 'replace']),
+      replacement: z.string().optional(),
+    })
+  ),
 });
 
 // Monitoring configuration
@@ -179,28 +191,31 @@ export const CostConfig = z.object({
     granularity: z.enum(['request', 'hour', 'day']),
     breakdown: z.array(z.enum(['provider', 'model', 'user', 'feature'])),
   }),
-  budgets: z.array(z.object({
-    name: z.string(),
-    limit: z.number().positive(),
-    period: z.enum(['daily', 'weekly', 'monthly']),
-    alerts: z.array(z.object({
-      threshold: z.number().min(0).max(1),
-      channels: z.array(z.string()),
-    })),
-  })),
+  budgets: z.array(
+    z.object({
+      name: z.string(),
+      limit: z.number().positive(),
+      period: z.enum(['daily', 'weekly', 'monthly']),
+      alerts: z.array(
+        z.object({
+          threshold: z.number().min(0).max(1),
+          channels: z.array(z.string()),
+        })
+      ),
+    })
+  ),
   optimization: z.object({
     enabled: z.boolean(),
-    strategies: z.array(z.enum([
-      'model-selection',
-      'batch-processing',
-      'caching',
-      'compression',
-    ])),
-    rules: z.array(z.object({
-      condition: z.string(),
-      action: z.string(),
-      priority: z.number(),
-    })),
+    strategies: z.array(
+      z.enum(['model-selection', 'batch-processing', 'caching', 'compression'])
+    ),
+    rules: z.array(
+      z.object({
+        condition: z.string(),
+        action: z.string(),
+        priority: z.number(),
+      })
+    ),
   }),
 });
 

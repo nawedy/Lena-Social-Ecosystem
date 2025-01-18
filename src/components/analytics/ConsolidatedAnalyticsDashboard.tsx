@@ -11,11 +11,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-  ContributionGraph,
-  StackedBarChart,
+  _BarChart,
+  _PieChart,
+  _ProgressChart,
+  _ContributionGraph,
+  _StackedBarChart,
 } from 'react-native-chart-kit';
 import { MaterialIcons } from '@expo/vector-icons';
 import { EnhancedAnalyticsService } from '../../services/EnhancedAnalyticsService';
@@ -58,8 +58,8 @@ export function ConsolidatedAnalyticsDashboard() {
   const [data, setData] = useState<any>(null);
   const [accessibleAccounts, setAccessibleAccounts] = useState<string[]>([]);
 
-  const analytics = EnhancedAnalyticsService.getInstance();
-  const rbac = RBACService.getInstance();
+  const _analytics = EnhancedAnalyticsService.getInstance();
+  const _rbac = RBACService.getInstance();
 
   useEffect(() => {
     loadAccessibleAccounts();
@@ -71,9 +71,9 @@ export function ConsolidatedAnalyticsDashboard() {
     }
   }, [accessibleAccounts, state.timeframe, state.filter, state.view]);
 
-  const loadAccessibleAccounts = async () => {
+  const _loadAccessibleAccounts = async () => {
     try {
-      const accounts = await rbac.getAccessibleAccounts(
+      const _accounts = await rbac.getAccessibleAccounts(
         'current_user_id',
         Permission.VIEW_ANALYTICS
       );
@@ -90,10 +90,10 @@ export function ConsolidatedAnalyticsDashboard() {
     }
   };
 
-  const loadAnalytics = async () => {
+  const _loadAnalytics = async () => {
     setLoading(true);
     try {
-      const analyticsData = await analytics.getConsolidatedAnalytics(
+      const _analyticsData = await analytics.getConsolidatedAnalytics(
         'current_user_id',
         state.timeframe,
         state.filter
@@ -106,15 +106,13 @@ export function ConsolidatedAnalyticsDashboard() {
     }
   };
 
-  const renderOverview = () => {
+  const _renderOverview = () => {
     if (!data) return null;
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          {t('analytics.overview.title')}
-        </Text>
-        
+        <Text style={styles.sectionTitle}>{t('analytics.overview.title')}</Text>
+
         {/* Key Metrics */}
         <ScrollView
           horizontal
@@ -173,7 +171,9 @@ export function ConsolidatedAnalyticsDashboard() {
             {t('analytics.overview.topContent')}
           </Text>
           {data.content
-            .sort((a: any, b: any) => b.metrics.engagement - a.metrics.engagement)
+            .sort(
+              (a: any, b: any) => b.metrics.engagement - a.metrics.engagement
+            )
             .slice(0, 5)
             .map((content: any, index: number) => (
               <View key={index} style={styles.contentItem}>
@@ -208,9 +208,7 @@ export function ConsolidatedAnalyticsDashboard() {
               />
               <View style={styles.insightContent}>
                 <Text style={styles.insightTitle}>{insight.metric}</Text>
-                <Text style={styles.insightText}>
-                  {insight.recommendation}
-                </Text>
+                <Text style={styles.insightText}>{insight.recommendation}</Text>
               </View>
             </View>
           ))}
@@ -221,115 +219,124 @@ export function ConsolidatedAnalyticsDashboard() {
           <Text style={styles.subsectionTitle}>
             {t('analytics.overview.predictions')}
           </Text>
-          {data.predictions.slice(0, 3).map((prediction: any, index: number) => (
-            <View key={index} style={styles.predictionItem}>
-              <View style={styles.predictionHeader}>
-                <Text style={styles.predictionTitle}>
-                  {prediction.metric}
-                </Text>
-                <Text style={styles.predictionConfidence}>
-                  {formatPercentage(prediction.confidence)} {t('analytics.confidence')}
-                </Text>
+          {data.predictions
+            .slice(0, 3)
+            .map((prediction: any, index: number) => (
+              <View key={index} style={styles.predictionItem}>
+                <View style={styles.predictionHeader}>
+                  <Text style={styles.predictionTitle}>
+                    {prediction.metric}
+                  </Text>
+                  <Text style={styles.predictionConfidence}>
+                    {formatPercentage(prediction.confidence)}{' '}
+                    {t('analytics.confidence')}
+                  </Text>
+                </View>
+                <View style={styles.predictionChart}>
+                  <LineChart
+                    data={{
+                      labels: generateForecastLabels(),
+                      datasets: [
+                        {
+                          data: prediction.forecast,
+                        },
+                      ],
+                    }}
+                    width={Dimensions.get('window').width - 64}
+                    height={100}
+                    chartConfig={{
+                      backgroundColor: '#fff',
+                      backgroundGradientFrom: '#fff',
+                      backgroundGradientTo: '#fff',
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
+                    }}
+                    bezier
+                    withDots={false}
+                    withInnerLines={false}
+                    style={styles.predictionChartStyle}
+                  />
+                </View>
+                <View style={styles.recommendations}>
+                  {prediction.recommendations.map(
+                    (rec: any, recIndex: number) => (
+                      <View key={recIndex} style={styles.recommendation}>
+                        <Text style={styles.recommendationText}>
+                          {rec.action}
+                        </Text>
+                        <View style={styles.recommendationMetrics}>
+                          <Text style={styles.recommendationMetric}>
+                            💪 {formatImpact(rec.impact)}
+                          </Text>
+                          <Text style={styles.recommendationMetric}>
+                            ⏱️ {formatEffort(rec.effort)}
+                          </Text>
+                        </View>
+                      </View>
+                    )
+                  )}
+                </View>
               </View>
-              <View style={styles.predictionChart}>
-                <LineChart
-                  data={{
-                    labels: generateForecastLabels(),
-                    datasets: [{
-                      data: prediction.forecast,
-                    }],
-                  }}
-                  width={Dimensions.get('window').width - 64}
-                  height={100}
-                  chartConfig={{
-                    backgroundColor: '#fff',
-                    backgroundGradientFrom: '#fff',
-                    backgroundGradientTo: '#fff',
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
-                  }}
-                  bezier
-                  withDots={false}
-                  withInnerLines={false}
-                  style={styles.predictionChartStyle}
-                />
-              </View>
-              <View style={styles.recommendations}>
-                {prediction.recommendations.map((rec: any, recIndex: number) => (
-                  <View key={recIndex} style={styles.recommendation}>
-                    <Text style={styles.recommendationText}>
-                      {rec.action}
-                    </Text>
-                    <View style={styles.recommendationMetrics}>
-                      <Text style={styles.recommendationMetric}>
-                        💪 {formatImpact(rec.impact)}
-                      </Text>
-                      <Text style={styles.recommendationMetric}>
-                        ⏱️ {formatEffort(rec.effort)}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          ))}
+            ))}
         </View>
       </View>
     );
   };
 
-  const renderContent = () => {
+  const _renderContent = () => {
     // Implementation for content view
     return null;
   };
 
-  const renderAudience = () => {
+  const _renderAudience = () => {
     // Implementation for audience view
     return null;
   };
 
-  const renderCompetitors = () => {
+  const _renderCompetitors = () => {
     // Implementation for competitors view
     return null;
   };
 
-  const renderPredictions = () => {
+  const _renderPredictions = () => {
     // Implementation for predictions view
     return null;
   };
 
   // Helper functions
-  const formatMetricValue = (value: number): string => {
+  const _formatMetricValue = (_value: number): string => {
     // Implementation
     return '';
   };
 
-  const formatPercentage = (value: number): string => {
+  const _formatPercentage = (_value: number): string => {
     // Implementation
     return '';
   };
 
-  const formatNumber = (value: number): string => {
+  const _formatNumber = (_value: number): string => {
     // Implementation
     return '';
   };
 
-  const formatImpact = (value: number): string => {
+  const _formatImpact = (_value: number): string => {
     // Implementation
     return '';
   };
 
-  const formatEffort = (value: number): string => {
+  const _formatEffort = (_value: number): string => {
     // Implementation
     return '';
   };
 
-  const generateTimeLabels = (timeframe: DashboardState['timeframe']): string[] => {
+  const _generateTimeLabels = (
+    _timeframe: DashboardState['timeframe']
+  ): string[] => {
     // Implementation
     return [];
   };
 
-  const generateForecastLabels = (): string[] => {
+  const _generateForecastLabels = (): string[] => {
     // Implementation
     return [];
   };
@@ -346,17 +353,23 @@ export function ConsolidatedAnalyticsDashboard() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>
-          {t('analytics.consolidated.title')}
-        </Text>
-        
+        <Text style={styles.title}>{t('analytics.consolidated.title')}</Text>
+
         {/* View Selector */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.viewSelector}
         >
-          {(['overview', 'content', 'audience', 'competitors', 'predictions'] as const).map(view => (
+          {(
+            [
+              'overview',
+              'content',
+              'audience',
+              'competitors',
+              'predictions',
+            ] as const
+          ).map(view => (
             <TouchableOpacity
               key={view}
               style={[
@@ -423,7 +436,7 @@ export function ConsolidatedAnalyticsDashboard() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

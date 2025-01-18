@@ -12,7 +12,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ContentGenerationService, GeneratedContent } from '../../services/ContentGenerationService';
+import {
+  ContentGenerationService,
+  GeneratedContent,
+} from '../../services/ContentGenerationService';
 import { APIUsageService, UsageQuota } from '../../services/APIUsageService';
 import { debounce } from 'lodash';
 
@@ -36,60 +39,74 @@ interface QuotaCheckResult {
   error?: string;
 }
 
-export function AIContentCreator({ userId, onContentGenerated }: AIContentCreatorProps) {
+export function AIContentCreator({
+  userId,
+  onContentGenerated,
+}: AIContentCreatorProps) {
   const { t } = useTranslation();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ContentType>('text');
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [generatedContent, setGeneratedContent] =
+    useState<GeneratedContent | null>(null);
   const [contentStyle, setContentStyle] = useState('');
   const [error, setError] = useState<ContentGenerationError | null>(null);
 
-  const contentGenService = ContentGenerationService.getInstance();
-  const apiUsageService = APIUsageService.getInstance();
+  const _contentGenService = ContentGenerationService.getInstance();
+  const _apiUsageService = APIUsageService.getInstance();
 
-  const checkQuota = async (provider: AIProvider): Promise<QuotaCheckResult> => {
+  const _checkQuota = async (
+    provider: AIProvider
+  ): Promise<QuotaCheckResult> => {
     try {
-      const quota: UsageQuota = await apiUsageService.checkQuota(userId, provider);
+      const quota: UsageQuota = await apiUsageService.checkQuota(
+        userId,
+        provider
+      );
       if (!quota.hasQuota) {
-        Alert.alert(
-          t('error'),
-          t('errors.quotaExceeded'),
-          [
-            {
-              text: t('viewUsage'),
-              onPress: () => {/* Navigate to usage stats */},
+        Alert.window.alert(t('error'), t('errors.quotaExceeded'), [
+          {
+            text: t('viewUsage'),
+            onPress: () => {
+              /* Navigate to usage stats */
             },
-            { text: t('ok'), style: 'cancel' },
-          ]
-        );
+          },
+          { text: t('ok'), style: 'cancel' },
+        ]);
         return { hasQuota: false, remainingQuota: quota.remaining };
       }
       return { hasQuota: true, remainingQuota: quota.remaining };
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to check quota');
+      const _error =
+        err instanceof Error ? err : new Error('Failed to check quota');
       console.error('Error checking quota:', error);
       return { hasQuota: false, error: error.message };
     }
   };
 
-  const trackUsage = async (
+  const _trackUsage = async (
     provider: AIProvider,
     operation: string,
     units: number,
     cost: number
   ): Promise<void> => {
     try {
-      await apiUsageService.trackUsage(userId, provider, operation, units, cost);
+      await apiUsageService.trackUsage(
+        userId,
+        provider,
+        operation,
+        units,
+        cost
+      );
     } catch (err) {
       console.error('Error tracking usage:', err);
       // Don't throw here, just log the error as this is not critical
     }
   };
 
-  const generateContent = async (): Promise<void> => {
+  const _generateContent = async (): Promise<void> => {
     if (!prompt) {
-      Alert.alert(t('error'), t('errors.promptRequired'));
+      Alert.window.alert(t('error'), t('errors.promptRequired'));
       return;
     }
 
@@ -98,8 +115,8 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
 
     try {
       const provider: AIProvider = 'openai'; // Could be made configurable
-      const quotaCheck = await checkQuota(provider);
-      
+      const _quotaCheck = await checkQuota(provider);
+
       if (!quotaCheck.hasQuota) {
         if (quotaCheck.error) {
           throw new Error(quotaCheck.error);
@@ -110,8 +127,16 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       let content: GeneratedContent;
       switch (activeTab) {
         case 'text':
-          content = await contentGenService.generateCaption(prompt, contentStyle);
-          await trackUsage(provider, 'generateCaption', prompt.length, 0.002 * prompt.length);
+          content = await contentGenService.generateCaption(
+            prompt,
+            contentStyle
+          );
+          await trackUsage(
+            provider,
+            'generateCaption',
+            prompt.length,
+            0.002 * prompt.length
+          );
           break;
 
         case 'image':
@@ -121,7 +146,12 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
 
         case 'video':
           content = await contentGenService.generateVideoIdeas(prompt);
-          await trackUsage(provider, 'generateVideoIdeas', prompt.length, 0.002 * prompt.length);
+          await trackUsage(
+            provider,
+            'generateVideoIdeas',
+            prompt.length,
+            0.002 * prompt.length
+          );
           break;
 
         default:
@@ -132,22 +162,23 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       onContentGenerated(content);
     } catch (err) {
       console.error('Error generating content:', err);
-      const error: ContentGenerationError = err instanceof Error ? err : new Error('Failed to generate content');
+      const error: ContentGenerationError =
+        err instanceof Error ? err : new Error('Failed to generate content');
       error.contentType = activeTab;
       error.provider = 'openai';
       setError(error);
-      Alert.alert(t('error'), t('errors.generationFailed'));
+      Alert.window.alert(t('error'), t('errors.generationFailed'));
     } finally {
       setLoading(false);
     }
   };
 
-  const debouncedGenerate = useCallback(
+  const _debouncedGenerate = useCallback(
     debounce(generateContent, 500, { leading: true, trailing: false }),
     [prompt, contentStyle, activeTab]
   );
 
-  const renderTextTab = () => (
+  const _renderTextTab = () => (
     <View>
       <TextInput
         style={styles.styleInput}
@@ -160,7 +191,9 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
           <Text style={styles.generatedText}>{generatedContent.text}</Text>
           <TouchableOpacity
             style={styles.copyButton}
-            onPress={() => {/* Copy to clipboard */}}
+            onPress={() => {
+              /* Copy to clipboard */
+            }}
           >
             <Ionicons name="copy-outline" size={20} color="#007AFF" />
           </TouchableOpacity>
@@ -169,7 +202,7 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
     </View>
   );
 
-  const renderImageTab = () => (
+  const _renderImageTab = () => (
     <View>
       <TextInput
         style={styles.styleInput}
@@ -186,7 +219,9 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
           />
           <TouchableOpacity
             style={styles.downloadButton}
-            onPress={() => {/* Download image */}}
+            onPress={() => {
+              /* Download image */
+            }}
           >
             <Ionicons name="download-outline" size={20} color="#fff" />
             <Text style={styles.downloadButtonText}>
@@ -198,7 +233,7 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
     </View>
   );
 
-  const renderVideoTab = () => (
+  const _renderVideoTab = () => (
     <View>
       {generatedContent && (
         <View style={styles.generatedContent}>
@@ -263,7 +298,10 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       />
 
       <TouchableOpacity
-        style={[styles.generateButton, loading && styles.generateButtonDisabled]}
+        style={[
+          styles.generateButton,
+          loading && styles.generateButtonDisabled,
+        ]}
         onPress={debouncedGenerate}
         disabled={loading}
       >
@@ -288,7 +326,7 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,

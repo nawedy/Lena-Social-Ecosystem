@@ -1,4 +1,18 @@
-import { Firestore, getFirestore, collection, query, where, orderBy, limit, getDocs, doc, getDoc, updateDoc, setDoc, arrayUnion } from 'firebase/firestore';
+import {
+  Firestore,
+  getFirestore,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+  arrayUnion,
+} from 'firebase/firestore';
 import { Message, Conversation } from '../types/messaging';
 import { User } from '../types/user';
 import { NotificationService } from './NotificationService';
@@ -23,7 +37,12 @@ export class MessagingService {
     return MessagingService.instance;
   }
 
-  async sendMessage(conversationId: string, senderId: string, content: string, type: 'text' | 'image' | 'video' | 'audio' | 'file' = 'text'): Promise<Message> {
+  async sendMessage(
+    conversationId: string,
+    senderId: string,
+    content: string,
+    type: 'text' | 'image' | 'video' | 'audio' | 'file' = 'text'
+  ): Promise<Message> {
     // Check if sender is blocked
     const isBlocked = await this.blockingService.isUserBlocked(senderId);
     if (isBlocked) {
@@ -41,7 +60,9 @@ export class MessagingService {
       updatedAt: new Date(),
     };
 
-    await setDoc(doc(this.db, 'messages', message.id), message, { merge: true });
+    await setDoc(doc(this.db, 'messages', message.id), message, {
+      merge: true,
+    });
     await this.updateConversationLastMessage(conversationId, message);
     await this.notifyRecipients(conversationId, senderId, message);
 
@@ -53,7 +74,9 @@ export class MessagingService {
     for (const participant of participants) {
       const isBlocked = await this.blockingService.isUserBlocked(participant);
       if (isBlocked) {
-        throw new Error(`Unable to create conversation due to blocking restrictions`);
+        throw new Error(
+          `Unable to create conversation due to blocking restrictions`
+        );
       }
     }
 
@@ -68,12 +91,16 @@ export class MessagingService {
       metadata: {},
     };
 
-    await setDoc(doc(this.db, 'conversations', conversation.id), conversation, { merge: true });
+    await setDoc(doc(this.db, 'conversations', conversation.id), conversation, {
+      merge: true,
+    });
     return conversation;
   }
 
   async getConversation(conversationId: string): Promise<Conversation> {
-    const conversationDoc = await getDoc(doc(this.db, 'conversations', conversationId));
+    const conversationDoc = await getDoc(
+      doc(this.db, 'conversations', conversationId)
+    );
     if (!conversationDoc.exists()) {
       throw new Error('Conversation not found');
     }
@@ -91,7 +118,10 @@ export class MessagingService {
     return snapshot.docs.map(doc => doc.data() as Conversation);
   }
 
-  async getConversationMessages(conversationId: string, messageLimit: number = 50): Promise<Message[]> {
+  async getConversationMessages(
+    conversationId: string,
+    messageLimit: number = 50
+  ): Promise<Message[]> {
     const messagesQuery = query(
       collection(this.db, 'messages'),
       where('conversationId', '==', conversationId),
@@ -129,7 +159,10 @@ export class MessagingService {
     });
   }
 
-  private async updateConversationLastMessage(conversationId: string, message: Message): Promise<void> {
+  private async updateConversationLastMessage(
+    conversationId: string,
+    message: Message
+  ): Promise<void> {
     await updateDoc(doc(this.db, 'conversations', conversationId), {
       lastMessage: {
         content: message.content,
@@ -140,7 +173,11 @@ export class MessagingService {
     });
   }
 
-  private async notifyRecipients(conversationId: string, senderId: string, message: Message): Promise<void> {
+  private async notifyRecipients(
+    conversationId: string,
+    senderId: string,
+    message: Message
+  ): Promise<void> {
     const conversation = await this.getConversation(conversationId);
     const recipients = conversation.participants.filter(id => id !== senderId);
 
@@ -148,7 +185,10 @@ export class MessagingService {
       await this.notificationService.sendNotification(recipientId, {
         type: 'new_message',
         title: 'New Message',
-        body: message.type === 'text' ? message.content : `Sent you a ${message.type}`,
+        body:
+          message.type === 'text'
+            ? message.content
+            : `Sent you a ${message.type}`,
         data: {
           conversationId,
           messageId: message.id,
@@ -157,9 +197,14 @@ export class MessagingService {
     }
   }
 
-  async searchMessages(userId: string, searchQuery: string): Promise<Message[]> {
+  async searchMessages(
+    userId: string,
+    searchQuery: string
+  ): Promise<Message[]> {
     const userConversations = await this.getUserConversations(userId);
-    const conversationIds = userConversations.map(conversation => conversation.id);
+    const conversationIds = userConversations.map(
+      conversation => conversation.id
+    );
 
     const messagesQuery = query(
       collection(this.db, 'messages'),

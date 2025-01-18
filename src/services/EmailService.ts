@@ -28,26 +28,27 @@ export class EmailService {
         to: email,
         from: {
           email: process.env.SENDGRID_FROM_EMAIL!,
-          name: process.env.SENDGRID_FROM_NAME!
+          name: process.env.SENDGRID_FROM_NAME!,
         },
         templateId: process.env.WELCOME_TEMPLATE_ID!,
         dynamicTemplateData: {
           INVITE_CODE: inviteCode,
           APP_STORE_LINK: 'https://apps.apple.com/app/tiktok-toe',
-          PLAY_STORE_LINK: 'https://play.google.com/store/apps/details?id=com.tiktok.toe'
-        }
+          PLAY_STORE_LINK:
+            'https://play.google.com/store/apps/details?id=com.tiktok.toe',
+        },
       });
 
       this.analytics.trackEvent('welcome_email_sent', {
         email,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       console.error('Error sending welcome email:', error);
       this.analytics.trackEvent('welcome_email_failed', {
         email,
         error: error.message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       throw error;
     }
@@ -71,7 +72,7 @@ export class EmailService {
         to: email,
         from: {
           email: process.env.SENDGRID_FROM_EMAIL!,
-          name: process.env.SENDGRID_FROM_NAME!
+          name: process.env.SENDGRID_FROM_NAME!,
         },
         templateId: process.env.FEEDBACK_RESPONSE_TEMPLATE_ID!,
         dynamicTemplateData: {
@@ -82,21 +83,21 @@ export class EmailService {
           SUBMISSION_DATE: feedback.submissionDate.toLocaleDateString(),
           TEAM_RESPONSE: feedback.teamResponse,
           NEXT_STEPS: feedback.nextSteps,
-          RELATED_ISSUES: feedback.relatedIssues || []
-        }
+          RELATED_ISSUES: feedback.relatedIssues || [],
+        },
       });
 
       this.analytics.trackEvent('feedback_response_sent', {
         email,
         feedbackTitle: feedback.title,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       console.error('Error sending feedback response:', error);
       this.analytics.trackEvent('feedback_response_failed', {
         email,
         error: error.message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       throw error;
     }
@@ -124,7 +125,7 @@ export class EmailService {
         to: email,
         from: {
           email: process.env.SENDGRID_FROM_EMAIL!,
-          name: process.env.SENDGRID_FROM_NAME!
+          name: process.env.SENDGRID_FROM_NAME!,
         },
         templateId: process.env.WEEKLY_UPDATE_TEMPLATE_ID!,
         dynamicTemplateData: {
@@ -134,21 +135,21 @@ export class EmailService {
           FEEDBACK_COUNT: data.feedbackCount,
           UPDATES: data.updates,
           COMING_SOON: data.comingSoon,
-          FEEDBACK_HIGHLIGHTS: data.feedbackHighlights
-        }
+          FEEDBACK_HIGHLIGHTS: data.feedbackHighlights,
+        },
       });
 
       this.analytics.trackEvent('weekly_update_sent', {
         email,
         weekDate: data.weekDate,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       console.error('Error sending weekly update:', error);
       this.analytics.trackEvent('weekly_update_failed', {
         email,
         error: error.message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       throw error;
     }
@@ -181,30 +182,30 @@ export class EmailService {
           FEEDBACK_COUNT: data.feedbackCount,
           UPDATES: data.updates,
           COMING_SOON: data.comingSoon,
-          FEEDBACK_HIGHLIGHTS: data.feedbackHighlights
-        }
+          FEEDBACK_HIGHLIGHTS: data.feedbackHighlights,
+        },
       }));
 
       await sgMail.send({
         from: {
           email: process.env.SENDGRID_FROM_EMAIL!,
-          name: process.env.SENDGRID_FROM_NAME!
+          name: process.env.SENDGRID_FROM_NAME!,
         },
         templateId: process.env.WEEKLY_UPDATE_TEMPLATE_ID!,
-        personalizations
+        personalizations,
       });
 
       this.analytics.trackEvent('batch_weekly_update_sent', {
         emailCount: emails.length,
         weekDate: data.weekDate,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       console.error('Error sending batch weekly update:', error);
       this.analytics.trackEvent('batch_weekly_update_failed', {
         emailCount: emails.length,
         error: error.message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       throw error;
     }

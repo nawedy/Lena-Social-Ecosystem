@@ -48,28 +48,28 @@ export class PerformanceTestSuite {
       thresholds: {
         http_req_duration: ['p(95)<500', 'p(99)<1000'],
         http_req_failed: ['rate<0.01'],
-        iterations: ['count>1000']
+        iterations: ['count>1000'],
       },
       scenarios: {
         browse: {
           name: 'Browse Content',
           flow: ['homepage', 'feed', 'profile'],
           thinkTime: 5,
-          weight: 40
+          weight: 40,
         },
         create: {
           name: 'Create Content',
           flow: ['upload', 'edit', 'publish'],
           thinkTime: 10,
-          weight: 20
+          weight: 20,
         },
         interact: {
           name: 'Social Interaction',
           flow: ['like', 'comment', 'share'],
           thinkTime: 3,
-          weight: 40
-        }
-      }
+          weight: 40,
+        },
+      },
     };
   }
 
@@ -92,18 +92,22 @@ export const options = {
   ],
   thresholds: ${JSON.stringify(config.thresholds)},
   scenarios: {
-    ${Object.entries(config.scenarios).map(([key, scenario]) => `
+    ${Object.entries(config.scenarios)
+      .map(
+        ([key, scenario]) => `
     ${key}: {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '${config.rampUpTime}', target: ${Math.floor(config.vus * scenario.weight / 100)} },
-        { duration: '${config.duration}', target: ${Math.floor(config.vus * scenario.weight / 100)} },
+        { duration: '${config.rampUpTime}', target: ${Math.floor((config.vus * scenario.weight) / 100)} },
+        { duration: '${config.duration}', target: ${Math.floor((config.vus * scenario.weight) / 100)} },
         { duration: '${config.rampDownTime}', target: 0 }
       ],
       gracefulRampDown: '30s',
       exec: '${scenario.name}'
-    }`).join(',')}
+    }`
+      )
+      .join(',')}
   }
 };
 
@@ -120,11 +124,15 @@ export function teardown(data) {
   // Cleanup logic here
 }
 
-${Object.entries(config.scenarios).map(([key, scenario]) => `
+${Object.entries(config.scenarios)
+  .map(
+    ([key, scenario]) => `
 // ${scenario.name}
 export function ${scenario.name}(data) {
   group('${scenario.name}', function() {
-    ${scenario.flow.map(step => `
+    ${scenario.flow
+      .map(
+        step => `
     group('${step}', function() {
       const response = http.get(\`\${data.baseUrl}/${step}\`, {
         headers: { 'Authorization': \`Bearer \${data.authToken}\` }
@@ -139,18 +147,27 @@ export function ${scenario.name}(data) {
       customTrend.add(response.timings.duration);
       
       sleep(${scenario.thinkTime});
-    });`).join('\n')}
+    });`
+      )
+      .join('\n')}
   });
-}`).join('\n\n')}
+}`
+  )
+  .join('\n\n')}
     `;
   }
 
-  public async runTests(config: TestConfig = this.getDefaultConfig()): Promise<void> {
-    const transaction = this.apm.startTransaction('run-performance-tests', 'testing');
+  public async runTests(
+    config: TestConfig = this.getDefaultConfig()
+  ): Promise<void> {
+    const transaction = this.apm.startTransaction(
+      'run-performance-tests',
+      'testing'
+    );
 
     try {
       const script = this.generateK6Script(config);
-      
+
       // Save script to file
       await this.saveScript(script);
 
@@ -159,7 +176,6 @@ export function ${scenario.name}(data) {
 
       // Process and store results
       await this.processResults();
-
     } catch (error) {
       this.logger.error('Performance test failed', { error });
       this.apm.captureError(error);
@@ -171,7 +187,7 @@ export function ${scenario.name}(data) {
 
   private async saveScript(script: string): Promise<void> {
     const span = this.apm.startSpan('save-k6-script');
-    
+
     try {
       // Implementation for saving script to file
       // This would typically use fs.writeFile
@@ -182,7 +198,7 @@ export function ${scenario.name}(data) {
 
   private async executeK6Test(): Promise<void> {
     const span = this.apm.startSpan('execute-k6-test');
-    
+
     try {
       // Implementation for executing k6 test
       // This would typically use child_process.exec
@@ -193,7 +209,7 @@ export function ${scenario.name}(data) {
 
   private async processResults(): Promise<void> {
     const span = this.apm.startSpan('process-test-results');
-    
+
     try {
       // Implementation for processing and storing test results
       // This would typically parse k6 output and store in database
@@ -207,7 +223,7 @@ export function ${scenario.name}(data) {
     current: string
   ): Promise<Record<string, number>> {
     const span = this.apm.startSpan('compare-test-results');
-    
+
     try {
       // Implementation for comparing test results
       return {};
@@ -218,7 +234,7 @@ export function ${scenario.name}(data) {
 
   public async generateReport(): Promise<string> {
     const span = this.apm.startSpan('generate-test-report');
-    
+
     try {
       // Implementation for generating test report
       return '';

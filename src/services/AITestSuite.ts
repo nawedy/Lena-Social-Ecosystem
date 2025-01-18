@@ -90,7 +90,7 @@ export class AITestSuite {
   }
 
   public async runSuite(testCases: AITestCase[]): Promise<TestReport> {
-    console.log(`Starting test suite: ${this.config.name}`);
+    logger.info(`Starting test suite: ${this.config.name}`);
     const startTime = Date.now();
 
     try {
@@ -106,7 +106,7 @@ export class AITestSuite {
   }
 
   private async setupSuite(): Promise<void> {
-    console.log('Setting up test suite...');
+    logger.info('Setting up test suite...');
     // Initialize test environment
     await this.setupTestEnvironment();
     // Load test data
@@ -116,7 +116,7 @@ export class AITestSuite {
   }
 
   private async teardownSuite(): Promise<void> {
-    console.log('Tearing down test suite...');
+    logger.info('Tearing down test suite...');
     // Cleanup test environment
     await this.cleanupTestEnvironment();
     // Archive test artifacts
@@ -137,7 +137,7 @@ export class AITestSuite {
 
       // Check if we should continue based on failure threshold
       if (!this.shouldContinueTesting(results)) {
-        console.log('Stopping test suite due to failure threshold');
+        logger.info('Stopping test suite due to failure threshold');
         break;
       }
     }
@@ -148,15 +148,17 @@ export class AITestSuite {
   private createTestBatches(testCases: AITestCase[]): AITestCase[][] {
     const batches: AITestCase[][] = [];
     const batchSize = this.config.parallelTests;
-    
+
     for (let i = 0; i < testCases.length; i += batchSize) {
       batches.push(testCases.slice(i, i + batchSize));
     }
-    
+
     return batches;
   }
 
-  private async executeTestWithRetry(testCase: AITestCase): Promise<TestResult> {
+  private async executeTestWithRetry(
+    testCase: AITestCase
+  ): Promise<TestResult> {
     let attempt = 0;
     let delay = this.config.retryStrategy.initialDelay;
 
@@ -166,7 +168,7 @@ export class AITestSuite {
         if (result.success) {
           return result;
         }
-        
+
         attempt++;
         if (attempt < this.config.retryStrategy.maxAttempts) {
           await this.delay(delay);
@@ -224,19 +226,23 @@ export class AITestSuite {
     this.context.metrics.qualityScores.push(
       (result.metrics.similarity +
         result.metrics.creativity +
-        (1 - result.metrics.toxicity)) / 3
+        (1 - result.metrics.toxicity)) /
+        3
     );
   }
 
   private shouldContinueTesting(results: TestResult[]): boolean {
     const failureRate = results.filter(r => !r.success).length / results.length;
-    return failureRate <= (1 - this.config.thresholds.successRate);
+    return failureRate <= 1 - this.config.thresholds.successRate;
   }
 
   private async generateReport(results: TestResult[]): Promise<TestReport> {
     const duration = Date.now() - this.context.startTime;
     const metrics = this.calculateMetrics(results);
-    const recommendations = await this.generateRecommendations(results, metrics);
+    const recommendations = await this.generateRecommendations(
+      results,
+      metrics
+    );
 
     return {
       suiteName: this.config.name,
@@ -286,7 +292,9 @@ export class AITestSuite {
     // Token usage recommendations
     const avgTokens = metrics.averageTokens;
     if (avgTokens < this.config.thresholds.minTokens) {
-      recommendations.push('Prompts might be too short for effective responses');
+      recommendations.push(
+        'Prompts might be too short for effective responses'
+      );
     } else if (avgTokens > this.config.thresholds.maxTokens) {
       recommendations.push('Consider reducing prompt length to optimize costs');
     }
@@ -317,7 +325,9 @@ export class AITestSuite {
     errorTypes.forEach((count, type) => {
       const percentage = (count / results.length) * 100;
       if (percentage > 10) {
-        patterns.push(`High frequency of ${type} errors (${percentage.toFixed(1)}%)`);
+        patterns.push(
+          `High frequency of ${type} errors (${percentage.toFixed(1)}%)`
+        );
       }
     });
 

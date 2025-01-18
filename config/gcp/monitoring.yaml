@@ -1,0 +1,81 @@
+apiVersion: monitoring.cnrm.cloud.google.com/v1beta1
+kind: MonitoringDashboard
+metadata:
+  name: tiktoktoe-dashboard
+  namespace: tiktoktoe
+spec:
+  displayName: "TikTokToe Application Dashboard"
+  gridLayout:
+    columns: 2
+    widgets:
+      - title: "HTTP Request Count"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: >
+                    metric.type="run.googleapis.com/request_count"
+                    resource.type="cloud_run_revision"
+      - title: "HTTP Latency"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: >
+                    metric.type="run.googleapis.com/request_latencies"
+                    resource.type="cloud_run_revision"
+      - title: "Memory Usage"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: >
+                    metric.type="run.googleapis.com/container/memory/utilizations"
+                    resource.type="cloud_run_revision"
+      - title: "CPU Usage"
+        xyChart:
+          dataSets:
+            - timeSeriesQuery:
+                timeSeriesFilter:
+                  filter: >
+                    metric.type="run.googleapis.com/container/cpu/utilizations"
+                    resource.type="cloud_run_revision"
+---
+apiVersion: monitoring.cnrm.cloud.google.com/v1beta1
+kind: MonitoringAlertPolicy
+metadata:
+  name: tiktoktoe-alerts
+  namespace: tiktoktoe
+spec:
+  displayName: "TikTokToe Alert Policy"
+  conditions:
+    - displayName: "High Error Rate"
+      conditionThreshold:
+        filter: >
+          metric.type="run.googleapis.com/request_count"
+          resource.type="cloud_run_revision"
+          metric.labels.response_code_class="5xx"
+        aggregations:
+          - alignmentPeriod: 60s
+            crossSeriesReducer: REDUCE_SUM
+            perSeriesAligner: ALIGN_RATE
+        comparison: COMPARISON_GT
+        duration: 300s
+        trigger:
+          count: 1
+        thresholdValue: 0.05
+    - displayName: "High Latency"
+      conditionThreshold:
+        filter: >
+          metric.type="run.googleapis.com/request_latencies"
+          resource.type="cloud_run_revision"
+        aggregations:
+          - alignmentPeriod: 60s
+            perSeriesAligner: ALIGN_PERCENTILE_99
+        comparison: COMPARISON_GT
+        duration: 300s
+        trigger:
+          count: 1
+        thresholdValue: 1000
+  notificationChannels:
+    - channel: projects/${PROJECT_ID}/notificationChannels/${NOTIFICATION_CHANNEL_ID}

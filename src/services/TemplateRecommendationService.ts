@@ -1,4 +1,4 @@
-import { 
+import {
   Firestore,
   getFirestore,
   collection,
@@ -10,7 +10,7 @@ import {
   orderBy,
   limit,
   DocumentData,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { ContentTemplate } from './ContentTemplateService';
 
@@ -57,7 +57,8 @@ export class TemplateRecommendationService {
 
   public static getInstance(): TemplateRecommendationService {
     if (!TemplateRecommendationService.instance) {
-      TemplateRecommendationService.instance = new TemplateRecommendationService();
+      TemplateRecommendationService.instance =
+        new TemplateRecommendationService();
     }
     return TemplateRecommendationService.instance;
   }
@@ -77,9 +78,7 @@ export class TemplateRecommendationService {
       context
     );
 
-    return scoredTemplates
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return scoredTemplates.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
   async getSimilarTemplates(
@@ -130,7 +129,7 @@ export class TemplateRecommendationService {
 
     const queryConstraints = [
       where('isActive', '==', true),
-      where('lastUsed', '>=', startDate)
+      where('lastUsed', '>=', startDate),
     ];
 
     if (options.category) {
@@ -180,14 +179,16 @@ export class TemplateRecommendationService {
       const categoryTemplates = await getDocs(categoryQuery);
 
       recommendations.push(
-        ...categoryTemplates.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-          templateId: doc.id,
-          score: this.calculatePersonalizedScore(doc.data(), userPrefs),
-          reasons: ['Based on your favorite categories'],
-          confidence: 0.8,
-          category: doc.data().categoryId,
-          tags: doc.data().tags || [],
-        }))
+        ...categoryTemplates.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => ({
+            templateId: doc.id,
+            score: this.calculatePersonalizedScore(doc.data(), userPrefs),
+            reasons: ['Based on your favorite categories'],
+            confidence: 0.8,
+            category: doc.data().categoryId,
+            tags: doc.data().tags || [],
+          })
+        )
       );
     }
 
@@ -202,20 +203,20 @@ export class TemplateRecommendationService {
       const tagTemplates = await getDocs(tagQuery);
 
       recommendations.push(
-        ...tagTemplates.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-          templateId: doc.id,
-          score: this.calculatePersonalizedScore(doc.data(), userPrefs),
-          reasons: ['Based on your favorite tags'],
-          confidence: 0.7,
-          category: doc.data().categoryId,
-          tags: doc.data().tags || [],
-        }))
+        ...tagTemplates.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => ({
+            templateId: doc.id,
+            score: this.calculatePersonalizedScore(doc.data(), userPrefs),
+            reasons: ['Based on your favorite tags'],
+            confidence: 0.7,
+            category: doc.data().categoryId,
+            tags: doc.data().tags || [],
+          })
+        )
       );
     }
 
-    return recommendations
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return recommendations.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
   async updateUserPreferences(
@@ -260,16 +261,20 @@ export class TemplateRecommendationService {
     ]);
   }
 
-  private async getTemplate(templateId: string): Promise<ContentTemplate | null> {
+  private async getTemplate(
+    templateId: string
+  ): Promise<ContentTemplate | null> {
     const docRef = doc(this.db, 'templates', templateId);
     const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as ContentTemplate : null;
+    return docSnap.exists()
+      ? ({ id: docSnap.id, ...docSnap.data() } as ContentTemplate)
+      : null;
   }
 
   private async getUserPreferences(userId: string): Promise<UserPreferences> {
     const docRef = doc(this.db, 'userPreferences', userId);
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
       return {
         favoriteCategories: [],
@@ -306,7 +311,7 @@ export class TemplateRecommendationService {
 
     return snapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     })) as ContentTemplate[];
   }
 
@@ -425,9 +430,7 @@ export class TemplateRecommendationService {
     // Tag similarity
     const tags1 = new Set(template1.tags || []);
     const tags2 = new Set(template2.tags || []);
-    const commonTags = new Set(
-      [...tags1].filter(tag => tags2.has(tag))
-    );
+    const commonTags = new Set([...tags1].filter(tag => tags2.has(tag)));
     similarity += (commonTags.size / Math.max(tags1.size, tags2.size)) * 0.3;
 
     // Content type match
@@ -452,9 +455,7 @@ export class TemplateRecommendationService {
 
     const tags1 = new Set(template1.tags || []);
     const tags2 = new Set(template2.tags || []);
-    const commonTags = new Set(
-      [...tags1].filter(tag => tags2.has(tag))
-    );
+    const commonTags = new Set([...tags1].filter(tag => tags2.has(tag)));
     if (commonTags.size > 0) {
       reasons.push(`${commonTags.size} common tags`);
     }
@@ -477,7 +478,7 @@ export class TemplateRecommendationService {
     const recentUsage = template.usageCount / daysSinceStart;
     const successRate = template.successCount / template.usageCount || 0;
 
-    return (recentUsage * 0.7 + successRate * 0.3);
+    return recentUsage * 0.7 + successRate * 0.3;
   }
 
   private getTrendingReasons(template: any): string[] {

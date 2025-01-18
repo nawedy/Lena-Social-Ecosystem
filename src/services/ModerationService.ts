@@ -1,5 +1,11 @@
 import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { Report, ReportStatus, ReportType } from '../types/moderation';
 import { User, UserStatus } from '../types/user';
 import { NotificationService } from './NotificationService';
@@ -79,7 +85,8 @@ export class ModerationService {
     }
 
     const report = reportDoc.data() as Report;
-    report.status = decision === 'approve' ? ReportStatus.APPROVED : ReportStatus.REJECTED;
+    report.status =
+      decision === 'approve' ? ReportStatus.APPROVED : ReportStatus.REJECTED;
     report.moderatorNotes = notes;
     report.reviewedBy = moderatorId;
     report.reviewTimestamp = new Date();
@@ -124,11 +131,14 @@ export class ModerationService {
     await this.db.collection('appeals').add(appeal);
 
     // Notify moderators of appeal
-    await this.notifyModerators({
-      type: 'appeal',
-      userId,
-      reason,
-    }, false);
+    await this.notifyModerators(
+      {
+        type: 'appeal',
+        userId,
+        reason,
+      },
+      false
+    );
   }
 
   async reviewAppeal(
@@ -169,7 +179,10 @@ export class ModerationService {
     });
   }
 
-  private async analyzeContent(contentType: string, content: string): Promise<any> {
+  private async analyzeContent(
+    contentType: string,
+    content: string
+  ): Promise<any> {
     try {
       const response = await this.openai.moderations.create({
         input: content,
@@ -231,7 +244,9 @@ export class ModerationService {
 
     if (suspensionDuration > 0) {
       const suspensionEndDate = new Date();
-      suspensionEndDate.setDate(suspensionEndDate.getDate() + suspensionDuration);
+      suspensionEndDate.setDate(
+        suspensionEndDate.getDate() + suspensionDuration
+      );
 
       await this.db.collection('users').doc(report.reportedId).update({
         status: UserStatus.SUSPENDED,
@@ -253,11 +268,14 @@ export class ModerationService {
 
     // Remove violating content
     if (report.contentId) {
-      await this.db.collection(report.contentType).doc(report.contentId).update({
-        status: 'removed',
-        removedReason: report.reportType,
-        removedTimestamp: new Date(),
-      });
+      await this.db
+        .collection(report.contentType)
+        .doc(report.contentId)
+        .update({
+          status: 'removed',
+          removedReason: report.reportType,
+          removedTimestamp: new Date(),
+        });
     }
   }
 

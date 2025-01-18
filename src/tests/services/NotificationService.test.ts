@@ -1,22 +1,51 @@
 import { NotificationService } from '../../services/NotificationService';
 import { RBACService, Role, Permission } from '../../services/RBACService';
 
+// Mock APM service
+jest.mock('@elastic/apm-rum', () => ({
+  init: jest.fn(),
+  setUserContext: jest.fn(),
+  setCustomContext: jest.fn(),
+  startTransaction: jest.fn(),
+  startSpan: jest.fn(),
+}));
+
 describe('NotificationService', () => {
   let notificationService: NotificationService;
   let rbac: RBACService;
   const testUserId = 'test_user';
   const adminUserId = 'admin_user';
 
-  beforeEach(async () => {
+  beforeEach(() => {
     notificationService = NotificationService.getInstance();
     rbac = RBACService.getInstance();
+  });
 
-    // Setup test users
-    await rbac.assignRole('system', adminUserId, Role.ADMIN);
-    await rbac.assignRole('system', testUserId, Role.ANALYST);
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('Initialization', () => {
+    it('should initialize successfully', async () => {
+      await notificationService.initialize();
+      expect(notificationService.isInitialized()).toBe(true);
+    });
+
+    it('should not initialize twice', async () => {
+      await notificationService.initialize();
+      await notificationService.initialize();
+      expect(notificationService.isInitialized()).toBe(true);
+    });
   });
 
   describe('Notification Rules', () => {
+    beforeEach(async () => {
+      await notificationService.initialize();
+      // Setup test users
+      await rbac.assignRole('system', adminUserId, Role.ADMIN);
+      await rbac.assignRole('system', testUserId, Role.ANALYST);
+    });
+
     it('should create notification rules', async () => {
       const ruleId = await notificationService.createNotificationRule({
         name: 'Test Rule',
@@ -42,7 +71,8 @@ describe('NotificationService', () => {
         name: 'High Engagement',
         type: 'email',
         subject: 'High Engagement Alert',
-        content: 'Your content has achieved high engagement: {{engagement_rate}}',
+        content:
+          'Your content has achieved high engagement: {{engagement_rate}}',
         variables: ['engagement_rate'],
         locale: 'en',
       });
@@ -53,6 +83,10 @@ describe('NotificationService', () => {
   });
 
   describe('Sending Notifications', () => {
+    beforeEach(async () => {
+      await notificationService.initialize();
+    });
+
     it('should send single notification', async () => {
       const notificationId = await notificationService.sendNotification(
         'in_app',
@@ -67,9 +101,8 @@ describe('NotificationService', () => {
 
       expect(notificationId).toBeDefined();
 
-      const status = await notificationService.checkNotificationStatus(
-        notificationId
-      );
+      const status =
+        await notificationService.checkNotificationStatus(notificationId);
       expect(status).toBe('sent');
     });
 
@@ -89,9 +122,8 @@ describe('NotificationService', () => {
         },
       ];
 
-      const notificationIds = await notificationService.sendBulkNotifications(
-        notifications
-      );
+      const notificationIds =
+        await notificationService.sendBulkNotifications(notifications);
 
       expect(notificationIds).toHaveLength(2);
       expect(Array.isArray(notificationIds)).toBe(true);
@@ -111,34 +143,30 @@ describe('NotificationService', () => {
         testUserId
       );
 
-      const status = await notificationService.checkNotificationStatus(
-        notificationId
-      );
+      const status =
+        await notificationService.checkNotificationStatus(notificationId);
       expect(status).toBe('read');
     });
   });
 
   describe('Notification Retrieval', () => {
+    beforeEach(async () => {
+      await notificationService.initialize();
+    });
+
     it('should get unread notifications', async () => {
       // Send multiple notifications
       await Promise.all([
-        notificationService.sendNotification(
-          'in_app',
-          'Test 1',
-          'Content 1',
-          [testUserId]
-        ),
-        notificationService.sendNotification(
-          'in_app',
-          'Test 2',
-          'Content 2',
-          [testUserId]
-        ),
+        notificationService.sendNotification('in_app', 'Test 1', 'Content 1', [
+          testUserId,
+        ]),
+        notificationService.sendNotification('in_app', 'Test 2', 'Content 2', [
+          testUserId,
+        ]),
       ]);
 
-      const unread = await notificationService.getUnreadNotifications(
-        testUserId
-      );
+      const unread =
+        await notificationService.getUnreadNotifications(testUserId);
 
       expect(unread.length).toBeGreaterThan(0);
       expect(unread[0]).toHaveProperty('status', 'sent');
@@ -158,18 +186,21 @@ describe('NotificationService', () => {
         [testUserId]
       );
 
-      const status = await notificationService.checkNotificationStatus(
-        notificationId
-      );
+      const status =
+        await notificationService.checkNotificationStatus(notificationId);
       expect(status).toBe('sent');
     });
   });
 
   describe('Error Handling', () => {
+    beforeEach(async () => {
+      await notificationService.initialize();
+    });
+
     it('should handle invalid notification types', async () => {
       await expect(
         notificationService.sendNotification(
-          'invalid_type' as any,
+          'invalid_type' as unknown,
           'Test',
           'Content',
           [testUserId]
@@ -179,12 +210,9 @@ describe('NotificationService', () => {
 
     it('should handle invalid recipients', async () => {
       await expect(
-        notificationService.sendNotification(
-          'in_app',
-          'Test',
-          'Content',
-          ['invalid_user']
-        )
+        notificationService.sendNotification('in_app', 'Test', 'Content', [
+          'invalid_user',
+        ])
       ).rejects.toThrow();
     });
 
@@ -196,6 +224,10 @@ describe('NotificationService', () => {
   });
 
   describe('Performance', () => {
+    beforeEach(async () => {
+      await notificationService.initialize();
+    });
+
     it('should handle large bulk notifications efficiently', async () => {
       const notifications = Array.from({ length: 100 }, (_, i) => ({
         type: 'in_app' as const,
@@ -205,9 +237,8 @@ describe('NotificationService', () => {
       }));
 
       const startTime = Date.now();
-      const notificationIds = await notificationService.sendBulkNotifications(
-        notifications
-      );
+      const notificationIds =
+        await notificationService.sendBulkNotifications(notifications);
       const endTime = Date.now();
 
       expect(notificationIds).toHaveLength(100);
@@ -216,6 +247,10 @@ describe('NotificationService', () => {
   });
 
   describe('Template Handling', () => {
+    beforeEach(async () => {
+      await notificationService.initialize();
+    });
+
     it('should handle template variables correctly', async () => {
       const templateId = await notificationService.createTemplate({
         name: 'Variable Test',
@@ -239,9 +274,8 @@ describe('NotificationService', () => {
         }
       );
 
-      const status = await notificationService.checkNotificationStatus(
-        notificationId
-      );
+      const status =
+        await notificationService.checkNotificationStatus(notificationId);
       expect(status).toBe('sent');
     });
   });

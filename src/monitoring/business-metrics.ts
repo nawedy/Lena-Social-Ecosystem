@@ -39,7 +39,10 @@ export class BusinessMetrics {
   }
 
   public async trackUserEngagement(): Promise<void> {
-    const transaction = this.apm.startTransaction('track-user-engagement', 'metrics');
+    const transaction = this.apm.startTransaction(
+      'track-user-engagement',
+      'metrics'
+    );
 
     try {
       // Daily Active Users
@@ -53,7 +56,10 @@ export class BusinessMetrics {
       // Content Creation
       const contentMetrics = await this.getContentMetrics();
       await this.recordMetric('content_created_daily', contentMetrics.created);
-      await this.recordMetric('content_engagement_rate', contentMetrics.engagementRate);
+      await this.recordMetric(
+        'content_engagement_rate',
+        contentMetrics.engagementRate
+      );
 
       // User Retention
       const retention = await this.getUserRetention();
@@ -67,7 +73,10 @@ export class BusinessMetrics {
   }
 
   public async trackBusinessPerformance(): Promise<void> {
-    const transaction = this.apm.startTransaction('track-business-performance', 'metrics');
+    const transaction = this.apm.startTransaction(
+      'track-business-performance',
+      'metrics'
+    );
 
     try {
       // Revenue Metrics
@@ -84,7 +93,10 @@ export class BusinessMetrics {
       // Conversion Metrics
       const conversion = await this.getConversionMetrics();
       await this.recordMetric('signup_conversion_rate', conversion.signupRate);
-      await this.recordMetric('premium_conversion_rate', conversion.premiumRate);
+      await this.recordMetric(
+        'premium_conversion_rate',
+        conversion.premiumRate
+      );
     } catch (error) {
       this.apm.captureError(error);
     } finally {
@@ -130,7 +142,7 @@ export class BusinessMetrics {
 
     return {
       created: created.rows[0].count,
-      engagementRate: engagement.rows[0].engagement_rate || 0
+      engagementRate: engagement.rows[0].engagement_rate || 0,
     };
   }
 
@@ -166,7 +178,7 @@ export class BusinessMetrics {
 
     return {
       sevenDay: sevenDay.rows[0].retention_rate || 0,
-      thirtyDay: thirtyDay.rows[0].retention_rate || 0
+      thirtyDay: thirtyDay.rows[0].retention_rate || 0,
     };
   }
 
@@ -203,7 +215,7 @@ export class BusinessMetrics {
     return {
       daily: daily.rows[0].revenue,
       monthly: monthly.rows[0].revenue,
-      arpu: arpu.rows[0].arpu || 0
+      arpu: arpu.rows[0].arpu || 0,
     };
   }
 
@@ -245,7 +257,7 @@ export class BusinessMetrics {
 
     return {
       userGrowth: userGrowth.rows[0].growth_rate || 0,
-      contentGrowth: contentGrowth.rows[0].growth_rate || 0
+      contentGrowth: contentGrowth.rows[0].growth_rate || 0,
     };
   }
 
@@ -288,16 +300,20 @@ export class BusinessMetrics {
 
     return {
       signupRate: signupRate.rows[0].conversion_rate || 0,
-      premiumRate: premiumRate.rows[0].conversion_rate || 0
+      premiumRate: premiumRate.rows[0].conversion_rate || 0,
     };
   }
 
-  private async recordMetric(name: string, value: number, dimensions?: Record<string, string | number>): Promise<void> {
+  private async recordMetric(
+    name: string,
+    value: number,
+    dimensions?: Record<string, string | number>
+  ): Promise<void> {
     const metric: BusinessMetric = {
       name,
       value,
       timestamp: new Date().toISOString(),
-      dimensions
+      dimensions,
     };
 
     // Store in Redis for real-time access
@@ -332,15 +348,19 @@ export class BusinessMetrics {
       query.name,
       query.timeRange.start,
       query.timeRange.end,
-      query.dimensions ? JSON.stringify(query.dimensions) : null
+      query.dimensions ? JSON.stringify(query.dimensions) : null,
     ].filter(p => p !== null);
 
     const result = await this.db.query(sql, params);
     return result.rows;
   }
 
-  public async getMetricStats(name: string, timeRange: { start: Date; end: Date }): Promise<any> {
-    const stats = await this.db.query(`
+  public async getMetricStats(
+    name: string,
+    timeRange: { start: Date; end: Date }
+  ): Promise<any> {
+    const stats = await this.db.query(
+      `
       SELECT 
         COUNT(*) as data_points,
         AVG(value) as avg_value,
@@ -351,7 +371,9 @@ export class BusinessMetrics {
       FROM business_metrics
       WHERE name = $1
       AND timestamp BETWEEN $2 AND $3
-    `, [name, timeRange.start, timeRange.end]);
+    `,
+      [name, timeRange.start, timeRange.end]
+    );
 
     return stats.rows[0];
   }

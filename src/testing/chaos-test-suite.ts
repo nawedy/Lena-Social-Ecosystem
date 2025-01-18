@@ -53,7 +53,7 @@ export class ChaosTestSuite {
         category: 'network',
         duration: 300,
         impact: 'low',
-        targetServices: ['api', 'auth']
+        targetServices: ['api', 'auth'],
       },
       {
         name: 'pod-termination',
@@ -61,7 +61,7 @@ export class ChaosTestSuite {
         category: 'compute',
         duration: 300,
         impact: 'medium',
-        targetServices: ['api', 'worker']
+        targetServices: ['api', 'worker'],
       },
       {
         name: 'disk-pressure',
@@ -69,7 +69,7 @@ export class ChaosTestSuite {
         category: 'storage',
         duration: 300,
         impact: 'medium',
-        targetServices: ['database']
+        targetServices: ['database'],
       },
       {
         name: 'memory-pressure',
@@ -77,7 +77,7 @@ export class ChaosTestSuite {
         category: 'compute',
         duration: 300,
         impact: 'high',
-        targetServices: ['api', 'cache']
+        targetServices: ['api', 'cache'],
       },
       {
         name: 'network-partition',
@@ -85,13 +85,16 @@ export class ChaosTestSuite {
         category: 'network',
         duration: 300,
         impact: 'high',
-        targetServices: ['api', 'database']
-      }
+        targetServices: ['api', 'database'],
+      },
     ];
   }
 
   public async runChaosTest(test: ChaosTest): Promise<TestResult> {
-    const transaction = this.apm.startTransaction(`chaos-test-${test.name}`, 'testing');
+    const transaction = this.apm.startTransaction(
+      `chaos-test-${test.name}`,
+      'testing'
+    );
 
     try {
       // Start monitoring
@@ -129,7 +132,7 @@ export class ChaosTestSuite {
         success: this.isTestSuccessful(metrics),
         metrics,
         observations: result,
-        recommendations
+        recommendations,
       };
     } catch (error) {
       this.logger.error('Chaos test failed', { test, error });
@@ -182,15 +185,13 @@ export class ChaosTestSuite {
     try {
       switch (test.name) {
         case 'network-latency':
-          await this.kubernetes.applyNetworkLatency(
-            test.targetServices,
-            { latency: '100ms', jitter: '50ms' }
-          );
+          await this.kubernetes.applyNetworkLatency(test.targetServices, {
+            latency: '100ms',
+            jitter: '50ms',
+          });
           break;
         case 'network-partition':
-          await this.kubernetes.createNetworkPartition(
-            test.targetServices
-          );
+          await this.kubernetes.createNetworkPartition(test.targetServices);
           break;
       }
     } finally {
@@ -204,16 +205,14 @@ export class ChaosTestSuite {
     try {
       switch (test.name) {
         case 'pod-termination':
-          await this.kubernetes.terminateRandomPods(
-            test.targetServices,
-            { count: 1 }
-          );
+          await this.kubernetes.terminateRandomPods(test.targetServices, {
+            count: 1,
+          });
           break;
         case 'memory-pressure':
-          await this.kubernetes.applyMemoryPressure(
-            test.targetServices,
-            { percentage: 80 }
-          );
+          await this.kubernetes.applyMemoryPressure(test.targetServices, {
+            percentage: 80,
+          });
           break;
       }
     } finally {
@@ -227,10 +226,9 @@ export class ChaosTestSuite {
     try {
       switch (test.name) {
         case 'disk-pressure':
-          await this.kubernetes.applyDiskPressure(
-            test.targetServices,
-            { percentage: 90 }
-          );
+          await this.kubernetes.applyDiskPressure(test.targetServices, {
+            percentage: 90,
+          });
           break;
       }
     } finally {
@@ -298,13 +296,13 @@ export class ChaosTestSuite {
       const metrics = await Promise.all([
         this.metrics.getErrorRate(test.targetServices),
         this.metrics.getLatency(test.targetServices),
-        this.metrics.getAvailability(test.targetServices)
+        this.metrics.getAvailability(test.targetServices),
       ]);
 
       return {
         errorRate: metrics[0],
         latency: metrics[1],
-        availability: metrics[2]
+        availability: metrics[2],
       };
     } finally {
       span?.end();
@@ -346,27 +344,17 @@ export class ChaosTestSuite {
         recommendations.push(
           'Implement circuit breakers to handle failures gracefully'
         );
-        recommendations.push(
-          'Add retry mechanisms with exponential backoff'
-        );
+        recommendations.push('Add retry mechanisms with exponential backoff');
       }
 
       if (observation.includes('latency')) {
-        recommendations.push(
-          'Implement timeouts for all service calls'
-        );
-        recommendations.push(
-          'Consider caching frequently accessed data'
-        );
+        recommendations.push('Implement timeouts for all service calls');
+        recommendations.push('Consider caching frequently accessed data');
       }
 
       if (observation.includes('availability')) {
-        recommendations.push(
-          'Implement redundancy for critical services'
-        );
-        recommendations.push(
-          'Set up automatic failover mechanisms'
-        );
+        recommendations.push('Implement redundancy for critical services');
+        recommendations.push('Set up automatic failover mechanisms');
       }
     }
 
@@ -374,9 +362,11 @@ export class ChaosTestSuite {
   }
 
   private isTestSuccessful(metrics: any): boolean {
-    return metrics.errorRate < 0.1 &&
-           metrics.latency < 1000 &&
-           metrics.availability > 0.99;
+    return (
+      metrics.errorRate < 0.1 &&
+      metrics.latency < 1000 &&
+      metrics.availability > 0.99
+    );
   }
 
   public async generateReport(results: TestResult[]): Promise<string> {
@@ -392,7 +382,9 @@ export class ChaosTestSuite {
 - Failed Tests: ${results.filter(r => !r.success).length}
 
 ## Test Results
-${results.map(result => `
+${results
+  .map(
+    result => `
 ### ${result.testName}
 - Duration: ${result.duration}s
 - Status: ${result.success ? '✅ Passed' : '❌ Failed'}
@@ -406,7 +398,9 @@ ${result.observations.map(o => `- ${o}`).join('\n')}
 
 Recommendations:
 ${result.recommendations.map(r => `- ${r}`).join('\n')}
-`).join('\n')}
+`
+  )
+  .join('\n')}
 
 ## Overall Recommendations
 ${this.generateOverallRecommendations(results)}

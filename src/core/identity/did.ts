@@ -18,22 +18,25 @@ export class IdentityManager {
     this.agent = new BskyAgent({ service: serviceUrl });
   }
 
-  async createSession(identifier: string, password: string): Promise<UserIdentity> {
+  async createSession(
+    identifier: string,
+    password: string
+  ): Promise<UserIdentity> {
     const response = await this.agent.login({ identifier, password });
-    
+
     return {
       did: response.data.did,
       handle: response.data.handle,
       profileData: {
         displayName: response.data.displayName,
         description: response.data.description,
-      }
+      },
     };
   }
 
   async getProfile(actor: string): Promise<UserIdentity> {
     const response = await this.agent.getProfile({ actor });
-    
+
     return {
       did: response.data.did,
       handle: response.data.handle,
@@ -41,12 +44,14 @@ export class IdentityManager {
         displayName: response.data.displayName,
         description: response.data.description,
         avatar: response.data.avatar,
-      }
+      },
     };
   }
 
-  async updateProfile(profile: Partial<UserIdentity['profileData']>): Promise<void> {
-    await this.agent.upsertProfile((existing) => ({
+  async updateProfile(
+    profile: Partial<UserIdentity['profileData']>
+  ): Promise<void> {
+    await this.agent.upsertProfile(existing => ({
       ...existing,
       ...profile,
     }));

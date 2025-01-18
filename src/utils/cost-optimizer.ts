@@ -53,7 +53,10 @@ export class CostOptimizer {
   }
 
   public async analyzeAndOptimize(): Promise<void> {
-    const transaction = this.apm.startTransaction('analyze-and-optimize-costs', 'optimization');
+    const transaction = this.apm.startTransaction(
+      'analyze-and-optimize-costs',
+      'optimization'
+    );
 
     try {
       // Analyze current costs and usage
@@ -62,13 +65,13 @@ export class CostOptimizer {
         storageCosts,
         networkCosts,
         databaseCosts,
-        cacheCosts
+        cacheCosts,
       ] = await Promise.all([
         this.analyzeComputeCosts(),
         this.analyzeStorageCosts(),
         this.analyzeNetworkCosts(),
         this.analyzeDatabaseCosts(),
-        this.analyzeCacheCosts()
+        this.analyzeCacheCosts(),
       ]);
 
       // Generate optimization recommendations
@@ -77,7 +80,7 @@ export class CostOptimizer {
         ...storageCosts,
         ...networkCosts,
         ...databaseCosts,
-        ...cacheCosts
+        ...cacheCosts,
       ]);
 
       // Apply automated optimizations
@@ -88,7 +91,6 @@ export class CostOptimizer {
 
       // Update metrics
       this.updateOptimizationMetrics(optimizations);
-
     } catch (error) {
       this.logger.error('Cost optimization failed', { error });
       this.apm.captureError(error);
@@ -103,7 +105,7 @@ export class CostOptimizer {
     try {
       // Get Kubernetes resource utilization
       const pods = await this.kubernetes.getPodMetrics();
-      
+
       return pods.map(pod => ({
         service: pod.metadata.name,
         resource: 'compute',
@@ -111,7 +113,7 @@ export class CostOptimizer {
         projectedCost: this.projectPodCost(pod),
         utilizationRate: this.calculateUtilization(pod),
         optimizationPotential: 0,
-        recommendations: []
+        recommendations: [],
       }));
     } finally {
       span?.end();
@@ -124,7 +126,7 @@ export class CostOptimizer {
     try {
       // Get storage metrics
       const volumes = await this.kubernetes.getPersistentVolumes();
-      
+
       return volumes.map(volume => ({
         service: volume.metadata.name,
         resource: 'storage',
@@ -132,7 +134,7 @@ export class CostOptimizer {
         projectedCost: this.projectStorageCost(volume),
         utilizationRate: this.calculateStorageUtilization(volume),
         optimizationPotential: 0,
-        recommendations: []
+        recommendations: [],
       }));
     } finally {
       span?.end();
@@ -145,7 +147,7 @@ export class CostOptimizer {
     try {
       // Get network metrics
       const services = await this.kubernetes.getServices();
-      
+
       return services.map(service => ({
         service: service.metadata.name,
         resource: 'network',
@@ -153,7 +155,7 @@ export class CostOptimizer {
         projectedCost: this.projectNetworkCost(service),
         utilizationRate: this.calculateNetworkUtilization(service),
         optimizationPotential: 0,
-        recommendations: []
+        recommendations: [],
       }));
     } finally {
       span?.end();
@@ -166,16 +168,18 @@ export class CostOptimizer {
     try {
       // Get database metrics
       const metrics = await this.db.getMetrics();
-      
-      return [{
-        service: 'database',
-        resource: 'rds',
-        currentCost: this.calculateDatabaseCost(metrics),
-        projectedCost: this.projectDatabaseCost(metrics),
-        utilizationRate: this.calculateDatabaseUtilization(metrics),
-        optimizationPotential: 0,
-        recommendations: []
-      }];
+
+      return [
+        {
+          service: 'database',
+          resource: 'rds',
+          currentCost: this.calculateDatabaseCost(metrics),
+          projectedCost: this.projectDatabaseCost(metrics),
+          utilizationRate: this.calculateDatabaseUtilization(metrics),
+          optimizationPotential: 0,
+          recommendations: [],
+        },
+      ];
     } finally {
       span?.end();
     }
@@ -187,16 +191,18 @@ export class CostOptimizer {
     try {
       // Get cache metrics
       const metrics = await this.redis.info();
-      
-      return [{
-        service: 'cache',
-        resource: 'redis',
-        currentCost: this.calculateCacheCost(metrics),
-        projectedCost: this.projectCacheCost(metrics),
-        utilizationRate: this.calculateCacheUtilization(metrics),
-        optimizationPotential: 0,
-        recommendations: []
-      }];
+
+      return [
+        {
+          service: 'cache',
+          resource: 'redis',
+          currentCost: this.calculateCacheCost(metrics),
+          projectedCost: this.projectCacheCost(metrics),
+          utilizationRate: this.calculateCacheUtilization(metrics),
+          optimizationPotential: 0,
+          recommendations: [],
+        },
+      ];
     } finally {
       span?.end();
     }
@@ -218,7 +224,7 @@ export class CostOptimizer {
             projectedSavings: cost.currentCost * 0.5,
             impact: 'medium',
             risk: 'low',
-            implementation: `Downsize ${cost.resource} due to low utilization`
+            implementation: `Downsize ${cost.resource} due to low utilization`,
           });
         }
 
@@ -231,7 +237,7 @@ export class CostOptimizer {
             projectedSavings: cost.currentCost * 0.3,
             impact: 'high',
             risk: 'low',
-            implementation: `Purchase reserved capacity for ${cost.resource}`
+            implementation: `Purchase reserved capacity for ${cost.resource}`,
           });
         }
 
@@ -244,7 +250,7 @@ export class CostOptimizer {
             projectedSavings: cost.currentCost * 0.7,
             impact: 'high',
             risk: 'medium',
-            implementation: `Consolidate ${cost.resource} with other resources`
+            implementation: `Consolidate ${cost.resource} with other resources`,
           });
         }
       }
@@ -295,9 +301,11 @@ export class CostOptimizer {
 
   private isAutoApplicable(optimization: CostOptimization): boolean {
     // Only auto-apply low-risk optimizations
-    return optimization.risk === 'low' && 
-           optimization.impact !== 'high' &&
-           optimization.type !== 'terminate';
+    return (
+      optimization.risk === 'low' &&
+      optimization.impact !== 'high' &&
+      optimization.type !== 'terminate'
+    );
   }
 
   private async applyOptimization(
@@ -320,7 +328,7 @@ export class CostOptimizer {
     } catch (error) {
       this.logger.error('Failed to apply optimization', {
         optimization,
-        error
+        error,
       });
       this.apm.captureError(error);
     } finally {
@@ -328,15 +336,11 @@ export class CostOptimizer {
     }
   }
 
-  private async resizeResource(
-    optimization: CostOptimization
-  ): Promise<void> {
+  private async resizeResource(optimization: CostOptimization): Promise<void> {
     // Implementation for resizing resources
   }
 
-  private async reserveCapacity(
-    optimization: CostOptimization
-  ): Promise<void> {
+  private async reserveCapacity(optimization: CostOptimization): Promise<void> {
     // Implementation for reserving capacity
   }
 
@@ -361,9 +365,7 @@ export class CostOptimizer {
     }
   }
 
-  private updateOptimizationMetrics(
-    optimizations: CostOptimization[]
-  ): void {
+  private updateOptimizationMetrics(optimizations: CostOptimization[]): void {
     const span = this.apm.startSpan('update-optimization-metrics');
 
     try {
@@ -490,63 +492,64 @@ ${this.generateImplementationPlan(latestOptimizations)}
     }
   }
 
-  private calculateAverageRisk(
-    optimizations: CostOptimization[]
-  ): string {
+  private calculateAverageRisk(optimizations: CostOptimization[]): string {
     const riskScores = optimizations.map(opt => this.getRiskScore(opt.risk));
     const avgRisk = riskScores.reduce((a, b) => a + b) / riskScores.length;
-    
+
     if (avgRisk > 0.8) return 'Low';
     if (avgRisk > 0.5) return 'Medium';
     return 'High';
   }
 
-  private groupOptimizationsByType(
-    optimizations: CostOptimization[]
-  ): string {
-    const groups = optimizations.reduce((acc, opt) => {
-      acc[opt.type] = (acc[opt.type] || 0) + opt.projectedSavings;
-      return acc;
-    }, {} as Record<string, number>);
+  private groupOptimizationsByType(optimizations: CostOptimization[]): string {
+    const groups = optimizations.reduce(
+      (acc, opt) => {
+        acc[opt.type] = (acc[opt.type] || 0) + opt.projectedSavings;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return Object.entries(groups)
-      .map(([type, savings]) => 
-        `- ${type}: $${savings.toFixed(2)} projected annual savings`)
+      .map(
+        ([type, savings]) =>
+          `- ${type}: $${savings.toFixed(2)} projected annual savings`
+      )
       .join('\n');
   }
 
-  private formatTopSavings(
-    optimizations: CostOptimization[]
-  ): string {
+  private formatTopSavings(optimizations: CostOptimization[]): string {
     return optimizations
       .sort((a, b) => b.projectedSavings - a.projectedSavings)
       .slice(0, 5)
-      .map(opt => 
-        `- ${opt.implementation}: $${opt.projectedSavings.toFixed(2)} projected savings`)
+      .map(
+        opt =>
+          `- ${opt.implementation}: $${opt.projectedSavings.toFixed(2)} projected savings`
+      )
       .join('\n');
   }
 
   private generateImplementationPlan(
     optimizations: CostOptimization[]
   ): string {
-    const autoOptimizations = optimizations.filter(opt => 
+    const autoOptimizations = optimizations.filter(opt =>
       this.isAutoApplicable(opt)
     );
-    
-    const manualOptimizations = optimizations.filter(opt => 
-      !this.isAutoApplicable(opt)
+
+    const manualOptimizations = optimizations.filter(
+      opt => !this.isAutoApplicable(opt)
     );
 
     return `
 ### Automated Optimizations
-${autoOptimizations.map(opt => 
-  `- ${opt.implementation} (Automated)`
-).join('\n')}
+${autoOptimizations
+  .map(opt => `- ${opt.implementation} (Automated)`)
+  .join('\n')}
 
 ### Manual Review Required
-${manualOptimizations.map(opt => 
-  `- ${opt.implementation} (${opt.risk} risk)`
-).join('\n')}
+${manualOptimizations
+  .map(opt => `- ${opt.implementation} (${opt.risk} risk)`)
+  .join('\n')}
     `;
   }
 }

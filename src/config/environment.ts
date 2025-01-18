@@ -85,8 +85,9 @@ interface Environment {
 }
 
 const getEnvironment = (): Environment => {
-  const env = Constants.manifest?.extra?.env || process.env.NODE_ENV || 'development';
-  
+  const env =
+    Constants.manifest?.extra?.env || process.env.NODE_ENV || 'development';
+
   // Common configuration
   const common = {
     contentGeneration: {
@@ -99,7 +100,8 @@ const getEnvironment = (): Environment => {
     templateSettings: {
       maxTemplatesPerUser: Number(process.env.MAX_TEMPLATES_PER_USER) || 100,
       maxTemplateSizeKb: Number(process.env.MAX_TEMPLATE_SIZE_KB) || 500,
-      templateCacheDuration: Number(process.env.TEMPLATE_CACHE_DURATION) || 3600,
+      templateCacheDuration:
+        Number(process.env.TEMPLATE_CACHE_DURATION) || 3600,
       autoArchiveDays: Number(process.env.AUTO_ARCHIVE_DAYS) || 90,
     },
     rateLimits: {
@@ -222,7 +224,9 @@ const getEnvironment = (): Environment => {
         apiBaseUrl: process.env.API_BASE_URL || '',
       },
       production: true,
-      baseUrl: process.env.REACT_APP_PRODUCTION_URL || 'https://eri-ethio.com/tiktoktoe',
+      baseUrl:
+        process.env.REACT_APP_PRODUCTION_URL ||
+        'https://eri-ethio.com/tiktoktoe',
       apiUrl: `${process.env.REACT_APP_PRODUCTION_URL || 'https://eri-ethio.com/tiktoktoe'}/api`,
       wsUrl: `${process.env.REACT_APP_PRODUCTION_URL || 'https://eri-ethio.com/tiktoktoe'}/ws`,
       version: process.env.npm_package_version || '1.0.0',
@@ -286,19 +290,27 @@ export const environment = getEnvironment();
 
 export const getApiUrl = (endpoint: string): string => {
   const cleanEndpoint = endpoint.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
-  return cleanEndpoint ? `${environment.apiUrl}/${cleanEndpoint}` : `${environment.apiUrl}/`;
+  return cleanEndpoint
+    ? `${environment.apiUrl}/${cleanEndpoint}`
+    : `${environment.apiUrl}/`;
 };
 
 export const getWebSocketUrl = (endpoint: string): string => {
   const cleanEndpoint = endpoint.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
-  return cleanEndpoint ? `${environment.wsUrl}/${cleanEndpoint}` : `${environment.wsUrl}/`;
+  return cleanEndpoint
+    ? `${environment.wsUrl}/${cleanEndpoint}`
+    : `${environment.wsUrl}/`;
 };
 
 export const getAssetUrl = (path: string): string => {
   const cleanPath = path.replace(/^\/+|\/+$/g, '').replace(/\/+/g, '/');
-  return cleanPath ? `${environment.baseUrl}/assets/${cleanPath}` : `${environment.baseUrl}/assets/`;
+  return cleanPath
+    ? `${environment.baseUrl}/assets/${cleanPath}`
+    : `${environment.baseUrl}/assets/`;
 };
 
 // Utility functions for environment checks
-export const isDevelopment = () => Constants.manifest?.extra?.env === 'development';
-export const isProduction = () => Constants.manifest?.extra?.env === 'production';
+export const isDevelopment = () =>
+  Constants.manifest?.extra?.env === 'development';
+export const isProduction = () =>
+  Constants.manifest?.extra?.env === 'production';

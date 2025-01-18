@@ -69,14 +69,18 @@ declare module '@sendgrid/mail' {
 
   interface ClientResponse {
     statusCode: number;
-    body: any;
+    body: Record<string, unknown>;
     headers: Record<string, string>;
   }
 
   interface MailService {
     setApiKey(apiKey: string): void;
-    send(data: EmailData | EmailData[]): Promise<[ClientResponse, {}]>;
-    sendMultiple(data: EmailData): Promise<[ClientResponse, {}]>;
+    send(
+      data: EmailData | EmailData[]
+    ): Promise<[ClientResponse, Record<string, unknown>]>;
+    sendMultiple(
+      data: EmailData
+    ): Promise<[ClientResponse, Record<string, unknown>]>;
     setSubstitutionWrappers(left: string, right: string): void;
     setDefaultRequest(defaultRequest: Record<string, any>): void;
   }

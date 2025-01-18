@@ -63,7 +63,10 @@ export class TemplateVersioningService {
       .collection('versions');
 
     // Get current version number
-    const versions = await versionsRef.orderBy('version', 'desc').limit(1).get();
+    const versions = await versionsRef
+      .orderBy('version', 'desc')
+      .limit(1)
+      .get();
     const currentVersion = versions.empty ? 0 : versions.docs[0].data().version;
 
     const newVersion: Omit<TemplateVersion, 'id'> = {
@@ -98,7 +101,9 @@ export class TemplateVersioningService {
       .doc(versionId)
       .get();
 
-    return doc.exists ? { id: doc.id, ...doc.data() } as TemplateVersion : null;
+    return doc.exists
+      ? ({ id: doc.id, ...doc.data() } as TemplateVersion)
+      : null;
   }
 
   async listVersions(
@@ -115,11 +120,11 @@ export class TemplateVersioningService {
       .orderBy('version', 'desc');
 
     if (options.startAfter !== undefined) {
-      query = query.startAfter(options.startAfter) as any;
+      query = query.startAfter(options.startAfter) as unknown;
     }
 
     if (options.limit) {
-      query = query.limit(options.limit) as any;
+      query = query.limit(options.limit) as unknown;
     }
 
     const snapshot = await query.get();
@@ -149,7 +154,9 @@ export class TemplateVersioningService {
       changes: {
         prompt: oldVersion.prompt !== newVersion.prompt,
         style: oldVersion.style !== newVersion.style,
-        parameters: JSON.stringify(oldVersion.parameters) !== JSON.stringify(newVersion.parameters),
+        parameters:
+          JSON.stringify(oldVersion.parameters) !==
+          JSON.stringify(newVersion.parameters),
         performanceDiff: {
           usageCount:
             (newVersion.performance?.usageCount || 0) -
@@ -247,11 +254,11 @@ export class TemplateVersioningService {
       .orderBy('createdAt', 'desc');
 
     if (options.startAfter) {
-      query = query.startAfter(options.startAfter) as any;
+      query = query.startAfter(options.startAfter) as unknown;
     }
 
     if (options.limit) {
-      query = query.limit(options.limit) as any;
+      query = query.limit(options.limit) as unknown;
     }
 
     const snapshot = await query.get();

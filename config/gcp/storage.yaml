@@ -1,0 +1,50 @@
+apiVersion: storage.cnrm.cloud.google.com/v1beta1
+kind: StorageBucket
+metadata:
+  name: tiktoktoe-media
+  namespace: tiktoktoe
+  annotations:
+    cnrm.cloud.google.com/force-destroy: "false"
+spec:
+  location: US-CENTRAL1
+  versioning:
+    enabled: true
+  lifecycle:
+    rule:
+      - action:
+          type: SetStorageClass
+          storageClass: NEARLINE
+        condition:
+          age: 30
+          matchesStorageClass: ["STANDARD"]
+      - action:
+          type: SetStorageClass
+          storageClass: COLDLINE
+        condition:
+          age: 90
+          matchesStorageClass: ["NEARLINE"]
+  cors:
+    - maxAgeSeconds: 3600
+      method: ["GET", "HEAD", "PUT", "POST", "DELETE"]
+      origin: ["*"]
+      responseHeader: ["Content-Type", "Content-Length", "ETag"]
+  uniformBucketLevelAccess: true
+---
+apiVersion: storage.cnrm.cloud.google.com/v1beta1
+kind: StorageBucket
+metadata:
+  name: tiktoktoe-backups
+  namespace: tiktoktoe
+  annotations:
+    cnrm.cloud.google.com/force-destroy: "false"
+spec:
+  location: US-CENTRAL1
+  versioning:
+    enabled: true
+  lifecycle:
+    rule:
+      - action:
+          type: Delete
+        condition:
+          age: 90
+  uniformBucketLevelAccess: true

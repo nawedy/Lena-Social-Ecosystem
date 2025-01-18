@@ -80,61 +80,80 @@ declare module 'react-native-chart-kit' {
     }[];
   }
 
-  export class LineChart extends React.Component<AbstractChartProps & {
-    data: LineChartData;
-    bezier?: boolean;
-    getDotColor?: (dataPoint: number, index: number) => string;
-    renderDotContent?: (params: { x: number; y: number; index: number; indexData: number }) => React.ReactNode;
-  }> {}
+  export class LineChart extends React.Component<
+    AbstractChartProps & {
+      data: LineChartData;
+      bezier?: boolean;
+      getDotColor?: (dataPoint: number, index: number) => string;
+      renderDotContent?: (params: {
+        x: number;
+        y: number;
+        index: number;
+        indexData: number;
+      }) => React.ReactNode;
+    }
+  > {}
 
-  export class BarChart extends React.Component<AbstractChartProps & {
-    data: BarChartData;
-    showValuesOnTopOfBars?: boolean;
-    showBarTops?: boolean;
-  }> {}
+  export class BarChart extends React.Component<
+    AbstractChartProps & {
+      data: BarChartData;
+      showValuesOnTopOfBars?: boolean;
+      showBarTops?: boolean;
+    }
+  > {}
 
-  export class PieChart extends React.Component<AbstractChartProps & {
-    data: PieChartData[];
-    accessor: string;
-    backgroundColor?: string;
-    paddingLeft?: string;
-    center?: [number, number];
-    absolute?: boolean;
-  }> {}
+  export class PieChart extends React.Component<
+    AbstractChartProps & {
+      data: PieChartData[];
+      accessor: string;
+      backgroundColor?: string;
+      paddingLeft?: string;
+      center?: [number, number];
+      absolute?: boolean;
+    }
+  > {}
 
-  export class ContributionGraph extends React.Component<AbstractChartProps & {
-    values: ContributionGraphData[];
-    endDate: Date;
-    numDays: number;
-    squareSize?: number;
-    gutterSize?: number;
-    showMonthLabels?: boolean;
-    tooltipDataAttrs?: (value: { date: string; count: number }) => any;
-  }> {}
+  export class ContributionGraph extends React.Component<
+    AbstractChartProps & {
+      values: ContributionGraphData[];
+      endDate: Date;
+      numDays: number;
+      squareSize?: number;
+      gutterSize?: number;
+      showMonthLabels?: boolean;
+      tooltipDataAttrs?: (value: { date: string; count: number }) => any;
+    }
+  > {}
 
-  export class ProgressChart extends React.Component<AbstractChartProps & {
-    data: {
-      labels?: string[];
-      data: number[];
-      colors?: string[];
-    };
-    hideLegend?: boolean;
-  }> {}
+  export class ProgressChart extends React.Component<
+    AbstractChartProps & {
+      data: {
+        labels?: string[];
+        data: number[];
+        colors?: string[];
+      };
+      hideLegend?: boolean;
+    }
+  > {}
 
-  export class StackedBarChart extends React.Component<AbstractChartProps & {
-    data: {
-      labels: string[];
-      legend: string[];
-      data: number[][];
-      barColors: string[];
-    };
-    hideLegend?: boolean;
-  }> {}
+  export class StackedBarChart extends React.Component<
+    AbstractChartProps & {
+      data: {
+        labels: string[];
+        legend: string[];
+        data: number[][];
+        barColors: string[];
+      };
+      hideLegend?: boolean;
+    }
+  > {}
 
-  export class RadarChart extends React.Component<AbstractChartProps & {
-    data: RadarChartData;
-    transparent?: boolean;
-  }> {}
+  export class RadarChart extends React.Component<
+    AbstractChartProps & {
+      data: RadarChartData;
+      transparent?: boolean;
+    }
+  > {}
 }
 
 declare module '@stability-ai/api' {
@@ -264,19 +283,35 @@ declare module '@sentry/node' {
 
   export function init(options: SentryConfig): void;
   export function captureException(error: any): string;
-  export function captureMessage(message: string, level?: 'fatal' | 'error' | 'warning' | 'info' | 'debug'): string;
+  export function captureMessage(
+    message: string,
+    level?: 'fatal' | 'error' | 'warning' | 'info' | 'debug'
+  ): string;
   export function setUser(user: Record<string, any> | null): void;
   export function setTag(key: string, value: string): void;
   export function setExtra(key: string, extra: any): void;
-  export function setContext(name: string, context: Record<string, any> | null): void;
+  export function setContext(
+    name: string,
+    context: Record<string, any> | null
+  ): void;
   export function addBreadcrumb(breadcrumb: Record<string, any>): void;
   export function configureScope(callback: (scope: any) => void): void;
 }
 
 declare module 'expo-secure-store' {
-  export function getItemAsync(key: string, options?: { keychainAccessible?: boolean }): Promise<string | null>;
-  export function setItemAsync(key: string, value: string, options?: { keychainAccessible?: boolean }): Promise<void>;
-  export function deleteItemAsync(key: string, options?: { keychainAccessible?: boolean }): Promise<void>;
+  export function getItemAsync(
+    key: string,
+    options?: { keychainAccessible?: boolean }
+  ): Promise<string | null>;
+  export function setItemAsync(
+    key: string,
+    value: string,
+    options?: { keychainAccessible?: boolean }
+  ): Promise<void>;
+  export function deleteItemAsync(
+    key: string,
+    options?: { keychainAccessible?: boolean }
+  ): Promise<void>;
 }
 
 declare module 'expo-linear-gradient' {
@@ -310,7 +345,9 @@ declare module 'expo-camera' {
       FlashMode: { on: number; off: number; auto: number; torch: number };
     };
 
-    static requestCameraPermissionsAsync(): Promise<{ status: 'granted' | 'denied' }>;
+    static requestCameraPermissionsAsync(): Promise<{
+      status: 'granted' | 'denied';
+    }>;
     takePictureAsync(options?: { quality?: number }): Promise<{ uri: string }>;
     recordAsync(options?: { quality?: number }): Promise<{ uri: string }>;
     stopRecording(): void;
@@ -342,10 +379,18 @@ declare module 'expo-image-picker' {
     All: 'All';
   };
 
-  export function launchImageLibraryAsync(options?: ImagePickerOptions): Promise<ImagePickerResult>;
-  export function launchCameraAsync(options?: ImagePickerOptions): Promise<ImagePickerResult>;
-  export function requestMediaLibraryPermissionsAsync(): Promise<{ status: 'granted' | 'denied' }>;
-  export function requestCameraPermissionsAsync(): Promise<{ status: 'granted' | 'denied' }>;
+  export function launchImageLibraryAsync(
+    options?: ImagePickerOptions
+  ): Promise<ImagePickerResult>;
+  export function launchCameraAsync(
+    options?: ImagePickerOptions
+  ): Promise<ImagePickerResult>;
+  export function requestMediaLibraryPermissionsAsync(): Promise<{
+    status: 'granted' | 'denied';
+  }>;
+  export function requestCameraPermissionsAsync(): Promise<{
+    status: 'granted' | 'denied';
+  }>;
 }
 
 declare module '@react-native-async-storage/async-storage' {

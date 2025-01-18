@@ -1,6 +1,7 @@
 import { EnhancedAnalyticsService } from './EnhancedAnalyticsService';
 import { NotificationService } from './NotificationService';
 import { RBACService, Permission } from './RBACService';
+import { AnalyticsService } from './AnalyticsService';
 
 interface AIModel {
   type: 'trend' | 'anomaly' | 'sentiment' | 'clustering' | 'recommendation';
@@ -210,28 +211,19 @@ export class AIAnalyticsService {
     }
   ): Promise<AIInsight[]> {
     // Validate access
-    await this.rbac.validateAccess(
-      userId,
-      'system',
-      Permission.VIEW_ANALYTICS
-    );
+    await this.rbac.validateAccess(userId, 'system', Permission.VIEW_ANALYTICS);
 
     const insights: AIInsight[] = [];
 
     // Run analysis in parallel
-    const [
-      trends,
-      anomalies,
-      clusters,
-      segments,
-      strategies,
-    ] = await Promise.all([
-      this.analyzeTrends(accountIds, options),
-      this.detectAnomalies(accountIds, options),
-      this.clusterContent(accountIds, options),
-      this.segmentAudience(accountIds, options),
-      this.generateOptimizationStrategies(accountIds, options),
-    ]);
+    const [trends, anomalies, clusters, segments, strategies] =
+      await Promise.all([
+        this.analyzeTrends(accountIds, options),
+        this.detectAnomalies(accountIds, options),
+        this.clusterContent(accountIds, options),
+        this.segmentAudience(accountIds, options),
+        this.generateOptimizationStrategies(accountIds, options),
+      ]);
 
     // Process trend insights
     for (const trend of trends) {
@@ -291,7 +283,11 @@ export class AIAnalyticsService {
 
     // Process strategy insights
     for (const strategy of strategies) {
-      if (strategy.recommendations.some(r => r.confidence > (options.threshold || 0.8))) {
+      if (
+        strategy.recommendations.some(
+          r => r.confidence > (options.threshold || 0.8)
+        )
+      ) {
         insights.push({
           type: 'strategy',
           confidence: this.calculateStrategyConfidence(strategy),
@@ -471,7 +467,9 @@ export class AIAnalyticsService {
     return '';
   }
 
-  private generateStrategyRecommendations(strategy: OptimizationStrategy): any[] {
+  private generateStrategyRecommendations(
+    strategy: OptimizationStrategy
+  ): any[] {
     // Implementation
     return [];
   }
@@ -479,5 +477,45 @@ export class AIAnalyticsService {
   private formatInsightsNotification(insights: AIInsight[]): string {
     // Implementation
     return '';
+  }
+
+  static trackModelPerformance(
+    modelName: string,
+    latency: number,
+    success: boolean
+  ) {
+    AnalyticsService.trackMetric('ai_model_latency', latency, {
+      model: modelName,
+    });
+    AnalyticsService.trackEvent('ai_model_invocation', {
+      model: modelName,
+      success,
+      latency,
+    });
+  }
+
+  static trackModelError(modelName: string, error: Error) {
+    AnalyticsService.trackError(error, {
+      model: modelName,
+      errorType: 'ai_model_error',
+    });
+  }
+
+  static trackFeatureUsage(featureName: string, userId: string) {
+    AnalyticsService.trackEvent('ai_feature_usage', {
+      feature: featureName,
+      userId,
+    });
+  }
+
+  static trackTrainingProgress(
+    modelName: string,
+    progress: number,
+    epoch: number
+  ) {
+    AnalyticsService.trackMetric('model_training_progress', progress, {
+      model: modelName,
+      epoch: epoch.toString(),
+    });
   }
 }

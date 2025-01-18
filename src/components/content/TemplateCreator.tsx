@@ -12,7 +12,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ContentTemplateService, ContentTemplate, TemplateCategory } from '../../services/ContentTemplateService';
+import {
+  ContentTemplateService,
+  ContentTemplate,
+  TemplateCategory,
+} from '../../services/ContentTemplateService';
 import { ContentGenerationService } from '../../services/ContentGenerationService';
 
 interface TemplateCreatorProps {
@@ -55,48 +59,52 @@ export function TemplateCreator({
   const [popularTags, setPopularTags] = useState<string[]>([]);
   const [error, setError] = useState<ValidationError | null>(null);
 
-  const templateService = ContentTemplateService.getInstance();
-  const contentGenService = ContentGenerationService.getInstance();
+  const _templateService = ContentTemplateService.getInstance();
+  const _contentGenService = ContentGenerationService.getInstance();
 
   useEffect(() => {
     void loadCategories();
     void loadPopularTags();
   }, []);
 
-  const loadCategories = async (): Promise<void> => {
+  const _loadCategories = async (): Promise<void> => {
     try {
-      const loadedCategories = await templateService.getTemplateCategories();
+      const _loadedCategories = await templateService.getTemplateCategories();
       setCategories(loadedCategories);
     } catch (error) {
       console.error('Error loading categories:', error);
-      setError(error instanceof Error ? error : new Error('Failed to load categories'));
+      setError(
+        error instanceof Error ? error : new Error('Failed to load categories')
+      );
     }
   };
 
-  const loadPopularTags = async (): Promise<void> => {
+  const _loadPopularTags = async (): Promise<void> => {
     try {
-      const loadedTags = await templateService.getTemplateTags();
+      const _loadedTags = await templateService.getTemplateTags();
       setPopularTags(loadedTags);
     } catch (error) {
       console.error('Error loading tags:', error);
-      setError(error instanceof Error ? error : new Error('Failed to load tags'));
+      setError(
+        error instanceof Error ? error : new Error('Failed to load tags')
+      );
     }
   };
 
-  const handleAddTag = (): void => {
+  const _handleAddTag = (): void => {
     if (tagInput && !tags.includes(tagInput)) {
       setTags([...tags, tagInput]);
       setTagInput('');
     }
   };
 
-  const handleRemoveTag = (tag: string): void => {
+  const _handleRemoveTag = (tag: string): void => {
     setTags(tags.filter(t => t !== tag));
   };
 
-  const testTemplate = async (): Promise<void> => {
+  const _testTemplate = async (): Promise<void> => {
     if (!prompt) {
-      Alert.alert(t('error'), t('errors.promptRequired'));
+      Alert.window.alert(t('error'), t('errors.promptRequired'));
       return;
     }
 
@@ -128,36 +136,58 @@ export function TemplateCreator({
       setTestResult(result);
     } catch (error) {
       console.error('Error testing template:', error);
-      setError(error instanceof Error ? error : new Error('Failed to test template'));
-      Alert.alert(t('error'), t('errors.testFailed'));
+      setError(
+        error instanceof Error ? error : new Error('Failed to test template')
+      );
+      Alert.window.alert(t('error'), t('errors.testFailed'));
     } finally {
       setLoading(false);
     }
   };
 
-  const validateTemplate = (): ValidationError | null => {
+  const _validateTemplate = (): ValidationError | null => {
     if (!name) {
-      return { name: 'ValidationError', message: t('errors.nameRequired'), field: 'name' };
+      return {
+        name: 'ValidationError',
+        message: t('errors.nameRequired'),
+        field: 'name',
+      };
     }
     if (!description) {
-      return { name: 'ValidationError', message: t('errors.descriptionRequired'), field: 'description' };
+      return {
+        name: 'ValidationError',
+        message: t('errors.descriptionRequired'),
+        field: 'description',
+      };
     }
     if (!category) {
-      return { name: 'ValidationError', message: t('errors.categoryRequired'), field: 'category' };
+      return {
+        name: 'ValidationError',
+        message: t('errors.categoryRequired'),
+        field: 'category',
+      };
     }
     if (!prompt) {
-      return { name: 'ValidationError', message: t('errors.promptRequired'), field: 'prompt' };
+      return {
+        name: 'ValidationError',
+        message: t('errors.promptRequired'),
+        field: 'prompt',
+      };
     }
     if (tags.length === 0) {
-      return { name: 'ValidationError', message: t('errors.tagsRequired'), field: 'tags' };
+      return {
+        name: 'ValidationError',
+        message: t('errors.tagsRequired'),
+        field: 'tags',
+      };
     }
     return null;
   };
 
-  const handleCreate = async (): Promise<void> => {
-    const validationError = validateTemplate();
+  const _handleCreate = async (): Promise<void> => {
+    const _validationError = validateTemplate();
     if (validationError) {
-      Alert.alert(t('error'), validationError.message);
+      Alert.window.alert(t('error'), validationError.message);
       setError(validationError);
       return;
     }
@@ -188,12 +218,14 @@ export function TemplateCreator({
       };
 
       await templateService.createTemplate(template);
-      Alert.alert(t('success'), t('messages.templateCreated'));
+      Alert.window.alert(t('success'), t('messages.templateCreated'));
       onTemplateCreated();
     } catch (error) {
       console.error('Error creating template:', error);
-      setError(error instanceof Error ? error : new Error('Failed to create template'));
-      Alert.alert(t('error'), t('errors.createFailed'));
+      setError(
+        error instanceof Error ? error : new Error('Failed to create template')
+      );
+      Alert.window.alert(t('error'), t('errors.createFailed'));
     } finally {
       setLoading(false);
     }
@@ -207,7 +239,9 @@ export function TemplateCreator({
         </TouchableOpacity>
         <Text style={styles.title}>{t('templates.createNew')}</Text>
         <TouchableOpacity onPress={handleCreate} disabled={loading}>
-          <Text style={[styles.saveButton, loading && styles.saveButtonDisabled]}>
+          <Text
+            style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+          >
             {t('save')}
           </Text>
         </TouchableOpacity>
@@ -276,7 +310,10 @@ export function TemplateCreator({
           <Text style={styles.label}>{t('templates.type')}</Text>
           <View style={styles.typeContainer}>
             <TouchableOpacity
-              style={[styles.typeButton, type === 'text' && styles.typeButtonSelected]}
+              style={[
+                styles.typeButton,
+                type === 'text' && styles.typeButtonSelected,
+              ]}
               onPress={() => setType('text')}
             >
               <Ionicons
@@ -294,7 +331,10 @@ export function TemplateCreator({
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.typeButton, type === 'image' && styles.typeButtonSelected]}
+              style={[
+                styles.typeButton,
+                type === 'image' && styles.typeButtonSelected,
+              ]}
               onPress={() => setType('image')}
             >
               <Ionicons
@@ -312,7 +352,10 @@ export function TemplateCreator({
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.typeButton, type === 'video' && styles.typeButtonSelected]}
+              style={[
+                styles.typeButton,
+                type === 'video' && styles.typeButtonSelected,
+              ]}
               onPress={() => setType('video')}
             >
               <Ionicons
@@ -444,7 +487,8 @@ export function TemplateCreator({
               <Text
                 style={[
                   styles.providerButtonText,
-                  aiProvider === 'anthropic' && styles.providerButtonTextSelected,
+                  aiProvider === 'anthropic' &&
+                    styles.providerButtonTextSelected,
                 ]}
               >
                 Anthropic
@@ -523,7 +567,7 @@ export function TemplateCreator({
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

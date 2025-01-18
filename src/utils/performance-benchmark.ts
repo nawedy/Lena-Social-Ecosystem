@@ -59,24 +59,27 @@ export class PerformanceBenchmark {
   }
 
   public async runBenchmark(config: BenchmarkConfig): Promise<BenchmarkResult> {
-    const transaction = this.apm.startTransaction(`benchmark-${config.name}`, 'benchmark');
-    
+    const transaction = this.apm.startTransaction(
+      `benchmark-${config.name}`,
+      'benchmark'
+    );
+
     try {
       // Prepare system
       await this.prepare(config);
-      
+
       // Run warmup
       await this.warmup(config);
-      
+
       // Run actual benchmark
       const result = await this.execute(config);
-      
+
       // Cooldown
       await this.cooldown(config);
-      
+
       // Store results
       await this.storeResults(result);
-      
+
       return result;
     } finally {
       transaction?.end();
@@ -85,17 +88,17 @@ export class PerformanceBenchmark {
 
   private async prepare(config: BenchmarkConfig): Promise<void> {
     const span = this.apm.startSpan('benchmark-prepare');
-    
+
     try {
       // Clear caches
       await this.redis.flushAll();
-      
+
       // Reset connection pools
       await this.db.resetPool();
-      
+
       // Clear metrics
       await this.metrics.reset();
-      
+
       this.logger.info('Benchmark preparation complete', { config });
     } finally {
       span?.end();
@@ -104,14 +107,14 @@ export class PerformanceBenchmark {
 
   private async warmup(config: BenchmarkConfig): Promise<void> {
     const span = this.apm.startSpan('benchmark-warmup');
-    
+
     try {
       const warmupConfig = {
         ...config,
         duration: config.warmup,
-        targetRPS: config.targetRPS * 0.5
+        targetRPS: config.targetRPS * 0.5,
       };
-      
+
       await this.execute(warmupConfig);
       this.logger.info('Warmup complete');
     } finally {
@@ -121,7 +124,7 @@ export class PerformanceBenchmark {
 
   private async execute(config: BenchmarkConfig): Promise<BenchmarkResult> {
     const span = this.apm.startSpan('benchmark-execute');
-    
+
     try {
       const startTime = Date.now();
       const metrics: number[] = [];
@@ -130,9 +133,9 @@ export class PerformanceBenchmark {
       let failureCount = 0;
 
       // Create worker pool
-      const workers = new Array(config.concurrency).fill(null).map((_, i) =>
-        this.worker(i, config, metrics, latencies)
-      );
+      const workers = new Array(config.concurrency)
+        .fill(null)
+        .map((_, i) => this.worker(i, config, metrics, latencies));
 
       // Run benchmark
       await Promise.all(workers);
@@ -157,12 +160,12 @@ export class PerformanceBenchmark {
         errorRate: failureCount / metrics.length,
         cpu: {
           average: await this.metrics.getAverageCPU(),
-          peak: await this.metrics.getPeakCPU()
+          peak: await this.metrics.getPeakCPU(),
         },
         memory: {
           average: await this.metrics.getAverageMemory(),
-          peak: await this.metrics.getPeakMemory()
-        }
+          peak: await this.metrics.getPeakMemory(),
+        },
       };
 
       this.logger.info('Benchmark execution complete', { result });
@@ -179,14 +182,14 @@ export class PerformanceBenchmark {
     latencies: number[]
   ): Promise<void> {
     const span = this.apm.startSpan(`benchmark-worker-${id}`);
-    
+
     try {
       const endTime = Date.now() + config.duration;
       const interval = 1000 / (config.targetRPS / config.concurrency);
 
       while (Date.now() < endTime) {
         const startTime = Date.now();
-        
+
         try {
           await this.executeRequest();
           metrics.push(1);
@@ -214,7 +217,7 @@ export class PerformanceBenchmark {
 
   private async cooldown(config: BenchmarkConfig): Promise<void> {
     const span = this.apm.startSpan('benchmark-cooldown');
-    
+
     try {
       await new Promise(resolve => setTimeout(resolve, config.cooldown));
       this.logger.info('Cooldown complete');
@@ -225,7 +228,7 @@ export class PerformanceBenchmark {
 
   private async storeResults(result: BenchmarkResult): Promise<void> {
     const span = this.apm.startSpan('store-benchmark-results');
-    
+
     try {
       // Store in database
       await this.db.query(
@@ -256,10 +259,10 @@ export class PerformanceBenchmark {
 
   private percentile(numbers: number[], p: number): number {
     const sorted = [...numbers].sort((a, b) => a - b);
-    const pos = (sorted.length - 1) * p / 100;
+    const pos = ((sorted.length - 1) * p) / 100;
     const base = Math.floor(pos);
     const rest = pos - base;
-    
+
     if (sorted[base + 1] !== undefined) {
       return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
     } else {
@@ -290,7 +293,7 @@ export class PerformanceBenchmark {
       this.db.query(
         'SELECT data FROM benchmark_results WHERE name = $1 ORDER BY timestamp DESC LIMIT 1',
         [current]
-      )
+      ),
     ]);
 
     const baselineData = baselineResult.rows[0]?.data;
@@ -301,11 +304,24 @@ export class PerformanceBenchmark {
     }
 
     return {
-      rpsChange: (currentData.rps - baselineData.rps) / baselineData.rps * 100,
-      latencyChange: (currentData.averageLatency - baselineData.averageLatency) / baselineData.averageLatency * 100,
-      errorRateChange: (currentData.errorRate - baselineData.errorRate) / baselineData.errorRate * 100,
-      cpuChange: (currentData.cpu.average - baselineData.cpu.average) / baselineData.cpu.average * 100,
-      memoryChange: (currentData.memory.average - baselineData.memory.average) / baselineData.memory.average * 100
+      rpsChange:
+        ((currentData.rps - baselineData.rps) / baselineData.rps) * 100,
+      latencyChange:
+        ((currentData.averageLatency - baselineData.averageLatency) /
+          baselineData.averageLatency) *
+        100,
+      errorRateChange:
+        ((currentData.errorRate - baselineData.errorRate) /
+          baselineData.errorRate) *
+        100,
+      cpuChange:
+        ((currentData.cpu.average - baselineData.cpu.average) /
+          baselineData.cpu.average) *
+        100,
+      memoryChange:
+        ((currentData.memory.average - baselineData.memory.average) /
+          baselineData.memory.average) *
+        100,
     };
   }
 }

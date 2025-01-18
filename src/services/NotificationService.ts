@@ -211,20 +211,28 @@ export class NotificationService {
     const notificationIds: string[] = [];
 
     // Group notifications by type for batch processing
-    const groupedNotifications = notifications.reduce((acc, notification) => {
-      if (!acc[notification.type]) {
-        acc[notification.type] = [];
-      }
-      acc[notification.type].push(notification);
-      return acc;
-    }, {} as Record<Notification['type'], typeof notifications>);
+    const groupedNotifications = notifications.reduce(
+      (acc, notification) => {
+        if (!acc[notification.type]) {
+          acc[notification.type] = [];
+        }
+        acc[notification.type].push(notification);
+        return acc;
+      },
+      {} as Record<Notification['type'], typeof notifications>
+    );
 
     // Process each group in parallel
     await Promise.all(
-      Object.entries(groupedNotifications).map(async ([type, notifications]) => {
-        const ids = await this.processBulkNotifications(type as Notification['type'], notifications);
-        notificationIds.push(...ids);
-      })
+      Object.entries(groupedNotifications).map(
+        async ([type, notifications]) => {
+          const ids = await this.processBulkNotifications(
+            type as Notification['type'],
+            notifications
+          );
+          notificationIds.push(...ids);
+        }
+      )
     );
 
     return notificationIds;
@@ -265,9 +273,7 @@ export class NotificationService {
     });
   }
 
-  public async getUnreadNotifications(
-    userId: string
-  ): Promise<Notification[]> {
+  public async getUnreadNotifications(userId: string): Promise<Notification[]> {
     const unread: Notification[] = [];
     for (const notification of this.notifications.values()) {
       if (
@@ -294,9 +300,7 @@ export class NotificationService {
     // Implementation for notification unsubscription
   }
 
-  private async sendThroughChannel(
-    notification: Notification
-  ): Promise<void> {
+  private async sendThroughChannel(notification: Notification): Promise<void> {
     const channel = this.channels.get(notification.type);
     if (!channel || !channel.config.enabled) {
       throw new Error(`Channel ${notification.type} not found or disabled`);
@@ -343,15 +347,21 @@ export class NotificationService {
     // Implementation for email sending
   }
 
-  private async sendPushNotification(notification: Notification): Promise<void> {
+  private async sendPushNotification(
+    notification: Notification
+  ): Promise<void> {
     // Implementation for push notification
   }
 
-  private async sendSlackNotification(notification: Notification): Promise<void> {
+  private async sendSlackNotification(
+    notification: Notification
+  ): Promise<void> {
     // Implementation for Slack notification
   }
 
-  private async sendWebhookNotification(notification: Notification): Promise<void> {
+  private async sendWebhookNotification(
+    notification: Notification
+  ): Promise<void> {
     // Implementation for webhook notification
   }
 
@@ -359,7 +369,9 @@ export class NotificationService {
     // Implementation for SMS notification
   }
 
-  private async sendInAppNotification(notification: Notification): Promise<void> {
+  private async sendInAppNotification(
+    notification: Notification
+  ): Promise<void> {
     // Implementation for in-app notification
   }
 }

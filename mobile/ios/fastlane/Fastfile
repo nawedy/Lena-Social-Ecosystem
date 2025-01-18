@@ -1,0 +1,132 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    setup_ci if ENV['CI']
+    
+    # Sync certificates and provisioning profiles
+    sync_code_signing(
+      type: "appstore",
+      readonly: true,
+      app_identifier: "com.tiktotoe.app"
+    )
+    
+    # Increment build number
+    increment_build_number(
+      build_number: latest_testflight_build_number + 1
+    )
+    
+    # Update CocoaPods
+    cocoapods(
+      clean_install: true,
+      podfile: "Podfile"
+    )
+    
+    # Build the app
+    build_ios_app(
+      scheme: "TikTokToe",
+      export_method: "app-store",
+      configuration: "Release",
+      clean: true,
+      export_options: {
+        provisioningProfiles: {
+          "com.tiktotoe.app" => "match AppStore com.tiktotoe.app"
+        }
+      }
+    )
+    
+    # Upload to TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      apple_id: ENV["APPLE_ID"],
+      api_key: app_store_connect_api_key
+    )
+  end
+  
+  desc "Deploy a new version to the App Store"
+  lane :deploy do
+    setup_ci if ENV['CI']
+    
+    # Sync certificates and provisioning profiles
+    sync_code_signing(
+      type: "appstore",
+      readonly: true,
+      app_identifier: "com.tiktotoe.app"
+    )
+    
+    # Ensure clean git status
+    ensure_git_status_clean
+    
+    # Increment version number if needed
+    current_version = get_version_number
+    latest_version = latest_app_store_build_number
+    if Gem::Version.new(current_version) <= Gem::Version.new(latest_version)
+      increment_version_number(
+        bump_type: "patch"
+      )
+    end
+    
+    # Update CocoaPods
+    cocoapods(
+      clean_install: true,
+      podfile: "Podfile"
+    )
+    
+    # Build the app
+    build_ios_app(
+      scheme: "TikTokToe",
+      export_method: "app-store",
+      configuration: "Release",
+      clean: true,
+      export_options: {
+        provisioningProfiles: {
+          "com.tiktotoe.app" => "match AppStore com.tiktotoe.app"
+        }
+      }
+    )
+    
+    # Upload to App Store
+    upload_to_app_store(
+      force: true,
+      skip_screenshots: true,
+      skip_metadata: false,
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        add_id_info_uses_idfa: false,
+        export_compliance_uses_encryption: false,
+        content_rights_contains_third_party_content: false
+      }
+    )
+    
+    # Tag the release
+    add_git_tag(
+      tag: "ios/#{get_version_number}/#{get_build_number}"
+    )
+    push_git_tags
+  end
+  
+  desc "Create app in App Store Connect if needed"
+  lane :create_app do
+    produce(
+      app_identifier: "com.tiktotoe.app",
+      app_name: "TikTokToe",
+      language: "en-US",
+      app_version: "1.0.0",
+      sku: "TIKTOTOE2025",
+      team_id: ENV["TEAM_ID"],
+      platform: "ios"
+    )
+  end
+  
+  error do |lane, exception, options|
+    if ENV['CI']
+      # Send error notification to Slack
+      slack(
+        message: "iOS build failed in lane #{lane}: #{exception.message}",
+        success: false,
+        slack_url: ENV["SLACK_WEBHOOK_URL"]
+      )
+    end
+  end
+end

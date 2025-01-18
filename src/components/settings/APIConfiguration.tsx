@@ -29,15 +29,15 @@ export function APIConfiguration() {
     replicate: { key: '', isVisible: false, isValid: null, isLoading: false },
   });
 
-  const contentGenService = ContentGenerationService.getInstance();
+  const _contentGenService = ContentGenerationService.getInstance();
 
   useEffect(() => {
     loadAPIKeys();
   }, []);
 
-  const loadAPIKeys = async () => {
+  const _loadAPIKeys = async () => {
     try {
-      const keys = await Promise.all([
+      const _keys = await Promise.all([
         SecureStore.getItemAsync('openai_api_key'),
         SecureStore.getItemAsync('stability_api_key'),
         SecureStore.getItemAsync('replicate_api_key'),
@@ -50,28 +50,28 @@ export function APIConfiguration() {
       }));
     } catch (error) {
       console.error('Error loading API keys:', error);
-      Alert.alert(t('error'), t('errors.loadingAPIKeys'));
+      Alert.window.alert(t('error'), t('errors.loadingAPIKeys'));
     }
   };
 
-  const toggleKeyVisibility = (provider: string) => {
+  const _toggleKeyVisibility = (provider: string) => {
     setApis(prev => ({
       ...prev,
       [provider]: { ...prev[provider], isVisible: !prev[provider].isVisible },
     }));
   };
 
-  const updateAPIKey = async (provider: string, key: string) => {
+  const _updateAPIKey = async (provider: string, key: string) => {
     setApis(prev => ({
       ...prev,
       [provider]: { ...prev[provider], key, isValid: null },
     }));
   };
 
-  const testConnection = async (provider: string) => {
-    const apiState = apis[provider];
+  const _testConnection = async (provider: string) => {
+    const _apiState = apis[provider];
     if (!apiState.key) {
-      Alert.alert(t('error'), t('errors.apiKeyRequired'));
+      Alert.window.alert(t('error'), t('errors.apiKeyRequired'));
       return;
     }
 
@@ -82,7 +82,7 @@ export function APIConfiguration() {
 
     try {
       await contentGenService.updateAPIKey(provider, apiState.key);
-      const isValid = await contentGenService.testAPIConnection(provider);
+      const _isValid = await contentGenService.testAPIConnection(provider);
 
       setApis(prev => ({
         ...prev,
@@ -90,9 +90,9 @@ export function APIConfiguration() {
       }));
 
       if (isValid) {
-        Alert.alert(t('success'), t('settings.apiConnectionSuccess'));
+        Alert.window.alert(t('success'), t('settings.apiConnectionSuccess'));
       } else {
-        Alert.alert(t('error'), t('errors.apiConnectionFailed'));
+        Alert.window.alert(t('error'), t('errors.apiConnectionFailed'));
       }
     } catch (error) {
       console.error(`Error testing ${provider} API:`, error);
@@ -100,12 +100,12 @@ export function APIConfiguration() {
         ...prev,
         [provider]: { ...prev[provider], isValid: false, isLoading: false },
       }));
-      Alert.alert(t('error'), t('errors.apiTestFailed'));
+      Alert.window.alert(t('error'), t('errors.apiTestFailed'));
     }
   };
 
-  const renderAPIKeyInput = (provider: string, label: string) => {
-    const apiState = apis[provider];
+  const _renderAPIKeyInput = (provider: string, label: string) => {
+    const _apiState = apis[provider];
 
     return (
       <View style={styles.apiKeyContainer}>
@@ -114,7 +114,7 @@ export function APIConfiguration() {
           <TextInput
             style={styles.input}
             value={apiState.key}
-            onChangeText={(text) => updateAPIKey(provider, text)}
+            onChangeText={text => updateAPIKey(provider, text)}
             placeholder={t('settings.enterAPIKey')}
             secureTextEntry={!apiState.isVisible}
             autoCapitalize="none"
@@ -149,8 +149,8 @@ export function APIConfiguration() {
                   apiState.isValid === true
                     ? 'checkmark-circle'
                     : apiState.isValid === false
-                    ? 'alert-circle'
-                    : 'radio-button-on'
+                      ? 'alert-circle'
+                      : 'radio-button-on'
                 }
                 size={20}
                 color="#fff"
@@ -186,7 +186,7 @@ export function APIConfiguration() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,

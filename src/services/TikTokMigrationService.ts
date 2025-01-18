@@ -87,7 +87,7 @@ export class TikTokMigrationService {
     options: MigrationOptions
   ): Promise<string> {
     const migrationId = this.generateMigrationId();
-    
+
     this.migrations.set(migrationId, {
       status: 'pending',
       progress: 0,
@@ -176,13 +176,15 @@ export class TikTokMigrationService {
         const videoData = await this.downloadVideo(video.url);
 
         // Preserve metadata if enabled
-        const metadata = options.preserveMetadata ? {
-          caption: video.caption,
-          hashtags: video.hashtags,
-          music: video.music,
-          stats: video.stats,
-          created: video.created,
-        } : {};
+        const metadata = options.preserveMetadata
+          ? {
+              caption: video.caption,
+              hashtags: video.hashtags,
+              music: video.music,
+              stats: video.stats,
+              created: video.created,
+            }
+          : {};
 
         // Upload to TikTokToe
         await this.uploadVideo(videoData, metadata);
@@ -195,7 +197,10 @@ export class TikTokMigrationService {
           progress
         );
       } catch (error) {
-        this.addError(migrationId, `Failed to import video ${video.id}: ${error.message}`);
+        this.addError(
+          migrationId,
+          `Failed to import video ${video.id}: ${error.message}`
+        );
       }
     }
   }
@@ -229,7 +234,10 @@ export class TikTokMigrationService {
         );
       }
     } catch (error) {
-      this.addError(migrationId, `Failed to import followers: ${error.message}`);
+      this.addError(
+        migrationId,
+        `Failed to import followers: ${error.message}`
+      );
     }
   }
 
@@ -252,7 +260,10 @@ export class TikTokMigrationService {
       await this.importContentPerformance(analytics.topPerformingContent);
       this.updateProgress(migrationId, 'Imported content performance', 85);
     } catch (error) {
-      this.addError(migrationId, `Failed to import analytics: ${error.message}`);
+      this.addError(
+        migrationId,
+        `Failed to import analytics: ${error.message}`
+      );
     }
   }
 
@@ -264,7 +275,9 @@ export class TikTokMigrationService {
 
     try {
       // Analyze content performance
-      const contentAnalysis = await this.analyzeContentPerformance(profile.videos);
+      const contentAnalysis = await this.analyzeContentPerformance(
+        profile.videos
+      );
 
       // Generate optimization recommendations
       const recommendations = await this.generateOptimizations(contentAnalysis);
@@ -274,7 +287,10 @@ export class TikTokMigrationService {
 
       this.updateProgress(migrationId, 'Content optimization completed', 90);
     } catch (error) {
-      this.addError(migrationId, `Failed to optimize content: ${error.message}`);
+      this.addError(
+        migrationId,
+        `Failed to optimize content: ${error.message}`
+      );
     }
   }
 
@@ -286,17 +302,25 @@ export class TikTokMigrationService {
 
     try {
       // Analyze best posting times
-      const postingTimes = await this.analyzeBestPostingTimes(profile.analytics);
+      const postingTimes = await this.analyzeBestPostingTimes(
+        profile.analytics
+      );
 
       // Create content schedule
-      const schedule = await this.createContentSchedule(profile.videos, postingTimes);
+      const schedule = await this.createContentSchedule(
+        profile.videos,
+        postingTimes
+      );
 
       // Set up scheduled posts
       await this.setupScheduledPosts(schedule);
 
       this.updateProgress(migrationId, 'Content scheduling completed', 95);
     } catch (error) {
-      this.addError(migrationId, `Failed to schedule content: ${error.message}`);
+      this.addError(
+        migrationId,
+        `Failed to schedule content: ${error.message}`
+      );
     }
   }
 
@@ -315,7 +339,10 @@ export class TikTokMigrationService {
 
       this.updateProgress(migrationId, 'Cross-posting setup completed', 100);
     } catch (error) {
-      this.addError(migrationId, `Failed to set up cross-posting: ${error.message}`);
+      this.addError(
+        migrationId,
+        `Failed to set up cross-posting: ${error.message}`
+      );
     }
   }
 
@@ -356,7 +383,9 @@ export class TikTokMigrationService {
       migration.currentStep = step;
       migration.progress = progress;
       migration.completedSteps.push(step);
-      migration.remainingSteps = migration.remainingSteps.filter(s => s !== step);
+      migration.remainingSteps = migration.remainingSteps.filter(
+        s => s !== step
+      );
       this.migrations.set(migrationId, migration);
     }
   }
@@ -392,11 +421,15 @@ export class TikTokMigrationService {
     // Implementation
   }
 
-  private async importGeneralAnalytics(analytics: TikTokAnalytics): Promise<void> {
+  private async importGeneralAnalytics(
+    analytics: TikTokAnalytics
+  ): Promise<void> {
     // Implementation
   }
 
-  private async importAudienceStats(stats: TikTokAnalytics['audienceStats']): Promise<void> {
+  private async importAudienceStats(
+    stats: TikTokAnalytics['audienceStats']
+  ): Promise<void> {
     // Implementation
   }
 
@@ -418,12 +451,17 @@ export class TikTokMigrationService {
     // Implementation
   }
 
-  private async analyzeBestPostingTimes(analytics: TikTokAnalytics): Promise<any> {
+  private async analyzeBestPostingTimes(
+    analytics: TikTokAnalytics
+  ): Promise<any> {
     // Implementation
     return {};
   }
 
-  private async createContentSchedule(videos: TikTokVideo[], times: any): Promise<any> {
+  private async createContentSchedule(
+    videos: TikTokVideo[],
+    times: any
+  ): Promise<any> {
     // Implementation
     return {};
   }

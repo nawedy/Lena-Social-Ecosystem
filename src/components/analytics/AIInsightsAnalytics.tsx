@@ -47,21 +47,27 @@ interface QualityMetrics {
 export function AIInsightsAnalytics() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d' | '90d'>('7d');
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d' | '90d'>(
+    '7d'
+  );
   const [tokenMetrics, setTokenMetrics] = useState<TokenUsageMetrics[]>([]);
-  const [modelMetrics, setModelMetrics] = useState<ModelPerformanceMetrics[]>([]);
-  const [qualityMetrics, setQualityMetrics] = useState<Record<string, QualityMetrics>>({});
+  const [modelMetrics, setModelMetrics] = useState<ModelPerformanceMetrics[]>(
+    []
+  );
+  const [qualityMetrics, setQualityMetrics] = useState<
+    Record<string, QualityMetrics>
+  >({});
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
   useEffect(() => {
     loadInsights();
   }, [timeRange]);
 
-  const loadInsights = async () => {
+  const _loadInsights = async () => {
     setLoading(true);
     try {
-      const analytics = AnalyticsService.getInstance();
-      const data = await analytics.getAIInsights(timeRange);
+      const _analytics = AnalyticsService.getInstance();
+      const _data = await analytics.getAIInsights(timeRange);
       setTokenMetrics(data.tokenMetrics);
       setModelMetrics(data.modelMetrics);
       setQualityMetrics(data.qualityMetrics);
@@ -75,7 +81,7 @@ export function AIInsightsAnalytics() {
     }
   };
 
-  const renderTokenUsage = () => (
+  const _renderTokenUsage = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('analytics.tokenUsage')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -105,7 +111,7 @@ export function AIInsightsAnalytics() {
     </View>
   );
 
-  const renderModelPerformance = () => (
+  const _renderModelPerformance = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('analytics.modelPerformance')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -121,29 +127,39 @@ export function AIInsightsAnalytics() {
             <Text style={styles.modelName}>{metric.model}</Text>
             <View style={styles.metricGrid}>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>{t('analytics.successRate')}</Text>
+                <Text style={styles.metricLabel}>
+                  {t('analytics.successRate')}
+                </Text>
                 <Text style={styles.metricValue}>
                   {(metric.successRate * 100).toFixed(1)}%
                 </Text>
               </View>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>{t('analytics.avgLatency')}</Text>
+                <Text style={styles.metricLabel}>
+                  {t('analytics.avgLatency')}
+                </Text>
                 <Text style={styles.metricValue}>
                   {metric.averageLatency.toFixed(0)}ms
                 </Text>
               </View>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>{t('analytics.p95Latency')}</Text>
+                <Text style={styles.metricLabel}>
+                  {t('analytics.p95Latency')}
+                </Text>
                 <Text style={styles.metricValue}>
                   {metric.p95Latency.toFixed(0)}ms
                 </Text>
               </View>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>{t('analytics.errorRate')}</Text>
-                <Text style={[
-                  styles.metricValue,
-                  { color: getErrorColor(metric.errorRate) },
-                ]}>
+                <Text style={styles.metricLabel}>
+                  {t('analytics.errorRate')}
+                </Text>
+                <Text
+                  style={[
+                    styles.metricValue,
+                    { color: getErrorColor(metric.errorRate) },
+                  ]}
+                >
                   {(metric.errorRate * 100).toFixed(1)}%
                 </Text>
               </View>
@@ -154,11 +170,11 @@ export function AIInsightsAnalytics() {
     </View>
   );
 
-  const renderQualityMetrics = () => {
+  const _renderQualityMetrics = () => {
     if (!selectedModel || !qualityMetrics[selectedModel]) return null;
 
-    const quality = qualityMetrics[selectedModel];
-    const data = {
+    const _quality = qualityMetrics[selectedModel];
+    const _data = {
       labels: [
         t('analytics.coherence'),
         t('analytics.relevance'),
@@ -195,7 +211,7 @@ export function AIInsightsAnalytics() {
     );
   };
 
-  const renderUsageHeatmap = () => (
+  const _renderUsageHeatmap = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('analytics.usageHeatmap')}</Text>
       <ContributionGraph
@@ -216,11 +232,11 @@ export function AIInsightsAnalytics() {
     </View>
   );
 
-  const generateDummyContributions = () => {
-    const contributions = [];
-    const endDate = new Date();
+  const _generateDummyContributions = () => {
+    const _contributions = [];
+    const _endDate = new Date();
     for (let i = 0; i < (timeRange === '90d' ? 90 : 30); i++) {
-      const date = new Date();
+      const _date = new Date();
       date.setDate(endDate.getDate() - i);
       contributions.push({
         date: date.toISOString().split('T')[0],
@@ -230,7 +246,7 @@ export function AIInsightsAnalytics() {
     return contributions;
   };
 
-  const getErrorColor = (errorRate: number) => {
+  const _getErrorColor = (errorRate: number) => {
     if (errorRate < 0.05) return '#28a745';
     if (errorRate < 0.1) return '#ffc107';
     return '#dc3545';
@@ -281,7 +297,7 @@ export function AIInsightsAnalytics() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

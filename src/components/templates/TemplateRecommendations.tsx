@@ -38,14 +38,14 @@ export function TemplateRecommendations({
   >('recommended');
   const [refreshing, setRefreshing] = useState(false);
 
-  const recommendationService = TemplateRecommendationService.getInstance();
-  const scrollY = new Animated.Value(0);
+  const _recommendationService = TemplateRecommendationService.getInstance();
+  const _scrollY = new Animated.Value(0);
 
   useEffect(() => {
     loadRecommendations();
   }, [userId, currentTemplateId, currentCategory]);
 
-  const loadRecommendations = async () => {
+  const _loadRecommendations = async () => {
     setLoading(true);
     try {
       const [recommended, similar, trending] = await Promise.all([
@@ -72,13 +72,13 @@ export function TemplateRecommendations({
     }
   };
 
-  const handleRefresh = async () => {
+  const _handleRefresh = async () => {
     setRefreshing(true);
     await loadRecommendations();
     setRefreshing(false);
   };
 
-  const renderTemplateCard = (template: any) => (
+  const _renderTemplateCard = (template: any) => (
     <TouchableOpacity
       key={template.templateId}
       style={styles.templateCard}
@@ -95,9 +95,7 @@ export function TemplateRecommendations({
               <Text style={styles.scoreText}>
                 {(template.score * 100).toFixed(0)}%
               </Text>
-              <Text style={styles.matchText}>
-                {t('recommendations.match')}
-              </Text>
+              <Text style={styles.matchText}>{t('recommendations.match')}</Text>
             </View>
           </View>
           <View style={styles.confidenceContainer}>
@@ -137,7 +135,7 @@ export function TemplateRecommendations({
     </TouchableOpacity>
   );
 
-  const renderSectionHeader = (
+  const _renderSectionHeader = (
     title: string,
     count: number,
     section: 'recommended' | 'similar' | 'trending'
@@ -234,7 +232,7 @@ export function TemplateRecommendations({
   }
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

@@ -1,5 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, TextInput, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import {
+  View,
+  TextInput,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { debounce } from 'lodash';
 
@@ -19,7 +26,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const performSearch = async (searchQuery: string) => {
+  const _performSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setResults([]);
       return;
@@ -56,17 +63,17 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
     }
   };
 
-  const debouncedSearch = useCallback(
+  const _debouncedSearch = useCallback(
     debounce((text: string) => performSearch(text), 300),
     []
   );
 
-  const handleSearch = (text: string) => {
+  const _handleSearch = (text: string) => {
     setQuery(text);
     debouncedSearch(text);
   };
 
-  const handleResultPress = (result: SearchResult) => {
+  const _handleResultPress = (result: SearchResult) => {
     switch (result.type) {
       case 'user':
         navigation.navigate('Profile', { userId: result.id });
@@ -80,15 +87,12 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
     }
   };
 
-  const renderSearchResult = ({ item }: { item: SearchResult }) => (
+  const _renderSearchResult = ({ item }: { item: SearchResult }) => (
     <TouchableOpacity
       style={styles.resultItem}
       onPress={() => handleResultPress(item)}
     >
-      <LinearGradient
-        colors={['#fff', '#f8f8f8']}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={['#fff', '#f8f8f8']} style={styles.gradient}>
         <View>
           <Text style={styles.resultTitle}>{item.title}</Text>
           {item.subtitle && (
@@ -142,7 +146,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

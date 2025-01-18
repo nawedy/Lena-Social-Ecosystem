@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import { environment } from '../../config/environment';
+import { _environment as environment } from '../../config/environment';
+import { _ProgressBar as ProgressBar } from 'react-native-elements';
 
 interface ConfigSection {
   id: string;
@@ -53,16 +54,34 @@ export function ConfigurationUI() {
       id: 'firebase',
       title: t('config.sections.firebase'),
       fields: [
-        { key: 'FIREBASE_API_KEY', label: t('config.firebase.apiKey'), type: 'password', secure: true },
-        { key: 'FIREBASE_AUTH_DOMAIN', label: t('config.firebase.authDomain'), type: 'text' },
-        { key: 'FIREBASE_PROJECT_ID', label: t('config.firebase.projectId'), type: 'text' },
+        {
+          key: 'FIREBASE_API_KEY',
+          label: t('config.firebase.apiKey'),
+          type: 'password',
+          secure: true,
+        },
+        {
+          key: 'FIREBASE_AUTH_DOMAIN',
+          label: t('config.firebase.authDomain'),
+          type: 'text',
+        },
+        {
+          key: 'FIREBASE_PROJECT_ID',
+          label: t('config.firebase.projectId'),
+          type: 'text',
+        },
       ],
     },
     {
       id: 'openai',
       title: t('config.sections.openai'),
       fields: [
-        { key: 'OPENAI_API_KEY', label: t('config.openai.apiKey'), type: 'password', secure: true },
+        {
+          key: 'OPENAI_API_KEY',
+          label: t('config.openai.apiKey'),
+          type: 'password',
+          secure: true,
+        },
         { key: 'OPENAI_ORG_ID', label: t('config.openai.orgId'), type: 'text' },
       ],
     },
@@ -71,83 +90,120 @@ export function ConfigurationUI() {
       title: t('config.sections.bluesky'),
       fields: [
         { key: 'BSKY_HANDLE', label: t('config.bluesky.handle'), type: 'text' },
-        { key: 'BSKY_APP_PASSWORD', label: t('config.bluesky.password'), type: 'password', secure: true },
-        { key: 'BSKY_RATE_LIMIT', label: t('config.bluesky.rateLimit'), type: 'number' },
+        {
+          key: 'BSKY_APP_PASSWORD',
+          label: t('config.bluesky.password'),
+          type: 'password',
+          secure: true,
+        },
+        {
+          key: 'BSKY_RATE_LIMIT',
+          label: t('config.bluesky.rateLimit'),
+          type: 'number',
+        },
       ],
     },
     {
       id: 'social',
       title: t('config.sections.social'),
       fields: [
-        { key: 'TWITTER_API_KEY', label: t('config.social.twitterKey'), type: 'password', secure: true },
-        { key: 'INSTAGRAM_ACCESS_TOKEN', label: t('config.social.instagramToken'), type: 'password', secure: true },
-        { key: 'TIKTOK_ACCESS_TOKEN', label: t('config.social.tiktokToken'), type: 'password', secure: true },
+        {
+          key: 'TWITTER_API_KEY',
+          label: t('config.social.twitterKey'),
+          type: 'password',
+          secure: true,
+        },
+        {
+          key: 'INSTAGRAM_ACCESS_TOKEN',
+          label: t('config.social.instagramToken'),
+          type: 'password',
+          secure: true,
+        },
+        {
+          key: 'TIKTOK_ACCESS_TOKEN',
+          label: t('config.social.tiktokToken'),
+          type: 'password',
+          secure: true,
+        },
       ],
     },
     {
       id: 'templates',
       title: t('config.sections.templates'),
       fields: [
-        { key: 'MAX_TEMPLATES_PER_USER', label: t('config.templates.maxPerUser'), type: 'number' },
-        { key: 'TEMPLATE_BACKUP_ENABLED', label: t('config.templates.backupEnabled'), type: 'boolean' },
-        { key: 'TEMPLATE_EXPORT_FORMAT', label: t('config.templates.exportFormat'), type: 'select', options: ['json', 'yaml'] },
+        {
+          key: 'MAX_TEMPLATES_PER_USER',
+          label: t('config.templates.maxPerUser'),
+          type: 'number',
+        },
+        {
+          key: 'TEMPLATE_BACKUP_ENABLED',
+          label: t('config.templates.backupEnabled'),
+          type: 'boolean',
+        },
+        {
+          key: 'TEMPLATE_EXPORT_FORMAT',
+          label: t('config.templates.exportFormat'),
+          type: 'select',
+          options: ['json', 'yaml'],
+        },
       ],
     },
     {
       id: 'aiProviders',
       title: t('config.sections.aiProviders'),
       fields: [
-        { 
+        {
           key: 'PRIMARY_AI_PROVIDER',
           label: t('config.ai.primaryProvider'),
           type: 'select',
           options: ['openai', 'anthropic', 'groq', 'cohere'],
-          description: t('config.ai.primaryProviderDesc')
+          description: t('config.ai.primaryProviderDesc'),
         },
         {
           key: 'OPENAI_API_KEY',
           label: t('config.ai.openaiKey'),
           type: 'password',
           secure: true,
-          description: t('config.ai.openaiKeyDesc')
+          description: t('config.ai.openaiKeyDesc'),
         },
         {
           key: 'ANTHROPIC_API_KEY',
           label: t('config.ai.anthropicKey'),
           type: 'password',
-          secure: true
+          secure: true,
         },
         {
           key: 'RUNWAYML_API_KEY',
           label: t('config.ai.runwayKey'),
           type: 'password',
-          secure: true
+          secure: true,
         },
         {
           key: 'REPLICATE_API_TOKEN',
           label: t('config.ai.replicateToken'),
           type: 'password',
-          secure: true
+          secure: true,
         },
         {
           key: 'GROQ_API_KEY',
           label: t('config.ai.groqKey'),
           type: 'password',
-          secure: true
+          secure: true,
         },
         {
           key: 'STABILITY_API_KEY',
           label: t('config.ai.stabilityKey'),
           type: 'password',
-          secure: true
+          secure: true,
         },
         {
           key: 'MIDJOURNEY_API_KEY',
           label: t('config.ai.midjourneyKey'),
           type: 'password',
-          secure: true
-        }
-      ]
+          secure: true,
+        },
+      ],
     },
     {
       id: 'aiSettings',
@@ -158,32 +214,32 @@ export function ConfigurationUI() {
           label: t('config.ai.loadBalance'),
           type: 'select',
           options: ['round-robin', 'cost-based', 'performance-based'],
-          description: t('config.ai.loadBalanceDesc')
+          description: t('config.ai.loadBalanceDesc'),
         },
         {
           key: 'MAX_DAILY_COST',
           label: t('config.ai.maxDailyCost'),
           type: 'number',
-          validation: (value) => Number(value) > 0
+          validation: value => Number(value) > 0,
         },
         {
           key: 'COST_ALERT_THRESHOLD',
           label: t('config.ai.costThreshold'),
           type: 'number',
-          validation: (value) => Number(value) > 0 && Number(value) <= 1
+          validation: value => Number(value) > 0 && Number(value) <= 1,
         },
         {
           key: 'ENABLE_CONTENT_FILTERING',
           label: t('config.ai.contentFiltering'),
-          type: 'boolean'
+          type: 'boolean',
         },
         {
           key: 'FILTER_THRESHOLD',
           label: t('config.ai.filterThreshold'),
           type: 'number',
-          validation: (value) => Number(value) > 0 && Number(value) <= 1
-        }
-      ]
+          validation: value => Number(value) > 0 && Number(value) <= 1,
+        },
+      ],
     },
     // Add more sections as needed
   ];
@@ -192,13 +248,13 @@ export function ConfigurationUI() {
     loadConfiguration();
   }, []);
 
-  const loadConfiguration = async () => {
+  const _loadConfiguration = async () => {
     setLoading(true);
     try {
       const savedConfig: Record<string, any> = {};
-      
+
       // Load non-secure configs from AsyncStorage
-      const storedConfig = await AsyncStorage.getItem('app_config');
+      const _storedConfig = await AsyncStorage.getItem('app_config');
       if (storedConfig) {
         Object.assign(savedConfig, JSON.parse(storedConfig));
       }
@@ -207,7 +263,7 @@ export function ConfigurationUI() {
       for (const section of configSections) {
         for (const field of section.fields) {
           if (field.secure) {
-            const value = await SecureStore.getItemAsync(field.key);
+            const _value = await SecureStore.getItemAsync(field.key);
             if (value) {
               savedConfig[field.key] = value;
             }
@@ -218,13 +274,13 @@ export function ConfigurationUI() {
       setConfig(savedConfig);
     } catch (error) {
       console.error('Error loading configuration:', error);
-      Alert.alert(t('error.title'), t('error.loadConfig'));
+      Alert.window.alert(t('error.title'), t('error.loadConfig'));
     } finally {
       setLoading(false);
     }
   };
 
-  const saveConfiguration = async () => {
+  const _saveConfiguration = async () => {
     setSaving(true);
     try {
       const nonSecureConfig: Record<string, any> = {};
@@ -232,7 +288,7 @@ export function ConfigurationUI() {
 
       // Separate secure and non-secure configs
       Object.entries(config).forEach(([key, value]) => {
-        const field = configSections
+        const _field = configSections
           .flatMap(section => section.fields)
           .find(f => f.key === key);
 
@@ -251,20 +307,20 @@ export function ConfigurationUI() {
         await SecureStore.setItemAsync(key, value.toString());
       }
 
-      Alert.alert(t('success.title'), t('success.saveConfig'));
+      Alert.window.alert(t('success.title'), t('success.saveConfig'));
     } catch (error) {
       console.error('Error saving configuration:', error);
-      Alert.alert(t('error.title'), t('error.saveConfig'));
+      Alert.window.alert(t('error.title'), t('error.saveConfig'));
     } finally {
       setSaving(false);
     }
   };
 
-  const validateField = (field: ConfigField, value: any): string | null => {
+  const _validateField = (field: ConfigField, value: any): string | null => {
     if (field.validation && !field.validation(value)) {
       return t('error.validation');
     }
-    
+
     switch (field.type) {
       case 'number':
         if (isNaN(Number(value))) {
@@ -281,8 +337,8 @@ export function ConfigurationUI() {
     return null;
   };
 
-  const handleFieldChange = (key: string, value: any, field: ConfigField) => {
-    const error = validateField(field, value);
+  const _handleFieldChange = (key: string, value: any, field: ConfigField) => {
+    const _error = validateField(field, value);
     setErrors(prev => ({
       ...prev,
       [key]: error || '',
@@ -294,16 +350,17 @@ export function ConfigurationUI() {
     }));
   };
 
-  const filteredSections = configSections.filter(section =>
-    section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    section.fields.some(field =>
-      field.label.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  const _filteredSections = configSections.filter(
+    section =>
+      section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      section.fields.some(field =>
+        field.label.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
-  const renderField = (field: ConfigField) => {
-    const value = config[field.key];
-    const error = errors[field.key];
+  const _renderField = (field: ConfigField) => {
+    const _value = config[field.key];
+    const _error = errors[field.key];
 
     switch (field.type) {
       case 'boolean':
@@ -351,7 +408,7 @@ export function ConfigurationUI() {
     }
   };
 
-  const renderAIMetrics = () => (
+  const _renderAIMetrics = () => (
     <View style={styles.metricsContainer}>
       <View style={styles.metricCard}>
         <Text style={styles.metricLabel}>{t('config.ai.dailyCost')}</Text>
@@ -376,15 +433,22 @@ export function ConfigurationUI() {
     </View>
   );
 
-  const renderProviderStatus = () => (
+  const _renderProviderStatus = () => (
     <View style={styles.statusContainer}>
-      {Object.entries(metrics?.providerStatus || {}).map(([provider, status]) => (
-        <View key={provider} style={styles.statusItem}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor(status) }]} />
-          <Text style={styles.statusLabel}>{provider}</Text>
-          <Text style={styles.statusValue}>{getStatusText(status)}</Text>
-        </View>
-      ))}
+      {Object.entries(metrics?.providerStatus || {}).map(
+        ([provider, status]) => (
+          <View key={provider} style={styles.statusItem}>
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: getStatusColor(status) },
+              ]}
+            />
+            <Text style={styles.statusLabel}>{provider}</Text>
+            <Text style={styles.statusValue}>{getStatusText(status)}</Text>
+          </View>
+        )
+      )}
     </View>
   );
 
@@ -413,13 +477,17 @@ export function ConfigurationUI() {
           <View key={section.id} style={styles.section}>
             <TouchableOpacity
               style={styles.sectionHeader}
-              onPress={() => setActiveSection(
-                activeSection === section.id ? null : section.id
-              )}
+              onPress={() =>
+                setActiveSection(
+                  activeSection === section.id ? null : section.id
+                )
+              }
             >
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <Ionicons
-                name={activeSection === section.id ? 'chevron-up' : 'chevron-down'}
+                name={
+                  activeSection === section.id ? 'chevron-up' : 'chevron-down'
+                }
                 size={24}
                 color="#666"
               />
@@ -473,7 +541,7 @@ export function ConfigurationUI() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -637,7 +705,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const getCostColor = (costUsagePercent: number) => {
+const _getCostColor = (costUsagePercent: number) => {
   if (costUsagePercent < 0.5) {
     return '#28a745';
   } else if (costUsagePercent < 0.8) {
@@ -647,7 +715,7 @@ const getCostColor = (costUsagePercent: number) => {
   }
 };
 
-const getSuccessColor = (successRate: number) => {
+const _getSuccessColor = (successRate: number) => {
   if (successRate < 0.5) {
     return '#dc3545';
   } else if (successRate < 0.8) {
@@ -657,7 +725,7 @@ const getSuccessColor = (successRate: number) => {
   }
 };
 
-const getStatusColor = (status: string) => {
+const _getStatusColor = (status: string) => {
   switch (status) {
     case 'online':
       return '#28a745';
@@ -668,7 +736,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-const getStatusText = (status: string) => {
+const _getStatusText = (status: string) => {
   switch (status) {
     case 'online':
       return 'Online';

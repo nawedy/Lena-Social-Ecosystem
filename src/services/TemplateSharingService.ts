@@ -1,4 +1,4 @@
-import { 
+import {
   Firestore,
   getFirestore,
   collection,
@@ -15,7 +15,7 @@ import {
   increment,
   deleteDoc,
   DocumentData,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { ContentTemplate } from './ContentTemplateService';
 
@@ -228,8 +228,7 @@ export class TemplateSharingService {
       const share = { id: doc.id, ...doc.data() } as TemplateShare;
       return {
         ...share,
-        active:
-          !share.expiresAt || share.expiresAt.getTime() > Date.now(),
+        active: !share.expiresAt || share.expiresAt.getTime() > Date.now(),
       };
     });
   }
@@ -237,7 +236,7 @@ export class TemplateSharingService {
   async revokeShare(templateId: string, shareId: string): Promise<void> {
     await Promise.all([
       deleteDoc(doc(this.db, 'sharedTemplates', shareId)),
-      deleteDoc(doc(this.db, 'templates', templateId, 'shares', shareId))
+      deleteDoc(doc(this.db, 'templates', templateId, 'shares', shareId)),
     ]);
   }
 
@@ -280,9 +279,7 @@ export class TemplateSharingService {
     return `${process.env.NEXT_PUBLIC_APP_URL}/templates/shared/${shareId}`;
   }
 
-  async getSharedTemplateAnalytics(
-    shareId: string
-  ): Promise<{
+  async getSharedTemplateAnalytics(shareId: string): Promise<{
     accessCount: number;
     forkCount: number;
     usageCount: number;
@@ -324,11 +321,14 @@ export class TemplateSharingService {
   private aggregateUsageByDay(
     usage: { timestamp: Date }[]
   ): { date: string; count: number }[] {
-    const byDay = usage.reduce((acc, curr) => {
-      const date = curr.timestamp.toISOString().split('T')[0];
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const byDay = usage.reduce(
+      (acc, curr) => {
+        const date = curr.timestamp.toISOString().split('T')[0];
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return Object.entries(byDay).map(([date, count]) => ({
       date,

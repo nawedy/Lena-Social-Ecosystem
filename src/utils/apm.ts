@@ -35,7 +35,7 @@ export class APMService {
       errorOnAbortedRequests: config.errorOnAbortedRequests,
       stackTraceLimit: config.stackTraceLimit,
       transactionSampleRate: config.transactionSampleRate,
-      
+
       // Additional configurations
       metricsInterval: '30s',
       centralConfig: true,
@@ -139,10 +139,7 @@ export class APMService {
     }
   }
 
-  public startTransaction(
-    name: string,
-    type: string
-  ): Transaction | null {
+  public startTransaction(name: string, type: string): Transaction | null {
     return this.apm.startTransaction(name, type);
   }
 

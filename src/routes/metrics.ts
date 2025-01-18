@@ -31,8 +31,10 @@ function checkMetricsAuth(auth: string): boolean {
   const decoded = Buffer.from(credentials, 'base64').toString();
   const [username, password] = decoded.split(':');
 
-  return username === process.env.METRICS_USERNAME && 
-         password === process.env.METRICS_PASSWORD;
+  return (
+    username === process.env.METRICS_USERNAME &&
+    password === process.env.METRICS_PASSWORD
+  );
 }
 
 export default router;

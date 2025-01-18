@@ -1,0 +1,48 @@
+apiVersion: run.cnrm.cloud.google.com/v1beta1
+kind: RunService
+metadata:
+  name: tiktoktoe
+  namespace: tiktoktoe
+spec:
+  location: us-central1
+  template:
+    spec:
+      containers:
+      - image: gcr.io/${PROJECT_ID}/tiktoktoe:latest
+        resources:
+          limits:
+            cpu: "1"
+            memory: 512Mi
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: database-url
+        - name: STORAGE_BUCKET
+          value: "tiktoktoe-media"
+        ports:
+        - containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 30
+      serviceAccountName: tiktoktoe-sa
+      timeoutSeconds: 300
+  traffic:
+  - percent: 100
+    latestRevision: true

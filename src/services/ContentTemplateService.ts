@@ -46,14 +46,22 @@ export class ContentTemplateService {
 
   async getTemplate(id: string): Promise<ContentTemplate | null> {
     const doc = await this.db.collection('contentTemplates').doc(id).get();
-    return doc.exists ? { id: doc.id, ...doc.data() } as ContentTemplate : null;
+    return doc.exists
+      ? ({ id: doc.id, ...doc.data() } as ContentTemplate)
+      : null;
   }
 
-  async updateTemplate(id: string, updates: Partial<ContentTemplate>): Promise<void> {
-    await this.db.collection('contentTemplates').doc(id).update({
-      ...updates,
-      updatedAt: new Date(),
-    });
+  async updateTemplate(
+    id: string,
+    updates: Partial<ContentTemplate>
+  ): Promise<void> {
+    await this.db
+      .collection('contentTemplates')
+      .doc(id)
+      .update({
+        ...updates,
+        updatedAt: new Date(),
+      });
   }
 
   async deleteTemplate(id: string): Promise<void> {
@@ -74,38 +82,42 @@ export class ContentTemplateService {
     let query = this.db.collection('contentTemplates');
 
     if (options.category) {
-      query = query.where('category', '==', options.category) as any;
+      query = query.where('category', '==', options.category) as unknown;
     }
 
     if (options.type) {
-      query = query.where('type', '==', options.type) as any;
+      query = query.where('type', '==', options.type) as unknown;
     }
 
     if (options.userId) {
-      query = query.where('createdBy', '==', options.userId) as any;
+      query = query.where('createdBy', '==', options.userId) as unknown;
     }
 
     if (options.isPublic !== undefined) {
-      query = query.where('isPublic', '==', options.isPublic) as any;
+      query = query.where('isPublic', '==', options.isPublic) as unknown;
     }
 
     if (options.aiProvider) {
-      query = query.where('aiProvider', '==', options.aiProvider) as any;
+      query = query.where('aiProvider', '==', options.aiProvider) as unknown;
     }
 
     if (options.tags && options.tags.length > 0) {
-      query = query.where('tags', 'array-contains-any', options.tags) as any;
+      query = query.where(
+        'tags',
+        'array-contains-any',
+        options.tags
+      ) as unknown;
     }
 
     if (options.orderBy) {
       query = query.orderBy(
         options.orderBy,
         options.orderDirection || 'desc'
-      ) as any;
+      ) as unknown;
     }
 
     if (options.limit) {
-      query = query.limit(options.limit) as any;
+      query = query.limit(options.limit) as unknown;
     }
 
     const snapshot = await query.get();
@@ -138,7 +150,8 @@ export class ContentTemplateService {
     const currentRating = data.rating || 0;
     const currentRatingsCount = data.ratingsCount || 0;
     const newRating =
-      (currentRating * currentRatingsCount + rating) / (currentRatingsCount + 1);
+      (currentRating * currentRatingsCount + rating) /
+      (currentRatingsCount + 1);
 
     await ref.update({
       rating: newRating,
@@ -183,7 +196,7 @@ export class ContentTemplateService {
       .orderBy('usageCount', 'desc');
 
     if (type) {
-      query = query.where('type', '==', type) as any;
+      query = query.where('type', '==', type) as unknown;
     }
 
     const snapshot = await query.limit(limit).get();
@@ -211,7 +224,8 @@ export class ContentTemplateService {
       const data = doc.data();
       if (data.category) userPreferences.add(data.category);
       if (data.type) userPreferences.add(data.type);
-      if (data.tags) data.tags.forEach((tag: string) => userPreferences.add(tag));
+      if (data.tags)
+        data.tags.forEach((tag: string) => userPreferences.add(tag));
     });
 
     // Get templates matching user preferences

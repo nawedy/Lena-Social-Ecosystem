@@ -79,41 +79,43 @@ export function TikTokMigrationWizard() {
 
   useEffect(() => {
     if (migrationId) {
-      const interval = setInterval(checkMigrationStatus, 2000);
+      const _interval = setInterval(checkMigrationStatus, 2000);
       return () => clearInterval(interval);
     }
   }, [migrationId]);
 
-  const checkMigrationStatus = async () => {
+  const _checkMigrationStatus = async () => {
     if (!migrationId) return;
 
     try {
-      const migrationService = TikTokMigrationService.getInstance();
-      const status = migrationService.getMigrationStatus(migrationId);
+      const _migrationService = TikTokMigrationService.getInstance();
+      const _status = migrationService.getMigrationStatus(migrationId);
 
       // Update progress
       setProgress(status.progress);
 
       // Update step statuses
-      setSteps(steps => steps.map(step => {
-        if (status.completedSteps.includes(step.id)) {
-          return { ...step, status: 'completed' };
-        }
-        if (step.id === status.currentStep) {
-          return { ...step, status: 'in_progress' };
-        }
-        if (status.errors.some(error => error.includes(step.id))) {
-          return { ...step, status: 'failed' };
-        }
-        return step;
-      }));
+      setSteps(steps =>
+        steps.map(step => {
+          if (status.completedSteps.includes(step.id)) {
+            return { ...step, status: 'completed' };
+          }
+          if (step.id === status.currentStep) {
+            return { ...step, status: 'in_progress' };
+          }
+          if (status.errors.some(error => error.includes(step.id))) {
+            return { ...step, status: 'failed' };
+          }
+          return step;
+        })
+      );
 
       // Update errors
       setErrors(status.errors);
 
       // Handle completion
       if (status.status === 'completed') {
-        Alert.alert(
+        Alert.window.alert(
           t('migration.complete.title'),
           t('migration.complete.message'),
           [{ text: t('common.ok') }]
@@ -122,7 +124,7 @@ export function TikTokMigrationWizard() {
 
       // Handle failure
       if (status.status === 'failed') {
-        Alert.alert(
+        Alert.window.alert(
           t('migration.failed.title'),
           t('migration.failed.message'),
           [{ text: t('common.ok') }]
@@ -133,9 +135,9 @@ export function TikTokMigrationWizard() {
     }
   };
 
-  const startMigration = async () => {
+  const _startMigration = async () => {
     if (!username) {
-      Alert.alert(
+      Alert.window.alert(
         t('migration.error.noUsername.title'),
         t('migration.error.noUsername.message'),
         [{ text: t('common.ok') }]
@@ -144,19 +146,19 @@ export function TikTokMigrationWizard() {
     }
 
     try {
-      const migrationService = TikTokMigrationService.getInstance();
-      const id = await migrationService.startMigration(username, options);
+      const _migrationService = TikTokMigrationService.getInstance();
+      const _id = await migrationService.startMigration(username, options);
       setMigrationId(id);
-      
+
       // Track migration start
-      const analytics = AnalyticsService.getInstance();
+      const _analytics = AnalyticsService.getInstance();
       analytics.trackEvent('migration_started', {
         username,
         options,
       });
     } catch (error) {
       console.error('Error starting migration:', error);
-      Alert.alert(
+      Alert.window.alert(
         t('migration.error.start.title'),
         t('migration.error.start.message'),
         [{ text: t('common.ok') }]
@@ -164,8 +166,8 @@ export function TikTokMigrationWizard() {
     }
   };
 
-  const renderStepIcon = (step: MigrationStep) => {
-    const color = getStepColor(step.status);
+  const _renderStepIcon = (step: MigrationStep) => {
+    const _color = getStepColor(step.status);
     return (
       <MaterialIcons
         name={step.icon}
@@ -176,7 +178,7 @@ export function TikTokMigrationWizard() {
     );
   };
 
-  const getStepColor = (status: MigrationStep['status']) => {
+  const _getStepColor = (status: MigrationStep['status']) => {
     switch (status) {
       case 'completed':
         return '#28a745';
@@ -225,13 +227,8 @@ export function TikTokMigrationWizard() {
         ))}
 
         {!migrationId && (
-          <TouchableOpacity
-            style={styles.startButton}
-            onPress={startMigration}
-          >
-            <Text style={styles.startButtonText}>
-              {t('migration.start')}
-            </Text>
+          <TouchableOpacity style={styles.startButton} onPress={startMigration}>
+            <Text style={styles.startButtonText}>{t('migration.start')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -239,13 +236,9 @@ export function TikTokMigrationWizard() {
       {migrationId && (
         <View style={styles.progress}>
           <View style={styles.progressBar}>
-            <View
-              style={[styles.progressFill, { width: `${progress}%` }]}
-            />
+            <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
-          <Text style={styles.progressText}>
-            {progress.toFixed(0)}%
-          </Text>
+          <Text style={styles.progressText}>{progress.toFixed(0)}%</Text>
         </View>
       )}
 
@@ -253,18 +246,13 @@ export function TikTokMigrationWizard() {
         {steps.map((step, index) => (
           <View
             key={step.id}
-            style={[
-              styles.step,
-              index === steps.length - 1 && styles.lastStep,
-            ]}
+            style={[styles.step, index === steps.length - 1 && styles.lastStep]}
           >
             <View style={styles.stepHeader}>
               {renderStepIcon(step)}
               <View style={styles.stepContent}>
                 <Text style={styles.stepTitle}>{step.title}</Text>
-                <Text style={styles.stepDescription}>
-                  {step.description}
-                </Text>
+                <Text style={styles.stepDescription}>{step.description}</Text>
               </View>
               {step.status === 'in_progress' && (
                 <ActivityIndicator
@@ -286,7 +274,7 @@ export function TikTokMigrationWizard() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

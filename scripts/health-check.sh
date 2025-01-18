@@ -35,6 +35,10 @@ check_service() {
     return 0
 }
 
+# Check Bluesky Connection
+echo "Checking Bluesky connection..."
+curl -s "https://bsky.social/xrpc/_health" | grep -q "success" && echo "Bluesky API: OK" || echo "Error: Bluesky API health check failed"
+
 # API Health Checks
 check_endpoint "health" 200
 check_endpoint "beta/status" 200
@@ -44,13 +48,8 @@ check_endpoint "metrics/status" 200
 check_service "Frontend" 3000
 check_service "Prometheus" 9091
 check_service "Grafana" 3000
-check_service "Elasticsearch" 9200
-check_service "Kibana" 5601
+check_service "Redis" 6379
 check_service "APM Server" 8200
-
-# Database Connectivity Check
-echo "Checking database connectivity..."
-npm run db:check
 
 # Redis Connectivity Check
 echo "Checking Redis connectivity..."

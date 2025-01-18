@@ -1,5 +1,11 @@
 import { AIAnalyticsService } from '../../services/AIAnalyticsService';
+import { AnalyticsService } from '../../services/AnalyticsService';
+import { NotificationService } from '../../services/NotificationService';
 import { RBACService, Role } from '../../services/RBACService';
+
+jest.mock('../../services/AnalyticsService');
+jest.mock('../../services/NotificationService');
+jest.mock('../../services/RBACService');
 
 describe('AIAnalyticsService', () => {
   let aiAnalytics: AIAnalyticsService;
@@ -93,12 +99,18 @@ describe('AIAnalyticsService', () => {
       );
 
       const insightTypes = new Set(insights.map(i => i.type));
-      
+
       // Should have multiple types of insights
       expect(insightTypes.size).toBeGreaterThan(1);
-      
+
       // Check for specific insight types
-      const expectedTypes = ['trend', 'anomaly', 'cluster', 'segment', 'strategy'];
+      const expectedTypes = [
+        'trend',
+        'anomaly',
+        'cluster',
+        'segment',
+        'strategy',
+      ];
       expectedTypes.forEach(type => {
         const hasType = insights.some(i => i.type === type);
         expect(hasType).toBe(true);
@@ -152,7 +164,7 @@ describe('AIAnalyticsService', () => {
       );
 
       const anomalyInsights = insights.filter(i => i.type === 'anomaly');
-      
+
       anomalyInsights.forEach(insight => {
         expect(insight.data).toHaveProperty('severity');
         expect(['low', 'medium', 'high']).toContain(insight.data.severity);
@@ -176,7 +188,7 @@ describe('AIAnalyticsService', () => {
       );
 
       const clusterInsights = insights.filter(i => i.type === 'cluster');
-      
+
       clusterInsights.forEach(insight => {
         expect(insight.data).toHaveProperty('characteristics');
         expect(insight.data).toHaveProperty('performance');
@@ -202,7 +214,7 @@ describe('AIAnalyticsService', () => {
       );
 
       const segmentInsights = insights.filter(i => i.type === 'segment');
-      
+
       segmentInsights.forEach(insight => {
         expect(insight.data).toHaveProperty('demographics');
         expect(insight.data).toHaveProperty('behaviors');
@@ -228,10 +240,10 @@ describe('AIAnalyticsService', () => {
       );
 
       const strategyInsights = insights.filter(i => i.type === 'strategy');
-      
+
       strategyInsights.forEach(insight => {
         expect(insight.recommendations.length).toBeGreaterThan(0);
-        
+
         insight.recommendations.forEach(recommendation => {
           expect(recommendation).toHaveProperty('action');
           expect(recommendation).toHaveProperty('impact');
@@ -240,6 +252,107 @@ describe('AIAnalyticsService', () => {
           expect(recommendation).toHaveProperty('implementation');
         });
       });
+    });
+  });
+
+  describe('Analytics Service Mock', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should track AI model performance', () => {
+      const modelName = 'gpt-4';
+      const latency = 500;
+      const success = true;
+
+      AIAnalyticsService.trackModelPerformance(modelName, latency, success);
+
+      expect(AnalyticsService.trackMetric).toHaveBeenCalledWith(
+        'ai_model_latency',
+        latency,
+        { model: modelName }
+      );
+      expect(AnalyticsService.trackEvent).toHaveBeenCalledWith(
+        'ai_model_invocation',
+        {
+          model: modelName,
+          success,
+          latency,
+        }
+      );
+    });
+
+    it('should track AI model errors', () => {
+      const modelName = 'gpt-4';
+      const error = new Error('Model timeout');
+
+      AIAnalyticsService.trackModelError(modelName, error);
+
+      expect(AnalyticsService.trackError).toHaveBeenCalledWith(error, {
+        model: modelName,
+        errorType: 'ai_model_error',
+      });
+    });
+
+    it('should track AI feature usage', () => {
+      const featureName = 'smart_suggestions';
+      const userId = 'user123';
+
+      AIAnalyticsService.trackFeatureUsage(featureName, userId);
+
+      expect(AnalyticsService.trackEvent).toHaveBeenCalledWith(
+        'ai_feature_usage',
+        {
+          feature: featureName,
+          userId,
+        }
+      );
+    });
+
+    it('should track model training progress', () => {
+      const modelName = 'custom_model';
+      const progress = 75;
+      const epoch = 3;
+
+      AIAnalyticsService.trackTrainingProgress(modelName, progress, epoch);
+
+      expect(AnalyticsService.trackMetric).toHaveBeenCalledWith(
+        'model_training_progress',
+        progress,
+        {
+          model: modelName,
+          epoch: epoch.toString(),
+        }
+      );
+    });
+  });
+
+  describe('getInstance', () => {
+    it('should create a singleton instance', () => {
+      const instance1 = AIAnalyticsService.getInstance();
+      const instance2 = AIAnalyticsService.getInstance();
+      expect(instance1).toBe(instance2);
+    });
+  });
+
+  describe('initialize', () => {
+    it('should initialize with default settings', async () => {
+      const instance = AIAnalyticsService.getInstance();
+      await instance.initialize();
+      expect(instance.isInitialized()).toBe(true);
+    });
+  });
+
+  describe('setConfiguration', () => {
+    it('should update configuration', () => {
+      const instance = AIAnalyticsService.getInstance();
+      const config = {
+        modelType: 'trend',
+        dataSource: 'realtime',
+        threshold: 0.85,
+      };
+      instance.setConfiguration(config);
+      expect(instance.getConfiguration()).toEqual(config);
     });
   });
 });

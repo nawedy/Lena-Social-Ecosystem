@@ -1,4 +1,15 @@
-import { Firestore, getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import {
+  Firestore,
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+} from 'firebase/firestore';
 import { Follow, FollowRequest } from '../types/follow';
 import { User } from '../types/user';
 import { NotificationService } from './NotificationService';
@@ -25,7 +36,10 @@ export class FollowService {
 
   async followUser(followerId: string, followedId: string): Promise<void> {
     // Check if users can interact
-    const canInteract = await this.blockingService.canInteract(followerId, followedId);
+    const canInteract = await this.blockingService.canInteract(
+      followerId,
+      followedId
+    );
     if (!canInteract) {
       throw new Error('Unable to follow this user');
     }
@@ -120,7 +134,10 @@ export class FollowService {
     });
   }
 
-  private async createFollowRequest(fromUserId: string, toUserId: string): Promise<void> {
+  private async createFollowRequest(
+    fromUserId: string,
+    toUserId: string
+  ): Promise<void> {
     const request: FollowRequest = {
       id: `${fromUserId}_${toUserId}`,
       fromUserId,
@@ -130,11 +147,15 @@ export class FollowService {
       updatedAt: new Date(),
     };
 
-    await setDoc(doc(this.db, 'followRequests', request.id), {
-      ...request,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { merge: true });
+    await setDoc(
+      doc(this.db, 'followRequests', request.id),
+      {
+        ...request,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      { merge: true }
+    );
 
     // Notify the target user
     await this.notificationService.sendNotification(toUserId, {
@@ -148,7 +169,10 @@ export class FollowService {
     });
   }
 
-  private async createFollow(followerId: string, followingId: string): Promise<void> {
+  private async createFollow(
+    followerId: string,
+    followingId: string
+  ): Promise<void> {
     const follow: Follow = {
       id: `${followerId}_${followingId}`,
       followerId,
@@ -160,10 +184,14 @@ export class FollowService {
       },
     };
 
-    await setDoc(doc(this.db, 'follows', follow.id), {
-      ...follow,
-      createdAt: new Date(),
-    }, { merge: true });
+    await setDoc(
+      doc(this.db, 'follows', follow.id),
+      {
+        ...follow,
+        createdAt: new Date(),
+      },
+      { merge: true }
+    );
 
     // Notify the followed user
     await this.notificationService.sendNotification(followingId, {

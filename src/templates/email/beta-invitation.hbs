@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo {
+      width: 120px;
+      height: auto;
+    }
+    .invitation-code {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 18px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .button {
+      display: inline-block;
+      background-color: #007AFF;
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      margin: 20px 0;
+    }
+    .custom-message {
+      border-left: 4px solid #007AFF;
+      padding-left: 15px;
+      margin: 20px 0;
+      font-style: italic;
+    }
+    .footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="https://tiktoktoe.app/logo.png" alt="TikTokToe Logo" class="logo">
+    <h1>Welcome to TikTokToe Beta!</h1>
+  </div>
+
+  <p>Hi{{#if inviteeHandle}} @{{inviteeHandle}}{{/if}},</p>
+
+  <p><strong>{{inviterName}}</strong> (@{{inviterHandle}}) has invited you to join the TikTokToe beta program!</p>
+
+  {{#if customMessage}}
+  <div class="custom-message">
+    "{{customMessage}}"
+  </div>
+  {{/if}}
+
+  <p>TikTokToe is a next-generation social platform built on the AT Protocol, offering:</p>
+  <ul>
+    <li>Decentralized social networking</li>
+    <li>Full data ownership and portability</li>
+    <li>Rich media sharing capabilities</li>
+    <li>Advanced content discovery</li>
+  </ul>
+
+  <p>Your exclusive beta invitation code is:</p>
+  <div class="invitation-code">
+    {{invitationCode}}
+  </div>
+
+  <p style="text-align: center;">
+    <a href="https://tiktoktoe.app/beta/join?code={{invitationCode}}" class="button">
+      Join the Beta
+    </a>
+  </p>
+
+  <p>To get started:</p>
+  <ol>
+    <li>Click the button above or visit <a href="https://tiktoktoe.app/beta">tiktoktoe.app/beta</a></li>
+    <li>Enter your invitation code</li>
+    <li>Create your account or connect with your existing AT Protocol identity</li>
+    <li>Start exploring and providing feedback!</li>
+  </ol>
+
+  <p>As a beta tester, you'll get:</p>
+  <ul>
+    <li>Early access to new features</li>
+    <li>Direct communication with our development team</li>
+    <li>Influence over the platform's development</li>
+    <li>Exclusive beta tester badge</li>
+  </ul>
+
+  <div class="footer">
+    <p>This invitation expires in 7 days. Questions? Reply to this email or contact us at beta@tiktoktoe.app</p>
+    <p>TikTokToe, Inc. • Built on the AT Protocol</p>
+  </div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 # Environment variables
-#.env
+.env
 .env.*
 !.env.example
 
@@ -46,3 +46,6 @@ elasticsearch/data/
 *.tmp
 *.temp
 .cache/
+
+# windsurf rules
+.windsurfrules

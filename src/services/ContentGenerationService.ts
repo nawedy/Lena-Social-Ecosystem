@@ -22,15 +22,15 @@ export class ContentGenerationService {
 
   private async initializeAPIs() {
     const apiKeys = await this.getAPIKeys();
-    
+
     if (apiKeys.openai) {
       this.openai = new OpenAI({ apiKey: apiKeys.openai });
     }
-    
+
     if (apiKeys.stability) {
       this.stabilityAI = new StabilityAI({ apiKey: apiKeys.stability });
     }
-    
+
     if (apiKeys.replicate) {
       this.replicate = new Replicate({ auth: apiKeys.replicate });
     }
@@ -41,16 +41,16 @@ export class ContentGenerationService {
     if (!this.openai) throw new Error('OpenAI API not configured');
 
     const response = await this.openai.chat.completions.create({
-      model: "gpt-4",
+      model: 'gpt-4',
       messages: [
         {
-          role: "system",
-          content: `You are a creative social media caption writer. ${style ? `Write in a ${style} style.` : ''}`
+          role: 'system',
+          content: `You are a creative social media caption writer. ${style ? `Write in a ${style} style.` : ''}`,
         },
         {
-          role: "user",
-          content: prompt
-        }
+          role: 'user',
+          content: prompt,
+        },
       ],
       temperature: 0.7,
     });
@@ -62,21 +62,24 @@ export class ContentGenerationService {
     if (!this.openai) throw new Error('OpenAI API not configured');
 
     const response = await this.openai.chat.completions.create({
-      model: "gpt-4",
+      model: 'gpt-4',
       messages: [
         {
-          role: "system",
-          content: "Generate relevant, trending hashtags for the given content. Return as a comma-separated list."
+          role: 'system',
+          content:
+            'Generate relevant, trending hashtags for the given content. Return as a comma-separated list.',
         },
         {
-          role: "user",
-          content
-        }
+          role: 'user',
+          content,
+        },
       ],
       temperature: 0.7,
     });
 
-    return (response.choices[0].message.content || '').split(',').map(tag => tag.trim());
+    return (response.choices[0].message.content || '')
+      .split(',')
+      .map(tag => tag.trim());
   }
 
   // Image Generation
@@ -84,10 +87,10 @@ export class ContentGenerationService {
     if (!this.openai) throw new Error('OpenAI API not configured');
 
     const response = await this.openai.images.generate({
-      model: "dall-e-3",
+      model: 'dall-e-3',
       prompt: `${prompt} ${style ? `in ${style} style` : ''}`,
       n: 1,
-      size: "1024x1024",
+      size: '1024x1024',
     });
 
     return response.data[0].url || '';
@@ -97,12 +100,12 @@ export class ContentGenerationService {
     if (!this.replicate) throw new Error('Replicate API not configured');
 
     const output = await this.replicate.run(
-      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+      'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b',
       {
         input: {
           image: imageUrl,
-          prompt: "enhance, high quality, detailed",
-        }
+          prompt: 'enhance, high quality, detailed',
+        },
       }
     );
 
@@ -114,21 +117,24 @@ export class ContentGenerationService {
     if (!this.openai) throw new Error('OpenAI API not configured');
 
     const response = await this.openai.chat.completions.create({
-      model: "gpt-4",
+      model: 'gpt-4',
       messages: [
         {
-          role: "system",
-          content: "Generate creative video ideas for social media content. Return as a numbered list."
+          role: 'system',
+          content:
+            'Generate creative video ideas for social media content. Return as a numbered list.',
         },
         {
-          role: "user",
-          content: `Theme: ${theme}`
-        }
+          role: 'user',
+          content: `Theme: ${theme}`,
+        },
       ],
       temperature: 0.8,
     });
 
-    return (response.choices[0].message.content || '').split('\n').filter(line => line.trim());
+    return (response.choices[0].message.content || '')
+      .split('\n')
+      .filter(line => line.trim());
   }
 
   // Trend Analysis
@@ -136,16 +142,17 @@ export class ContentGenerationService {
     if (!this.openai) throw new Error('OpenAI API not configured');
 
     const response = await this.openai.chat.completions.create({
-      model: "gpt-4",
+      model: 'gpt-4',
       messages: [
         {
-          role: "system",
-          content: "Analyze current social media trends and provide insights. Return as JSON."
+          role: 'system',
+          content:
+            'Analyze current social media trends and provide insights. Return as JSON.',
         },
         {
-          role: "user",
-          content: "What are the current trending topics and content formats?"
-        }
+          role: 'user',
+          content: 'What are the current trending topics and content formats?',
+        },
       ],
       temperature: 0.6,
     });
@@ -156,19 +163,19 @@ export class ContentGenerationService {
   // API Key Management
   private async getAPIKeys(): Promise<Record<string, string>> {
     const keys: Record<string, string> = {};
-    
+
     try {
       const openaiKey = await SecureStore.getItemAsync('openai_api_key');
       const stabilityKey = await SecureStore.getItemAsync('stability_api_key');
       const replicateKey = await SecureStore.getItemAsync('replicate_api_key');
-      
+
       if (openaiKey) keys.openai = openaiKey;
       if (stabilityKey) keys.stability = stabilityKey;
       if (replicateKey) keys.replicate = replicateKey;
     } catch (error) {
       console.error('Error retrieving API keys:', error);
     }
-    
+
     return keys;
   }
 

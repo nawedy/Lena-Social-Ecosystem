@@ -4,7 +4,7 @@ import {
   updateBetaTesterStatus,
   recordFeatureUsage,
   recordFeedback,
-  recordMigrationAttempt
+  recordMigrationAttempt,
 } from '../src/monitoring/BetaMetrics';
 
 // Initialize Firebase
@@ -39,29 +39,29 @@ interface Migration {
 
 async function initializeBetaMetrics() {
   try {
-    console.log('Initializing beta metrics...');
+    logger.info('Initializing beta metrics...');
 
     // Get current beta tester counts
     const testers = await getDocs(collection(db, 'beta_testers'));
     const counts = {
       active: 0,
       invited: 0,
-      inactive: 0
+      inactive: 0,
     };
 
-    testers.forEach((doc) => {
+    testers.forEach(doc => {
       const tester = doc.data() as BetaTester;
       counts[tester.status]++;
     });
 
     // Update beta tester status metrics
     updateBetaTesterStatus(counts.active, counts.invited, counts.inactive);
-    console.log('Updated beta tester status metrics:', counts);
+    logger.info('Updated beta tester status metrics:', counts);
 
     // Initialize feature usage metrics from historical data
     const features = ['core_gameplay', 'tiktok_migration', 'social_features'];
     const usageSnapshot = await getDocs(collection(db, 'feature_usage'));
-    usageSnapshot.forEach((doc) => {
+    usageSnapshot.forEach(doc => {
       const data = doc.data() as FeatureUsage;
       features.forEach(feature => {
         if (data[feature]) {
@@ -69,7 +69,7 @@ async function initializeBetaMetrics() {
         }
       });
     });
-    console.log('Initialized feature usage metrics');
+    logger.info('Initialized feature usage metrics');
 
     // Initialize feedback metrics
     const feedbackSnapshot = await getDocs(collection(db, 'beta_testers'));
@@ -77,10 +77,10 @@ async function initializeBetaMetrics() {
       bug: 0,
       feature: 0,
       improvement: 0,
-      general: 0
+      general: 0,
     };
 
-    feedbackSnapshot.forEach((doc) => {
+    feedbackSnapshot.forEach(doc => {
       const tester = doc.data() as BetaTester;
       (tester.feedback || []).forEach(item => {
         feedbackCounts[item.type]++;
@@ -92,14 +92,14 @@ async function initializeBetaMetrics() {
         recordFeedback(type);
       }
     });
-    console.log('Initialized feedback metrics:', feedbackCounts);
+    logger.info('Initialized feedback metrics:', feedbackCounts);
 
     // Initialize migration metrics
     const migrationSnapshot = await getDocs(collection(db, 'migrations'));
     let totalDuration = 0;
     let successCount = 0;
 
-    migrationSnapshot.forEach((doc) => {
+    migrationSnapshot.forEach(doc => {
       const migration = doc.data() as Migration;
       recordMigrationAttempt(
         migration.duration,
@@ -115,10 +115,10 @@ async function initializeBetaMetrics() {
     console.log('Initialized migration metrics:', {
       total: migrationSnapshot.size,
       successful: successCount,
-      averageDuration: `${avgDuration}ms`
+      averageDuration: `${avgDuration}ms`,
     });
 
-    console.log('Beta metrics initialization complete!');
+    logger.info('Beta metrics initialization complete!');
   } catch (error) {
     console.error('Error initializing beta metrics:', error);
     process.exit(1);

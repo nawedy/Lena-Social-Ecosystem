@@ -174,19 +174,14 @@ export class EnhancedAnalyticsService {
     const targetAccounts = filter?.accounts || accounts;
 
     // Fetch data for all accounts in parallel
-    const [
-      metrics,
-      content,
-      audience,
-      competitors,
-      predictions,
-    ] = await Promise.all([
-      this.getConsolidatedMetrics(targetAccounts, timeframe, filter),
-      this.getConsolidatedContent(targetAccounts, timeframe, filter),
-      this.getAudienceInsights(targetAccounts, timeframe, filter),
-      this.getCompetitorAnalysis(targetAccounts, timeframe, filter),
-      this.getPredictiveInsights(targetAccounts, timeframe, filter),
-    ]);
+    const [metrics, content, audience, competitors, predictions] =
+      await Promise.all([
+        this.getConsolidatedMetrics(targetAccounts, timeframe, filter),
+        this.getConsolidatedContent(targetAccounts, timeframe, filter),
+        this.getAudienceInsights(targetAccounts, timeframe, filter),
+        this.getCompetitorAnalysis(targetAccounts, timeframe, filter),
+        this.getPredictiveInsights(targetAccounts, timeframe, filter),
+      ]);
 
     return {
       metrics,
@@ -288,9 +283,7 @@ export class EnhancedAnalyticsService {
   }
 
   // Helper methods for data aggregation and enrichment
-  private aggregateMetrics(
-    metrics: any[][]
-  ): any[] {
+  private aggregateMetrics(metrics: any[][]): any[] {
     // Implementation
     return [];
   }
@@ -303,51 +296,37 @@ export class EnhancedAnalyticsService {
     return [];
   }
 
-  private enrichContentPerformance(
-    content: any[]
-  ): ContentPerformance[] {
+  private enrichContentPerformance(content: any[]): ContentPerformance[] {
     // Implementation
     return [];
   }
 
-  private aggregateAudienceInsights(
-    audiences: any[][]
-  ): any[] {
+  private aggregateAudienceInsights(audiences: any[][]): any[] {
     // Implementation
     return [];
   }
 
-  private enrichAudienceInsights(
-    insights: any[]
-  ): AudienceInsight[] {
+  private enrichAudienceInsights(insights: any[]): AudienceInsight[] {
     // Implementation
     return [];
   }
 
-  private mergeCompetitorAnalysis(
-    competitors: any[][]
-  ): any[] {
+  private mergeCompetitorAnalysis(competitors: any[][]): any[] {
     // Implementation
     return [];
   }
 
-  private enrichCompetitorAnalysis(
-    analysis: any[]
-  ): CompetitorAnalysis[] {
+  private enrichCompetitorAnalysis(analysis: any[]): CompetitorAnalysis[] {
     // Implementation
     return [];
   }
 
-  private aggregatePredictions(
-    predictions: any[][]
-  ): any[] {
+  private aggregatePredictions(predictions: any[][]): any[] {
     // Implementation
     return [];
   }
 
-  private enrichPredictiveInsights(
-    insights: any[]
-  ): PredictiveInsight[] {
+  private enrichPredictiveInsights(insights: any[]): PredictiveInsight[] {
     // Implementation
     return [];
   }

@@ -36,11 +36,7 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-# 3. Database Backup
-echo "Creating database backup..."
-./scripts/backup-db.sh
-
-# 4. Run Tests
+# 3. Run Tests
 echo "Running test suite..."
 npm run test
 
@@ -49,7 +45,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 5. Build Application
+# 4. Build Application
 echo "Building application..."
 npm run build
 
@@ -58,27 +54,23 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 6. Start Monitoring Stack
+# 5. Start Monitoring Stack
 echo "Starting monitoring stack..."
 docker-compose -f docker-compose.monitoring.yml up -d
 
-# 7. Start Metrics Stack
+# 6. Start Metrics Stack
 echo "Starting metrics stack..."
 docker-compose -f docker-compose.metrics.yml up -d
 
-# 8. Start Tracing Stack
+# 7. Start Tracing Stack
 echo "Starting tracing stack..."
 docker-compose -f docker-compose.tracing.yml up -d
 
-# 9. Deploy Application
+# 8. Deploy Application
 echo "Deploying application..."
 docker-compose up -d --build
 
-# 10. Run Migrations
-echo "Running database migrations..."
-npm run migrate
-
-# 11. Run Health Checks
+# 9. Run Health Checks
 echo "Running health checks..."
 ./scripts/health-check.sh
 
@@ -92,18 +84,18 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 12. Cache Warming
+# 10. Cache Warming
 echo "Warming up cache..."
 ./scripts/warm-cache.sh
 
-# 13. Enable Beta Features
+# 11. Enable Beta Features
 echo "Enabling beta features..."
 curl -X POST http://localhost:3000/api/beta/enable \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer ${ADMIN_TOKEN}" \
     -d '{"features": ["tiktok_migration", "social_features", "ai_suggestions"]}'
 
-# 14. Send Notifications
+# 12. Send Notifications
 echo "Sending deployment notifications..."
 curl -X POST http://localhost:3000/api/notifications/send \
     -H "Content-Type: application/json" \

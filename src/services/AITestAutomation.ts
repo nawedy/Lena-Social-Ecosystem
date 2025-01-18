@@ -76,7 +76,7 @@ export class AITestAutomation {
 
   public async runTestSuite(suite: AITestSuite): Promise<TestResult[]> {
     const results: TestResult[] = [];
-    console.log(`Running test suite: ${suite.name}`);
+    logger.info(`Running test suite: ${suite.name}`);
 
     try {
       for (const testCase of suite.testCases) {
@@ -84,7 +84,10 @@ export class AITestAutomation {
         results.push(result);
         await this.analytics.trackTestResult(suite.name, result);
 
-        if (!result.success && this.isBlockingFailure(testCase, suite.validationRules)) {
+        if (
+          !result.success &&
+          this.isBlockingFailure(testCase, suite.validationRules)
+        ) {
           console.error(`Blocking failure in test case ${testCase.id}`);
           break;
         }
@@ -177,24 +180,29 @@ export class AITestAutomation {
       (!testCase.maxTokens || tokenCount <= testCase.maxTokens);
 
     // Check latency
-    const withinLatency = !testCase.maxLatency || metrics.latency <= testCase.maxLatency;
+    const withinLatency =
+      !testCase.maxLatency || metrics.latency <= testCase.maxLatency;
 
     // Check required keywords
-    const hasRequiredKeywords = !testCase.requiredKeywords ||
+    const hasRequiredKeywords =
+      !testCase.requiredKeywords ||
       testCase.requiredKeywords.every(keyword =>
         output.toLowerCase().includes(keyword.toLowerCase())
       );
 
     // Check sentiment
-    const correctSentiment = !testCase.sentimentScore ||
+    const correctSentiment =
+      !testCase.sentimentScore ||
       Math.abs(metrics.sentiment - testCase.sentimentScore) <= 0.2;
 
     // Check toxicity
-    const withinToxicity = !testCase.toxicityThreshold ||
+    const withinToxicity =
+      !testCase.toxicityThreshold ||
       metrics.toxicity <= testCase.toxicityThreshold;
 
     // Check creativity
-    const meetsCreativity = !testCase.creativityScore ||
+    const meetsCreativity =
+      !testCase.creativityScore ||
       metrics.creativity >= testCase.creativityScore;
 
     return (
@@ -300,7 +308,9 @@ export class AITestAutomation {
       r => r.metrics.latency > suite.config.maxTokens * 10
     );
     if (slowTests.length > 0) {
-      recommendations.push('Consider optimizing prompts for faster response times');
+      recommendations.push(
+        'Consider optimizing prompts for faster response times'
+      );
     }
 
     // Check token usage
@@ -308,7 +318,9 @@ export class AITestAutomation {
       r => r.metrics.tokenCount > suite.config.maxTokens * 0.9
     );
     if (highTokenTests.length > 0) {
-      recommendations.push('Some responses are close to token limit, consider refining prompts');
+      recommendations.push(
+        'Some responses are close to token limit, consider refining prompts'
+      );
     }
 
     return recommendations;
@@ -316,18 +328,23 @@ export class AITestAutomation {
 
   private analyzeFailurePatterns(failedTests: TestResult[]): string[] {
     const patterns: string[] = [];
-    
+
     // Group failures by error type
-    const errorGroups = failedTests.reduce((acc, test) => {
-      const errorType = this.categorizeError(test.error || '');
-      acc[errorType] = (acc[errorType] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const errorGroups = failedTests.reduce(
+      (acc, test) => {
+        const errorType = this.categorizeError(test.error || '');
+        acc[errorType] = (acc[errorType] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     // Generate recommendations based on error patterns
     Object.entries(errorGroups).forEach(([errorType, count]) => {
       if (count > failedTests.length * 0.3) {
-        patterns.push(`High frequency of ${errorType} errors (${count} occurrences)`);
+        patterns.push(
+          `High frequency of ${errorType} errors (${count} occurrences)`
+        );
       }
     });
 
@@ -363,7 +380,10 @@ export class AITestAutomation {
     return this.countTokens(output) * 0.0001; // Simplified cost calculation
   }
 
-  private async calculateSimilarity(output: string, testCase: AITestCase): Promise<number> {
+  private async calculateSimilarity(
+    output: string,
+    testCase: AITestCase
+  ): Promise<number> {
     // Implement similarity calculation (e.g., cosine similarity)
     return 0.8;
   }
@@ -383,19 +403,31 @@ export class AITestAutomation {
     return 0.7;
   }
 
-  private async validateContentResults(results: TestResult[], rule: ValidationRule) {
+  private async validateContentResults(
+    results: TestResult[],
+    rule: ValidationRule
+  ) {
     // Implement content validation
   }
 
-  private async validatePerformanceResults(results: TestResult[], rule: ValidationRule) {
+  private async validatePerformanceResults(
+    results: TestResult[],
+    rule: ValidationRule
+  ) {
     // Implement performance validation
   }
 
-  private async validateSecurityResults(results: TestResult[], rule: ValidationRule) {
+  private async validateSecurityResults(
+    results: TestResult[],
+    rule: ValidationRule
+  ) {
     // Implement security validation
   }
 
-  private async validateCostResults(results: TestResult[], rule: ValidationRule) {
+  private async validateCostResults(
+    results: TestResult[],
+    rule: ValidationRule
+  ) {
     // Implement cost validation
   }
 }

@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,19 +15,21 @@ interface CreatePostScreenProps {
   navigation: any;
 }
 
-export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
+export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
+  navigation,
+}) => {
   const [text, setText] = useState('');
   const [media, setMedia] = useState<string[]>([]);
   const { user } = useAuth();
 
-  const pickImage = async () => {
+  const _pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
+      window.alert('Sorry, we need camera roll permissions to make this work!');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const _result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
@@ -33,10 +41,10 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }
     }
   };
 
-  const takePicture = async () => {
+  const _takePicture = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      alert('Sorry, we need camera permissions to make this work!');
+      window.alert('Sorry, we need camera permissions to make this work!');
       return;
     }
 
@@ -48,9 +56,9 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }
     });
   };
 
-  const createPost = async () => {
+  const _createPost = async () => {
     if (!text && media.length === 0) {
-      alert('Please add some content to your post');
+      window.alert('Please add some content to your post');
       return;
     }
 
@@ -59,7 +67,7 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }
       navigation.goBack();
     } catch (error) {
       console.error('Error creating post:', error);
-      alert('Failed to create post. Please try again.');
+      window.alert('Failed to create post. Please try again.');
     }
   };
 
@@ -113,7 +121,7 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }
   );
 };
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,

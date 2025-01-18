@@ -48,20 +48,22 @@ export function TemplateTestingUI({
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [currentInput, setCurrentInput] = useState<Record<string, any>>({});
   const [batchTesting, setBatchTesting] = useState(false);
-  const [testResults, setTestResults] = useState<Record<string, TestResult>>({});
+  const [testResults, setTestResults] = useState<Record<string, TestResult>>(
+    {}
+  );
   const [selectedTestCase, setSelectedTestCase] = useState<string | null>(null);
 
-  const contentService = ContentGenerationService.getInstance();
+  const _contentService = ContentGenerationService.getInstance();
 
   useEffect(() => {
     loadTestCases();
   }, [templateId]);
 
-  const loadTestCases = async () => {
+  const _loadTestCases = async () => {
     setLoading(true);
     try {
       // Load saved test cases for this template
-      const savedCases = await contentService.getTemplateTestCases(templateId);
+      const _savedCases = await contentService.getTemplateTestCases(templateId);
       setTestCases(savedCases);
     } catch (error) {
       console.error('Error loading test cases:', error);
@@ -70,14 +72,14 @@ export function TemplateTestingUI({
     }
   };
 
-  const handleRunTest = async (testCase?: TestCase) => {
-    const input = testCase ? testCase.input : currentInput;
+  const _handleRunTest = async (testCase?: TestCase) => {
+    const _input = testCase ? testCase.input : currentInput;
     setLoading(true);
 
     try {
-      const startTime = Date.now();
-      const result = await contentService.generateContent(templateId, input);
-      const endTime = Date.now();
+      const _startTime = Date.now();
+      const _result = await contentService.generateContent(templateId, input);
+      const _endTime = Date.now();
 
       const testResult: TestResult = {
         success: true,
@@ -131,23 +133,21 @@ export function TemplateTestingUI({
         );
       }
 
-      Alert.alert(t('error.title'), error.message);
+      Alert.window.alert(t('error.title'), error.message);
       return testResult;
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRunAllTests = async () => {
+  const _handleRunAllTests = async () => {
     setBatchTesting(true);
     const results: Record<string, TestResult> = {};
 
     for (const testCase of testCases) {
       setTestCases(prev =>
         prev.map(tc =>
-          tc.id === testCase.id
-            ? { ...tc, status: 'running' }
-            : tc
+          tc.id === testCase.id ? { ...tc, status: 'running' } : tc
         )
       );
 
@@ -158,9 +158,9 @@ export function TemplateTestingUI({
     setBatchTesting(false);
   };
 
-  const handleSaveTestCase = async () => {
+  const _handleSaveTestCase = async () => {
     if (Object.keys(currentInput).length === 0) {
-      Alert.alert(t('error.title'), t('error.noInput'));
+      Alert.window.alert(t('error.title'), t('error.noInput'));
       return;
     }
 
@@ -175,11 +175,11 @@ export function TemplateTestingUI({
     setCurrentInput({});
   };
 
-  const handleDeleteTestCase = async (testCaseId: string) => {
+  const _handleDeleteTestCase = async (testCaseId: string) => {
     setTestCases(prev => prev.filter(tc => tc.id !== testCaseId));
   };
 
-  const renderTestCase = (testCase: TestCase) => (
+  const _renderTestCase = (testCase: TestCase) => (
     <TouchableOpacity
       key={testCase.id}
       style={[
@@ -262,12 +262,7 @@ export function TemplateTestingUI({
         )}
       </View>
 
-      <View
-        style={[
-          styles.statusIndicator,
-          getStatusStyle(testCase.status),
-        ]}
-      />
+      <View style={[styles.statusIndicator, getStatusStyle(testCase.status)]} />
     </TouchableOpacity>
   );
 
@@ -285,9 +280,7 @@ export function TemplateTestingUI({
           ) : (
             <>
               <Ionicons name="play-circle" size={20} color="#fff" />
-              <Text style={styles.buttonText}>
-                {t('testing.runAll')}
-              </Text>
+              <Text style={styles.buttonText}>{t('testing.runAll')}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -334,7 +327,7 @@ export function TemplateTestingUI({
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

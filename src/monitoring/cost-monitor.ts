@@ -47,7 +47,7 @@ export class CostMonitor {
     this.metrics = metrics;
     this.db = db;
     this.logger = logger;
-    
+
     this.cloudwatch = new AWS.CloudWatch();
     this.costExplorer = new AWS.CostExplorer();
   }
@@ -61,16 +61,11 @@ export class CostMonitor {
         this.getAWSCosts(),
         this.getDatabaseCosts(),
         this.getCacheCosts(),
-        this.getCDNCosts()
+        this.getCDNCosts(),
       ]);
 
       // Combine all costs
-      const allCosts = [
-        ...awsCosts,
-        ...dbCosts,
-        ...cacheCosts,
-        ...cdnCosts
-      ];
+      const allCosts = [...awsCosts, ...dbCosts, ...cacheCosts, ...cdnCosts];
 
       // Store cost data
       await this.storeCostData(allCosts);
@@ -82,7 +77,7 @@ export class CostMonitor {
       this.updateCostMetrics(allCosts);
 
       this.logger.info('Cost tracking completed', {
-        totalCosts: allCosts.reduce((sum, cost) => sum + cost.amount, 0)
+        totalCosts: allCosts.reduce((sum, cost) => sum + cost.amount, 0),
       });
     } catch (error) {
       this.logger.error('Cost tracking failed', { error });
@@ -96,27 +91,33 @@ export class CostMonitor {
     const span = this.apm.startSpan('get-aws-costs');
 
     try {
-      const response = await this.costExplorer.getCostAndUsage({
-        TimePeriod: {
-          Start: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          End: new Date().toISOString().split('T')[0]
-        },
-        Granularity: 'DAILY',
-        Metrics: ['UnblendedCost'],
-        GroupBy: [
-          { Type: 'DIMENSION', Key: 'SERVICE' },
-          { Type: 'TAG', Key: 'Environment' }
-        ]
-      }).promise();
+      const response = await this.costExplorer
+        .getCostAndUsage({
+          TimePeriod: {
+            Start: new Date(Date.now() - 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split('T')[0],
+            End: new Date().toISOString().split('T')[0],
+          },
+          Granularity: 'DAILY',
+          Metrics: ['UnblendedCost'],
+          GroupBy: [
+            { Type: 'DIMENSION', Key: 'SERVICE' },
+            { Type: 'TAG', Key: 'Environment' },
+          ],
+        })
+        .promise();
 
-      return response.ResultsByTime?.[0]?.Groups?.map(group => ({
-        service: group.Keys[0],
-        amount: parseFloat(group.Metrics.UnblendedCost.Amount),
-        unit: 'USD',
-        startDate: response.ResultsByTime[0].TimePeriod.Start,
-        endDate: response.ResultsByTime[0].TimePeriod.End,
-        tags: { environment: group.Keys[1] }
-      })) || [];
+      return (
+        response.ResultsByTime?.[0]?.Groups?.map(group => ({
+          service: group.Keys[0],
+          amount: parseFloat(group.Metrics.UnblendedCost.Amount),
+          unit: 'USD',
+          startDate: response.ResultsByTime[0].TimePeriod.Start,
+          endDate: response.ResultsByTime[0].TimePeriod.End,
+          tags: { environment: group.Keys[1] },
+        })) || []
+      );
     } finally {
       span?.end();
     }
@@ -138,10 +139,10 @@ export class CostMonitor {
       // Convert storage size to cost (example: $0.115 per GB per month)
       return metrics.rows.map(row => ({
         service: 'database',
-        amount: (row.size_bytes / 1024 / 1024 / 1024) * 0.115 / 30,
+        amount: ((row.size_bytes / 1024 / 1024 / 1024) * 0.115) / 30,
         unit: 'USD',
         startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        endDate: new Date().toISOString()
+        endDate: new Date().toISOString(),
       }));
     } finally {
       span?.end();
@@ -153,38 +154,42 @@ export class CostMonitor {
 
     try {
       // Example: Redis cache costs based on memory usage
-      const metrics = await this.cloudwatch.getMetricData({
-        MetricDataQueries: [
-          {
-            Id: 'cache_memory',
-            MetricStat: {
-              Metric: {
-                Namespace: 'AWS/ElastiCache',
-                MetricName: 'DatabaseMemoryUsagePercentage',
-                Dimensions: [
-                  {
-                    Name: 'CacheClusterId',
-                    Value: 'your-cache-cluster'
-                  }
-                ]
+      const metrics = await this.cloudwatch
+        .getMetricData({
+          MetricDataQueries: [
+            {
+              Id: 'cache_memory',
+              MetricStat: {
+                Metric: {
+                  Namespace: 'AWS/ElastiCache',
+                  MetricName: 'DatabaseMemoryUsagePercentage',
+                  Dimensions: [
+                    {
+                      Name: 'CacheClusterId',
+                      Value: 'your-cache-cluster',
+                    },
+                  ],
+                },
+                Period: 3600,
+                Stat: 'Average',
               },
-              Period: 3600,
-              Stat: 'Average'
-            }
-          }
-        ],
-        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        EndTime: new Date()
-      }).promise();
+            },
+          ],
+          StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          EndTime: new Date(),
+        })
+        .promise();
 
       // Convert memory usage to cost (example: $0.034 per GB-hour)
-      return [{
-        service: 'cache',
-        amount: (metrics.MetricDataResults[0].Values[0] || 0) * 0.034 * 24,
-        unit: 'USD',
-        startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        endDate: new Date().toISOString()
-      }];
+      return [
+        {
+          service: 'cache',
+          amount: (metrics.MetricDataResults[0].Values[0] || 0) * 0.034 * 24,
+          unit: 'USD',
+          startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date().toISOString(),
+        },
+      ];
     } finally {
       span?.end();
     }
@@ -195,38 +200,47 @@ export class CostMonitor {
 
     try {
       // Example: CloudFront costs based on data transfer
-      const metrics = await this.cloudwatch.getMetricData({
-        MetricDataQueries: [
-          {
-            Id: 'cdn_bytes',
-            MetricStat: {
-              Metric: {
-                Namespace: 'AWS/CloudFront',
-                MetricName: 'BytesDownloaded',
-                Dimensions: [
-                  {
-                    Name: 'DistributionId',
-                    Value: 'your-distribution-id'
-                  }
-                ]
+      const metrics = await this.cloudwatch
+        .getMetricData({
+          MetricDataQueries: [
+            {
+              Id: 'cdn_bytes',
+              MetricStat: {
+                Metric: {
+                  Namespace: 'AWS/CloudFront',
+                  MetricName: 'BytesDownloaded',
+                  Dimensions: [
+                    {
+                      Name: 'DistributionId',
+                      Value: 'your-distribution-id',
+                    },
+                  ],
+                },
+                Period: 3600,
+                Stat: 'Sum',
               },
-              Period: 3600,
-              Stat: 'Sum'
-            }
-          }
-        ],
-        StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        EndTime: new Date()
-      }).promise();
+            },
+          ],
+          StartTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          EndTime: new Date(),
+        })
+        .promise();
 
       // Convert data transfer to cost (example: $0.085 per GB)
-      return [{
-        service: 'cdn',
-        amount: (metrics.MetricDataResults[0].Values[0] || 0) / 1024 / 1024 / 1024 * 0.085,
-        unit: 'USD',
-        startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        endDate: new Date().toISOString()
-      }];
+      return [
+        {
+          service: 'cdn',
+          amount:
+            ((metrics.MetricDataResults[0].Values[0] || 0) /
+              1024 /
+              1024 /
+              1024) *
+            0.085,
+          unit: 'USD',
+          startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date().toISOString(),
+        },
+      ];
     } finally {
       span?.end();
     }
@@ -244,7 +258,7 @@ export class CostMonitor {
           cost.unit,
           cost.startDate,
           cost.endDate,
-          cost.tags
+          cost.tags,
         ])
       );
     } finally {
@@ -258,12 +272,15 @@ export class CostMonitor {
     try {
       for (const cost of costs) {
         // Get historical costs
-        const historicalCosts = await this.db.query(`
+        const historicalCosts = await this.db.query(
+          `
           SELECT AVG(amount) as avg_amount
           FROM cost_tracking
           WHERE service = $1
           AND start_date >= NOW() - INTERVAL '7 days'
-        `, [cost.service]);
+        `,
+          [cost.service]
+        );
 
         const avgAmount = historicalCosts.rows[0].avg_amount;
         const threshold = avgAmount * 1.5; // 50% increase threshold
@@ -274,7 +291,7 @@ export class CostMonitor {
             threshold: threshold,
             currentAmount: cost.amount,
             percentageIncrease: ((cost.amount - avgAmount) / avgAmount) * 100,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           };
 
           await this.handleCostAlert(alert);
@@ -297,7 +314,7 @@ export class CostMonitor {
           alert.threshold,
           alert.currentAmount,
           alert.percentageIncrease,
-          alert.timestamp
+          alert.timestamp,
         ]
       );
 
@@ -320,10 +337,13 @@ export class CostMonitor {
       this.metrics.recordTotalCost(totalCost);
 
       // Update per-service cost metrics
-      const costsByService = costs.reduce((acc, cost) => {
-        acc[cost.service] = (acc[cost.service] || 0) + cost.amount;
-        return acc;
-      }, {} as Record<string, number>);
+      const costsByService = costs.reduce(
+        (acc, cost) => {
+          acc[cost.service] = (acc[cost.service] || 0) + cost.amount;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
 
       for (const [service, amount] of Object.entries(costsByService)) {
         this.metrics.recordServiceCost(service, amount);
@@ -340,7 +360,8 @@ export class CostMonitor {
     const span = this.apm.startSpan('get-cost-report');
 
     try {
-      const results = await this.db.query(`
+      const results = await this.db.query(
+        `
         WITH daily_costs AS (
           SELECT 
             date_trunc('day', start_date) as day,
@@ -385,7 +406,9 @@ export class CostMonitor {
               GROUP BY day
             )
           ) as report
-      `, [startDate, endDate]);
+      `,
+        [startDate, endDate]
+      );
 
       return results.rows[0].report;
     } finally {
@@ -399,21 +422,25 @@ export class CostMonitor {
     const span = this.apm.startSpan('get-forecasted-costs');
 
     try {
-      const response = await this.costExplorer.getCostForecast({
-        TimePeriod: {
-          Start: new Date().toISOString().split('T')[0],
-          End: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        },
-        Metric: 'UNBLENDED_COST',
-        Granularity: 'MONTHLY'
-      }).promise();
+      const response = await this.costExplorer
+        .getCostForecast({
+          TimePeriod: {
+            Start: new Date().toISOString().split('T')[0],
+            End: new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split('T')[0],
+          },
+          Metric: 'UNBLENDED_COST',
+          Granularity: 'MONTHLY',
+        })
+        .promise();
 
       return {
         totalForecast: parseFloat(response.Total.Amount),
         monthlyForecast: response.ForecastResultsByTime.map(result => ({
           startDate: result.TimePeriod.Start,
-          amount: parseFloat(result.MeanValue)
-        }))
+          amount: parseFloat(result.MeanValue),
+        })),
       };
     } finally {
       span?.end();
@@ -441,7 +468,8 @@ export class CostMonitor {
       recommendations.push(...riOpportunities);
 
       // Check for storage optimization opportunities
-      const storageRecommendations = await this.getStorageOptimizationRecommendations();
+      const storageRecommendations =
+        await this.getStorageOptimizationRecommendations();
       recommendations.push(...storageRecommendations);
 
       return recommendations;

@@ -1,4 +1,4 @@
-import { 
+import {
   Firestore,
   getFirestore,
   collection,
@@ -14,7 +14,7 @@ import {
   updateDoc,
   deleteDoc,
   DocumentData,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 
 export interface TemplateCategory {
@@ -58,7 +58,10 @@ export class TemplateCategoryService {
   }
 
   async createCategory(
-    data: Omit<TemplateCategory, 'id' | 'templateCount' | 'createdAt' | 'lastModified'>,
+    data: Omit<
+      TemplateCategory,
+      'id' | 'templateCount' | 'createdAt' | 'lastModified'
+    >,
     userId: string
   ): Promise<string> {
     const categoryData: Omit<TemplateCategory, 'id'> = {
@@ -70,7 +73,10 @@ export class TemplateCategoryService {
       modifiedBy: userId,
     };
 
-    const docRef = await addDoc(collection(this.db, 'templateCategories'), categoryData);
+    const docRef = await addDoc(
+      collection(this.db, 'templateCategories'),
+      categoryData
+    );
     return docRef.id;
   }
 
@@ -78,7 +84,9 @@ export class TemplateCategoryService {
     const docRef = doc(this.db, 'templateCategories', categoryId);
     const docSnap = await getDoc(docRef);
 
-    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as TemplateCategory : null;
+    return docSnap.exists()
+      ? ({ id: docSnap.id, ...docSnap.data() } as TemplateCategory)
+      : null;
   }
 
   async updateCategory(
@@ -125,11 +133,13 @@ export class TemplateCategoryService {
     await deleteDoc(docRef);
   }
 
-  async listCategories(options: {
-    parent?: string;
-    includeInactive?: boolean;
-    searchTerm?: string;
-  } = {}): Promise<TemplateCategory[]> {
+  async listCategories(
+    options: {
+      parent?: string;
+      includeInactive?: boolean;
+      searchTerm?: string;
+    } = {}
+  ): Promise<TemplateCategory[]> {
     const queryConstraints = [];
 
     if (options.parent !== undefined) {
@@ -149,9 +159,12 @@ export class TemplateCategoryService {
 
     queryConstraints.push(orderBy('order'));
 
-    const q = query(collection(this.db, 'templateCategories'), ...queryConstraints);
+    const q = query(
+      collection(this.db, 'templateCategories'),
+      ...queryConstraints
+    );
     const snapshot = await getDocs(q);
-    
+
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -245,7 +258,7 @@ export class TemplateCategoryService {
 
     templates.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const data = doc.data();
-      
+
       if (data.isActive) {
         stats.activeTemplates++;
       }
@@ -285,7 +298,7 @@ export class TemplateCategoryService {
   ): Promise<TemplateCategory[]> {
     // Get all categories
     const categories = await this.listCategories();
-    
+
     // Calculate relevance scores
     const scores = categories.map(category => {
       let score = 0;
@@ -416,7 +429,12 @@ export class TemplateCategoryService {
       const chunks = this.chunkArray(categoryIds, 10);
       const snapshots = await Promise.all(
         chunks.map(chunk =>
-          getDocs(query(collection(this.db, 'templateCategories'), where('id', 'in', chunk)))
+          getDocs(
+            query(
+              collection(this.db, 'templateCategories'),
+              where('id', 'in', chunk)
+            )
+          )
         )
       );
 

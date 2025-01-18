@@ -48,34 +48,44 @@ export class APIUsageService {
     const batch = this.db.batch();
 
     // Update daily usage
-    const dailyRef = this.db.collection('usage')
+    const dailyRef = this.db
+      .collection('usage')
       .doc(userId)
       .collection('daily')
       .doc(today);
 
-    batch.set(dailyRef, {
-      [`${provider}.${operation}`]: {
-        count: increment(1),
-        tokens: increment(tokens),
-        cost: increment(cost),
-        lastUsed: new Date(),
+    batch.set(
+      dailyRef,
+      {
+        [`${provider}.${operation}`]: {
+          count: increment(1),
+          tokens: increment(tokens),
+          cost: increment(cost),
+          lastUsed: new Date(),
+        },
       },
-    }, { merge: true });
+      { merge: true }
+    );
 
     // Update monthly usage
-    const monthlyRef = this.db.collection('usage')
+    const monthlyRef = this.db
+      .collection('usage')
       .doc(userId)
       .collection('monthly')
       .doc(month);
 
-    batch.set(monthlyRef, {
-      [`${provider}.${operation}`]: {
-        count: increment(1),
-        tokens: increment(tokens),
-        cost: increment(cost),
-        lastUsed: new Date(),
+    batch.set(
+      monthlyRef,
+      {
+        [`${provider}.${operation}`]: {
+          count: increment(1),
+          tokens: increment(tokens),
+          cost: increment(cost),
+          lastUsed: new Date(),
+        },
       },
-    }, { merge: true });
+      { merge: true }
+    );
 
     await batch.commit();
   }
@@ -85,12 +95,14 @@ export class APIUsageService {
     const month = today.substring(0, 7);
 
     const [dailyUsage, monthlyUsage] = await Promise.all([
-      this.db.collection('usage')
+      this.db
+        .collection('usage')
         .doc(userId)
         .collection('daily')
         .doc(today)
         .get(),
-      this.db.collection('usage')
+      this.db
+        .collection('usage')
         .doc(userId)
         .collection('monthly')
         .doc(month)
@@ -98,7 +110,9 @@ export class APIUsageService {
     ]);
 
     const dailyTotal = this.calculateTotalUsage(dailyUsage.data()?.[provider]);
-    const monthlyTotal = this.calculateTotalUsage(monthlyUsage.data()?.[provider]);
+    const monthlyTotal = this.calculateTotalUsage(
+      monthlyUsage.data()?.[provider]
+    );
 
     return (
       dailyTotal < this.quotas[provider].daily &&
@@ -114,7 +128,8 @@ export class APIUsageService {
     const today = new Date().toISOString().split('T')[0];
     const month = today.substring(0, 7);
 
-    const docRef = this.db.collection('usage')
+    const docRef = this.db
+      .collection('usage')
       .doc(userId)
       .collection(period)
       .doc(period === 'daily' ? today : month);
@@ -139,7 +154,9 @@ export class APIUsageService {
     return this.quotas[provider];
   }
 
-  private calculateTotalUsage(usageData: Record<string, UsageStats> = {}): number {
+  private calculateTotalUsage(
+    usageData: Record<string, UsageStats> = {}
+  ): number {
     return Object.values(usageData || {}).reduce(
       (total, stats) => total + stats.tokens,
       0
@@ -157,15 +174,19 @@ export class APIUsageService {
         totalTokens: 0,
         operationCount: 0,
       },
-      providers: {} as Record<string, {
-        cost: number;
-        tokens: number;
-        operations: number;
-        breakdown: Record<string, UsageStats>;
-      }>,
+      providers: {} as Record<
+        string,
+        {
+          cost: number;
+          tokens: number;
+          operations: number;
+          breakdown: Record<string, UsageStats>;
+        }
+      >,
     };
 
-    const usageQuery = this.db.collection('usage')
+    const usageQuery = this.db
+      .collection('usage')
       .doc(userId)
       .collection('daily')
       .where('timestamp', '>=', startDate)
@@ -208,10 +229,9 @@ export class APIUsageService {
             breakdown.count += stats.count;
             breakdown.tokens += stats.tokens;
             breakdown.cost += stats.cost;
-            breakdown.lastUsed = new Date(Math.max(
-              breakdown.lastUsed.getTime(),
-              stats.lastUsed.getTime()
-            ));
+            breakdown.lastUsed = new Date(
+              Math.max(breakdown.lastUsed.getTime(), stats.lastUsed.getTime())
+            );
           }
         );
       });

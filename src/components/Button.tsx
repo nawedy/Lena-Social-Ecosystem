@@ -1,28 +1,29 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: object;
+  disabled?: boolean;
   testID?: string;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
   style,
-  textStyle,
+  disabled,
   testID,
 }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
       style={[styles.button, style]}
+      disabled={disabled}
       testID={testID}
     >
-      <Text style={[styles.text, textStyle]}>{title}</Text>
+      <Text style={styles.text}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -30,14 +31,16 @@ export const Button: React.FC<ButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     backgroundColor: '#007AFF',
-    borderRadius: 8,
     padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
-    color: '#FFFFFF',
+    color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },
 });
+
+export default Button;

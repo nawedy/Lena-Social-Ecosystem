@@ -33,9 +33,11 @@ export class ContentManager {
     const post = {
       text: richText.text,
       facets: richText.facets,
-      labels: metadata.contentWarning ? {
-        values: [{ val: metadata.contentWarning }]
-      } : undefined,
+      labels: metadata.contentWarning
+        ? {
+            values: [{ val: metadata.contentWarning }],
+          }
+        : undefined,
       langs: metadata.language ? [metadata.language] : undefined,
     };
 

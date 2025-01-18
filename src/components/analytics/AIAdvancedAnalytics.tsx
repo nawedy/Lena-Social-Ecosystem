@@ -55,7 +55,9 @@ export function AIAdvancedAnalytics() {
   const [view, setView] = useState<ViewType>('prompts');
   const [timeframe, setTimeframe] = useState<TimeframeType>('day');
   const [promptAnalytics, setPromptAnalytics] = useState<PromptAnalytics[]>([]);
-  const [responseAnalytics, setResponseAnalytics] = useState<ResponseAnalytics[]>([]);
+  const [responseAnalytics, setResponseAnalytics] = useState<
+    ResponseAnalytics[]
+  >([]);
   const [costBreakdown, setCostBreakdown] = useState<CostBreakdown[]>([]);
   const [errorAnalytics, setErrorAnalytics] = useState<ErrorAnalytics[]>([]);
 
@@ -63,12 +65,12 @@ export function AIAdvancedAnalytics() {
     loadAnalytics();
   }, [view, timeframe]);
 
-  const loadAnalytics = async () => {
+  const _loadAnalytics = async () => {
     setLoading(true);
     try {
-      const analytics = AnalyticsService.getInstance();
-      const data = await analytics.getAdvancedAnalytics();
-      
+      const _analytics = AnalyticsService.getInstance();
+      const _data = await analytics.getAdvancedAnalytics();
+
       switch (view) {
         case 'prompts':
           setPromptAnalytics(data.prompts || []);
@@ -90,7 +92,7 @@ export function AIAdvancedAnalytics() {
     }
   };
 
-  const chartConfig = {
+  const _chartConfig = {
     backgroundColor: '#ffffff',
     backgroundGradientFrom: '#ffffff',
     backgroundGradientTo: '#ffffff',
@@ -107,16 +109,20 @@ export function AIAdvancedAnalytics() {
     },
   };
 
-  const renderPromptAnalytics = () => (
+  const _renderPromptAnalytics = () => (
     <ScrollView>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.promptEffectiveness')}</Text>
+        <Text style={styles.sectionTitle}>
+          {t('analytics.promptEffectiveness')}
+        </Text>
         <LineChart
           data={{
             labels: promptAnalytics.map((_, i) => i.toString()),
-            datasets: [{
-              data: promptAnalytics.map(p => p.effectiveness),
-            }],
+            datasets: [
+              {
+                data: promptAnalytics.map(p => p.effectiveness),
+              },
+            ],
           }}
           width={Dimensions.get('window').width - 32}
           height={220}
@@ -185,10 +191,12 @@ export function AIAdvancedAnalytics() {
     </ScrollView>
   );
 
-  const renderResponseAnalytics = () => (
+  const _renderResponseAnalytics = () => (
     <ScrollView>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.responseSentiment')}</Text>
+        <Text style={styles.sectionTitle}>
+          {t('analytics.responseSentiment')}
+        </Text>
         <StackedBarChart
           data={{
             labels: Object.keys(
@@ -217,7 +225,7 @@ export function AIAdvancedAnalytics() {
     </ScrollView>
   );
 
-  const renderCostBreakdown = () => (
+  const _renderCostBreakdown = () => (
     <ScrollView>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('analytics.costBreakdown')}</Text>
@@ -244,10 +252,12 @@ export function AIAdvancedAnalytics() {
     </ScrollView>
   );
 
-  const renderErrorAnalytics = () => (
+  const _renderErrorAnalytics = () => (
     <ScrollView>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.errorDistribution')}</Text>
+        <Text style={styles.sectionTitle}>
+          {t('analytics.errorDistribution')}
+        </Text>
         <StackedBarChart
           data={{
             labels: errorAnalytics.map(e => e.type),
@@ -264,7 +274,7 @@ export function AIAdvancedAnalytics() {
     </ScrollView>
   );
 
-  const renderContent = () => {
+  const _renderContent = () => {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
@@ -291,29 +301,41 @@ export function AIAdvancedAnalytics() {
     <View style={styles.container}>
       <View style={styles.header}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {(['prompts', 'responses', 'costs', 'errors'] as ViewType[]).map((v) => (
-            <TouchableOpacity
-              key={v}
-              style={[styles.tab, view === v && styles.activeTab]}
-              onPress={() => setView(v)}
-            >
-              <Text style={[styles.tabText, view === v && styles.activeTabText]}>
-                {t(`analytics.${v}`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {(['prompts', 'responses', 'costs', 'errors'] as ViewType[]).map(
+            v => (
+              <TouchableOpacity
+                key={v}
+                style={[styles.tab, view === v && styles.activeTab]}
+                onPress={() => setView(v)}
+              >
+                <Text
+                  style={[styles.tabText, view === v && styles.activeTabText]}
+                >
+                  {t(`analytics.${v}`)}
+                </Text>
+              </TouchableOpacity>
+            )
+          )}
         </ScrollView>
       </View>
 
       <View style={styles.timeframeContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {(['hour', 'day', 'week', 'month'] as TimeframeType[]).map((t) => (
+          {(['hour', 'day', 'week', 'month'] as TimeframeType[]).map(t => (
             <TouchableOpacity
               key={t}
-              style={[styles.timeframeButton, timeframe === t && styles.activeTimeframe]}
+              style={[
+                styles.timeframeButton,
+                timeframe === t && styles.activeTimeframe,
+              ]}
               onPress={() => setTimeframe(t)}
             >
-              <Text style={[styles.timeframeText, timeframe === t && styles.activeTimeframeText]}>
+              <Text
+                style={[
+                  styles.timeframeText,
+                  timeframe === t && styles.activeTimeframeText,
+                ]}
+              >
                 {t(`analytics.timeframe.${t}`)}
               </Text>
             </TouchableOpacity>
@@ -326,7 +348,7 @@ export function AIAdvancedAnalytics() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

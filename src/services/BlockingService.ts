@@ -1,5 +1,11 @@
 import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { Block, BlockReason } from '../types/blocking';
 import { User } from '../types/user';
 import { NotificationService } from './NotificationService';
@@ -97,7 +103,9 @@ export class BlockingService {
     );
 
     const snapshot = await blocksQuery.get();
-    const blockedIds = snapshot.docs.map(doc => (doc.data() as Block).blockedId);
+    const blockedIds = snapshot.docs.map(
+      doc => (doc.data() as Block).blockedId
+    );
 
     if (blockedIds.length === 0) {
       return [];
@@ -120,7 +128,9 @@ export class BlockingService {
     );
 
     const snapshot = await blocksQuery.get();
-    const blockerIds = snapshot.docs.map(doc => (doc.data() as Block).blockerId);
+    const blockerIds = snapshot.docs.map(
+      doc => (doc.data() as Block).blockerId
+    );
 
     if (blockerIds.length === 0) {
       return [];
@@ -144,15 +154,24 @@ export class BlockingService {
     return !blocks1 && !blocks2;
   }
 
-  private async removeFollowRelationships(userId1: string, userId2: string): Promise<void> {
+  private async removeFollowRelationships(
+    userId1: string,
+    userId2: string
+  ): Promise<void> {
     await Promise.all([
-      this.db.collection('follows').where('followerId', '==', userId1)
-        .where('followedId', '==', userId2).get()
+      this.db
+        .collection('follows')
+        .where('followerId', '==', userId1)
+        .where('followedId', '==', userId2)
+        .get()
         .then(snapshot => {
           snapshot.forEach(doc => doc.ref.delete());
         }),
-      this.db.collection('follows').where('followerId', '==', userId2)
-        .where('followedId', '==', userId1).get()
+      this.db
+        .collection('follows')
+        .where('followerId', '==', userId2)
+        .where('followedId', '==', userId1)
+        .get()
         .then(snapshot => {
           snapshot.forEach(doc => doc.ref.delete());
         }),

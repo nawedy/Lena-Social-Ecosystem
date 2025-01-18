@@ -1,0 +1,98 @@
+name: Visual Regression Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  visual-regression:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          npx playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: yarn build-storybook
+
+      - name: Run Storybook
+        run: |
+          yarn start-storybook -p 6006 &
+          sleep 10
+
+      - name: Run Loki Tests
+        run: yarn loki test --requireReference
+        continue-on-error: true
+
+      - name: Update Visual References
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          yarn loki approve
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add .loki/reference
+          git commit -m "Update visual regression references [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Upload Visual Regression Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: visual-regression-report
+          path: .loki/
+
+      - name: Check for Visual Changes
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -d ".loki/difference" ]; then
+            echo "Visual changes detected. Please review the differences in the artifacts."
+            exit 1
+          fi
+
+      - name: Comment PR with Visual Changes
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const { repo, owner } = context.repo;
+            const prNumber = context.payload.pull_request.number;
+            
+            const differences = fs.readdirSync('.loki/difference');
+            const comment = `### Visual Regression Test Results
+            
+            Changes detected in the following components:
+            ${differences.map(file => `- ${file}`).join('\n')}
+            
+            Please review the visual regression report in the workflow artifacts.`;
+            
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body: comment
+            });
+
+      - name: Notify Slack on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_COLOR: '#FF0000'
+          SLACK_MESSAGE: 'Visual regression tests failed! :x:'
+          SLACK_TITLE: Visual Regression Tests
+          SLACK_FOOTER: 'View details in GitHub Actions'

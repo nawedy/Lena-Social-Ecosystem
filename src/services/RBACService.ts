@@ -7,47 +7,47 @@ export enum Permission {
   EXPORT_ANALYTICS = 'export_analytics',
   SHARE_ANALYTICS = 'share_analytics',
   CREATE_CUSTOM_REPORTS = 'create_custom_reports',
-  
+
   // Account Management
   MANAGE_ACCOUNTS = 'manage_accounts',
   VIEW_ACCOUNTS = 'view_accounts',
   LINK_ACCOUNTS = 'link_accounts',
   UNLINK_ACCOUNTS = 'unlink_accounts',
-  
+
   // Migration Permissions
   INITIATE_MIGRATION = 'initiate_migration',
   VIEW_MIGRATION_STATUS = 'view_migration_status',
   CANCEL_MIGRATION = 'cancel_migration',
   CONFIGURE_MIGRATION = 'configure_migration',
   SCHEDULE_MIGRATION = 'schedule_migration',
-  
+
   // Content Management
   CREATE_CONTENT = 'create_content',
   EDIT_CONTENT = 'edit_content',
   DELETE_CONTENT = 'delete_content',
   PUBLISH_CONTENT = 'publish_content',
   SCHEDULE_CONTENT = 'schedule_content',
-  
+
   // User Management
   MANAGE_USERS = 'manage_users',
   VIEW_USERS = 'view_users',
   ASSIGN_ROLES = 'assign_roles',
   REVOKE_ROLES = 'revoke_roles',
-  
+
   // System Configuration
   MANAGE_SYSTEM = 'manage_system',
   VIEW_SYSTEM = 'view_system',
   CONFIGURE_AI = 'configure_ai',
   MANAGE_INTEGRATIONS = 'manage_integrations',
-  
+
   // Notification Management
   MANAGE_NOTIFICATIONS = 'manage_notifications',
   VIEW_NOTIFICATIONS = 'view_notifications',
   SEND_NOTIFICATIONS = 'send_notifications',
-  
+
   // Audit Management
   VIEW_AUDIT_LOGS = 'view_audit_logs',
-  EXPORT_AUDIT_LOGS = 'export_audit_logs'
+  EXPORT_AUDIT_LOGS = 'export_audit_logs',
 }
 
 export enum Role {
@@ -55,7 +55,7 @@ export enum Role {
   MANAGER = 'manager',
   ANALYST = 'analyst',
   CREATOR = 'creator',
-  VIEWER = 'viewer'
+  VIEWER = 'viewer',
 }
 
 interface RoleDefinition {
@@ -274,7 +274,7 @@ export class RBACService {
     permission: Permission
   ): Promise<boolean> {
     const userPermissions = await this.getUserPermissions(userId);
-    
+
     if (!userPermissions.has(permission)) {
       await this.logAudit({
         userId,
@@ -319,7 +319,7 @@ export class RBACService {
       const roleDefinition = this.roleDefinitions.get(userRole.role);
       if (roleDefinition) {
         roleDefinition.permissions.forEach(p => permissions.add(p));
-        
+
         // Add inherited permissions
         if (roleDefinition.inherits) {
           for (const inheritedRole of roleDefinition.inherits) {
@@ -383,10 +383,10 @@ export class RBACService {
         logs = logs.filter(log => log.timestamp <= filters.endDate!);
       }
       if (filters.actions) {
-        logs = logs.filter(log => filters.actions!.includes(log.action));
+        logs = logs.filter(log => filters.actions?.includes(log.action));
       }
       if (filters.resources) {
-        logs = logs.filter(log => filters.resources!.includes(log.resource));
+        logs = logs.filter(log => filters.resources?.includes(log.resource));
       }
       if (filters.status) {
         logs = logs.filter(log => log.metadata.status === filters.status);

@@ -1,14 +1,20 @@
 # TikTokToe
 
-A social gaming platform for playing Tic-tac-toe with friends.
+A revolutionary social media platform built on the AT Protocol.
+
+## Overview
+
+A social media platform for connecting with friends and discovering new content.
 
 ## Features
 
-- Real-time multiplayer Tic-tac-toe
-- Social features (friends, chat, leaderboards)
-- User profiles and statistics
-- Cross-platform support (iOS, Android, Web)
-- Beta testing program with monitoring
+- Real-time social feed
+- User profiles and authentication
+- Content creation and sharing
+- Advanced search capabilities
+- E-commerce integration
+- Affiliate marketing dashboard
+- Real-time notifications
 
 ## Tech Stack
 

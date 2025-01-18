@@ -38,7 +38,7 @@ export class AutoScaler {
         cooldown: 300,
         minReplicas: 2,
         maxReplicas: 10,
-        scaleIncrement: 1
+        scaleIncrement: 1,
       },
       {
         metric: 'memory_utilization',
@@ -48,7 +48,7 @@ export class AutoScaler {
         cooldown: 300,
         minReplicas: 2,
         maxReplicas: 10,
-        scaleIncrement: 1
+        scaleIncrement: 1,
       },
       {
         metric: 'request_rate',
@@ -58,8 +58,8 @@ export class AutoScaler {
         cooldown: 300,
         minReplicas: 2,
         maxReplicas: 10,
-        scaleIncrement: 2
-      }
+        scaleIncrement: 2,
+      },
     ],
     worker: [
       {
@@ -70,7 +70,7 @@ export class AutoScaler {
         cooldown: 300,
         minReplicas: 2,
         maxReplicas: 20,
-        scaleIncrement: 2
+        scaleIncrement: 2,
       },
       {
         metric: 'processing_time',
@@ -80,8 +80,8 @@ export class AutoScaler {
         cooldown: 300,
         minReplicas: 2,
         maxReplicas: 20,
-        scaleIncrement: 1
-      }
+        scaleIncrement: 1,
+      },
     ],
     cache: [
       {
@@ -92,7 +92,7 @@ export class AutoScaler {
         cooldown: 600,
         minReplicas: 2,
         maxReplicas: 5,
-        scaleIncrement: 1
+        scaleIncrement: 1,
       },
       {
         metric: 'connections',
@@ -102,9 +102,9 @@ export class AutoScaler {
         cooldown: 600,
         minReplicas: 2,
         maxReplicas: 5,
-        scaleIncrement: 1
-      }
-    ]
+        scaleIncrement: 1,
+      },
+    ],
   };
 
   private lastScaleTime: Record<string, number> = {};
@@ -154,7 +154,7 @@ export class AutoScaler {
       if (this.isInCooldown(service)) {
         this.logger.info('Service in cooldown period', {
           service,
-          lastScaleTime: this.lastScaleTime[service]
+          lastScaleTime: this.lastScaleTime[service],
         });
         return;
       }
@@ -188,7 +188,8 @@ export class AutoScaler {
       metrics.cpu_utilization = await this.metrics.getCPUUtilization(service);
 
       // Collect memory metrics
-      metrics.memory_utilization = await this.metrics.getMemoryUtilization(service);
+      metrics.memory_utilization =
+        await this.metrics.getMemoryUtilization(service);
 
       // Collect request rate
       metrics.request_rate = await this.metrics.getRequestRate(service);
@@ -259,7 +260,7 @@ export class AutoScaler {
       currentReplicas,
       targetReplicas,
       reason: scaleReason,
-      metrics
+      metrics,
     };
   }
 
@@ -283,7 +284,7 @@ export class AutoScaler {
         service: decision.service,
         previousReplicas: decision.currentReplicas,
         newReplicas: decision.targetReplicas,
-        reason: decision.reason
+        reason: decision.reason,
       });
 
       // Record metrics
@@ -292,12 +293,12 @@ export class AutoScaler {
         previousReplicas: decision.currentReplicas,
         newReplicas: decision.targetReplicas,
         reason: decision.reason,
-        metrics: decision.metrics
+        metrics: decision.metrics,
       });
     } catch (error) {
       this.logger.error('Failed to apply scaling', {
         error,
-        decision
+        decision,
       });
       this.apm.captureError(error);
       throw error;
@@ -323,7 +324,7 @@ export class AutoScaler {
           metrics: await this.metrics.getMetricsAtTime(
             service,
             event.timestamp
-          )
+          ),
         }))
       );
 
@@ -348,7 +349,9 @@ export class AutoScaler {
 Total Scaling Events: ${events.length}
 
 ### Scaling Events:
-${events.map(event => `
+${events
+  .map(
+    event => `
 - Time: ${event.timestamp}
   * Previous Replicas: ${event.previousReplicas}
   * New Replicas: ${event.newReplicas}
@@ -357,7 +360,9 @@ ${events.map(event => `
     ${Object.entries(event.metrics)
       .map(([key, value]) => `- ${key}: ${value}`)
       .join('\n    ')}
-`).join('\n')}
+`
+  )
+  .join('\n')}
 `);
       }
 

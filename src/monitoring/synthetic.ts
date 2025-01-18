@@ -53,7 +53,7 @@ export class SyntheticMonitoring {
         endpoint: '/health',
         method: 'GET',
         expectedStatus: 200,
-        timeout: 5000
+        timeout: 5000,
       },
       {
         name: 'User Authentication',
@@ -61,24 +61,24 @@ export class SyntheticMonitoring {
         method: 'POST',
         body: {
           username: process.env.SYNTHETIC_TEST_USER,
-          password: process.env.SYNTHETIC_TEST_PASSWORD
+          password: process.env.SYNTHETIC_TEST_PASSWORD,
         },
         expectedStatus: 200,
-        timeout: 5000
+        timeout: 5000,
       },
       {
         name: 'Database Connection',
         endpoint: '/api/health/db',
         method: 'GET',
         expectedStatus: 200,
-        timeout: 5000
+        timeout: 5000,
       },
       {
         name: 'Cache Operation',
         endpoint: '/api/health/cache',
         method: 'GET',
         expectedStatus: 200,
-        timeout: 5000
+        timeout: 5000,
       },
       {
         name: 'Content Creation',
@@ -86,29 +86,36 @@ export class SyntheticMonitoring {
         method: 'POST',
         body: {
           title: 'Synthetic Test Content',
-          description: 'Test content for monitoring'
+          description: 'Test content for monitoring',
         },
         expectedStatus: 201,
         timeout: 5000,
         headers: {
-          'Authorization': 'Bearer {{test_token}}'
-        }
-      }
+          Authorization: 'Bearer {{test_token}}',
+        },
+      },
     ];
   }
 
   public async runChecks(): Promise<CheckResult[]> {
     const results: CheckResult[] = [];
-    const transaction = this.apm.startTransaction('synthetic-monitoring', 'monitoring');
+    const transaction = this.apm.startTransaction(
+      'synthetic-monitoring',
+      'monitoring'
+    );
 
     try {
       for (const check of this.checks) {
         const result = await this.runSingleCheck(check);
         results.push(result);
-        
+
         // Record metrics
-        this.metrics.recordSyntheticCheck(check.name, result.success, result.duration);
-        
+        this.metrics.recordSyntheticCheck(
+          check.name,
+          result.success,
+          result.duration
+        );
+
         // Store result in Redis for quick access
         await this.redis.set(
           `synthetic:${check.name}:latest`,
@@ -116,11 +123,17 @@ export class SyntheticMonitoring {
           'EX',
           3600
         );
-        
+
         // Store in database for historical analysis
         await this.db.query(
           'INSERT INTO synthetic_checks (name, success, duration, error, timestamp) VALUES ($1, $2, $3, $4, $5)',
-          [check.name, result.success, result.duration, result.error, result.timestamp]
+          [
+            check.name,
+            result.success,
+            result.duration,
+            result.error,
+            result.timestamp,
+          ]
         );
       }
     } catch (error) {
@@ -143,12 +156,15 @@ export class SyntheticMonitoring {
         url: `${this.baseUrl}${check.endpoint}`,
         data: check.body,
         headers,
-        timeout: check.timeout
+        timeout: check.timeout,
       });
 
       const success = response.status === check.expectedStatus;
       if (check.expectedResponse) {
-        const responseMatch = this.compareResponse(response.data, check.expectedResponse);
+        const responseMatch = this.compareResponse(
+          response.data,
+          check.expectedResponse
+        );
         if (!responseMatch) {
           throw new Error('Response did not match expected format');
         }
@@ -158,7 +174,7 @@ export class SyntheticMonitoring {
         name: check.name,
         success,
         duration: Date.now() - startTime,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       return {
@@ -166,14 +182,16 @@ export class SyntheticMonitoring {
         success: false,
         duration: Date.now() - startTime,
         error: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } finally {
       span?.end();
     }
   }
 
-  private async prepareHeaders(headers?: Record<string, string>): Promise<Record<string, string>> {
+  private async prepareHeaders(
+    headers?: Record<string, string>
+  ): Promise<Record<string, string>> {
     if (!headers) return {};
 
     const preparedHeaders: Record<string, string> = {};
@@ -195,8 +213,10 @@ export class SyntheticMonitoring {
     }
 
     if (Array.isArray(expected)) {
-      return Array.isArray(actual) &&
-        expected.every((exp, index) => this.compareResponse(actual[index], exp));
+      return (
+        Array.isArray(actual) &&
+        expected.every((exp, index) => this.compareResponse(actual[index], exp))
+      );
     }
 
     if (typeof expected === 'object') {
@@ -208,7 +228,10 @@ export class SyntheticMonitoring {
     return actual === expected;
   }
 
-  public async getCheckHistory(checkName: string, limit: number = 100): Promise<CheckResult[]> {
+  public async getCheckHistory(
+    checkName: string,
+    limit: number = 100
+  ): Promise<CheckResult[]> {
     const results = await this.db.query(
       'SELECT * FROM synthetic_checks WHERE name = $1 ORDER BY timestamp DESC LIMIT $2',
       [checkName, limit]
@@ -217,7 +240,8 @@ export class SyntheticMonitoring {
   }
 
   public async getCheckStats(checkName: string): Promise<any> {
-    const stats = await this.db.query(`
+    const stats = await this.db.query(
+      `
       SELECT 
         COUNT(*) as total_runs,
         SUM(CASE WHEN success THEN 1 ELSE 0 END) as successful_runs,
@@ -227,8 +251,10 @@ export class SyntheticMonitoring {
       FROM synthetic_checks 
       WHERE name = $1 
       AND timestamp > NOW() - INTERVAL '24 hours'
-    `, [checkName]);
-    
+    `,
+      [checkName]
+    );
+
     return stats.rows[0];
   }
 
@@ -240,7 +266,10 @@ export class SyntheticMonitoring {
     this.checks = this.checks.filter(check => check.name !== checkName);
   }
 
-  public updateCheck(checkName: string, updates: Partial<SyntheticCheck>): void {
+  public updateCheck(
+    checkName: string,
+    updates: Partial<SyntheticCheck>
+  ): void {
     const index = this.checks.findIndex(check => check.name === checkName);
     if (index !== -1) {
       this.checks[index] = { ...this.checks[index], ...updates };

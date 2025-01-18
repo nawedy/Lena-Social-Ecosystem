@@ -1,0 +1,48 @@
+steps:
+  # Install dependencies
+  - name: 'node:18'
+    entrypoint: npm
+    args: ['install']
+
+  # Build the application
+  - name: 'node:18'
+    entrypoint: npm
+    args: ['run', 'build']
+
+  # Run AT Protocol validation tests
+  - name: 'node:18'
+    entrypoint: npm
+    args: ['run', 'test:at-protocol']
+
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/tiktoktoe', '.']
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/tiktoktoe']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'tiktoktoe'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/tiktoktoe'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--service-account'
+      - 'projects/$PROJECT_ID/serviceAccounts/887933536754-compute@developer.gserviceaccount.com'
+
+images:
+  - 'gcr.io/$PROJECT_ID/tiktoktoe'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/887933536754-compute@developer.gserviceaccount.com'
+timeout: '1800s'

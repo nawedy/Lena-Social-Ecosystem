@@ -1,4 +1,10 @@
-import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
+import {
+  useState,
+  useEffect,
+  useContext,
+  createContext,
+  ReactNode,
+} from 'react';
 import { User } from '../types/user';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -17,28 +23,32 @@ interface AuthContextType {
   deleteAccount: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const _AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const auth = getAuth();
+  const _auth = getAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const _unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
       try {
         if (firebaseUser) {
           // Get additional user data from Firestore
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const _userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
-            const userData = userDoc.data() as User;
+            const _userData = userDoc.data() as User;
             setUser({
               ...userData,
               id: firebaseUser.uid,
               email: firebaseUser.email || '',
-              createdAt: firebaseUser.metadata.creationTime ? new Date(firebaseUser.metadata.creationTime) : new Date(),
-              updatedAt: firebaseUser.metadata.lastSignInTime ? new Date(firebaseUser.metadata.lastSignInTime) : new Date(),
+              createdAt: firebaseUser.metadata.creationTime
+                ? new Date(firebaseUser.metadata.creationTime)
+                : new Date(),
+              updatedAt: firebaseUser.metadata.lastSignInTime
+                ? new Date(firebaseUser.metadata.lastSignInTime)
+                : new Date(),
             });
           } else {
             setUser(null);
@@ -56,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [auth]);
 
-  const signIn = async (email: string, password: string) => {
+  const _signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
       await auth.signInWithEmailAndPassword(email, password);
@@ -68,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signOut = async () => {
+  const _signOut = async () => {
     try {
       setLoading(true);
       await auth.signOut();
@@ -80,11 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, username: string) => {
+  const _signUp = async (email: string, password: string, username: string) => {
     try {
       setLoading(true);
-      const { user: firebaseUser } = await auth.createUserWithEmailAndPassword(email, password);
-      
+      const { user: firebaseUser } = await auth.createUserWithEmailAndPassword(
+        email,
+        password
+      );
+
       if (firebaseUser) {
         // Create user document in Firestore
         const userData: User = {
@@ -121,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const resetPassword = async (email: string) => {
+  const _resetPassword = async (email: string) => {
     try {
       setLoading(true);
       await auth.sendPasswordResetEmail(email);
@@ -133,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateProfile = async (data: Partial<User>) => {
+  const _updateProfile = async (data: Partial<User>) => {
     try {
       setLoading(true);
       if (user) {
@@ -142,7 +155,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updatedAt: new Date(),
         });
 
-        setUser(prev => prev ? { ...prev, ...data, updatedAt: new Date() } : null);
+        setUser(prev =>
+          prev ? { ...prev, ...data, updatedAt: new Date() } : null
+        );
       }
     } catch (err) {
       setError(err as Error);
@@ -152,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const sendEmailVerification = async () => {
+  const _sendEmailVerification = async () => {
     try {
       setLoading(true);
       if (auth.currentUser) {
@@ -166,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const deleteAccount = async () => {
+  const _deleteAccount = async () => {
     try {
       setLoading(true);
       if (user && auth.currentUser) {
@@ -181,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const value = {
+  const _value = {
     user,
     loading,
     error,
@@ -194,15 +209,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deleteAccount,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const _context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

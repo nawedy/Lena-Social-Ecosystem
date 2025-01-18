@@ -1,8 +1,8 @@
-import { 
-  Firestore, 
-  getFirestore, 
-  collection, 
-  doc, 
+import {
+  Firestore,
+  getFirestore,
+  collection,
+  doc,
   getDoc,
   getDocs,
   query,
@@ -16,7 +16,7 @@ import {
   arrayUnion,
   DocumentData,
   QueryDocumentSnapshot,
-  DocumentSnapshot
+  DocumentSnapshot,
 } from 'firebase/firestore';
 import { ContentTemplate } from './ContentTemplateService';
 
@@ -128,8 +128,11 @@ export class TemplateApprovalService {
       metadata,
     };
 
-    const docRef = await addDoc(collection(this.db, 'approvalRequests'), request);
-    
+    const docRef = await addDoc(
+      collection(this.db, 'approvalRequests'),
+      request
+    );
+
     // Create initial workflow steps
     await this.initializeWorkflow(docRef.id);
 
@@ -140,8 +143,8 @@ export class TemplateApprovalService {
     const docRef = doc(this.db, 'approvalRequests', requestId);
     const docSnap = await getDoc(docRef);
 
-    return docSnap.exists() 
-      ? { id: docSnap.id, ...docSnap.data() } as ApprovalRequest 
+    return docSnap.exists()
+      ? ({ id: docSnap.id, ...docSnap.data() } as ApprovalRequest)
       : null;
   }
 
@@ -172,7 +175,7 @@ export class TemplateApprovalService {
         type: this.getCommentType(status),
       };
 
-      updates.comments = arrayUnion(commentData) as any;
+      updates.comments = arrayUnion(commentData) as unknown;
     }
 
     await updateDoc(requestRef, updates);
@@ -236,13 +239,15 @@ export class TemplateApprovalService {
     await updateDoc(requestRef, updates);
   }
 
-  async listApprovalRequests(options: {
-    status?: ApprovalStatus;
-    userId?: string;
-    category?: string;
-    startAfter?: Date;
-    limit?: number;
-  } = {}): Promise<ApprovalRequest[]> {
+  async listApprovalRequests(
+    options: {
+      status?: ApprovalStatus;
+      userId?: string;
+      category?: string;
+      startAfter?: Date;
+      limit?: number;
+    } = {}
+  ): Promise<ApprovalRequest[]> {
     const queryConstraints = [];
 
     if (options.status) {
@@ -267,7 +272,10 @@ export class TemplateApprovalService {
       queryConstraints.push(limit(options.limit));
     }
 
-    const q = query(collection(this.db, 'approvalRequests'), ...queryConstraints);
+    const q = query(
+      collection(this.db, 'approvalRequests'),
+      ...queryConstraints
+    );
     const snapshot = await getDocs(q);
 
     return snapshot.docs.map(doc => ({
@@ -276,8 +284,13 @@ export class TemplateApprovalService {
     })) as ApprovalRequest[];
   }
 
-  async createWorkflow(workflow: Omit<ApprovalWorkflow, 'id'>): Promise<string> {
-    const docRef = await addDoc(collection(this.db, 'approvalWorkflows'), workflow);
+  async createWorkflow(
+    workflow: Omit<ApprovalWorkflow, 'id'>
+  ): Promise<string> {
+    const docRef = await addDoc(
+      collection(this.db, 'approvalWorkflows'),
+      workflow
+    );
     return docRef.id;
   }
 
@@ -293,8 +306,8 @@ export class TemplateApprovalService {
     const docRef = doc(this.db, 'approvalWorkflows', workflowId);
     const docSnap = await getDoc(docRef);
 
-    return docSnap.exists() 
-      ? { id: docSnap.id, ...docSnap.data() } as ApprovalWorkflow 
+    return docSnap.exists()
+      ? ({ id: docSnap.id, ...docSnap.data() } as ApprovalWorkflow)
       : null;
   }
 
@@ -394,7 +407,7 @@ export class TemplateApprovalService {
 
     snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
       const data = doc.data() as ApprovalRequest;
-      
+
       switch (data.status) {
         case 'approved':
           stats.approved++;
@@ -462,7 +475,13 @@ export class TemplateApprovalService {
       completedBy: null,
     }));
 
-    const stepsRef = doc(this.db, 'approvalRequests', requestId, 'workflow', 'steps');
+    const stepsRef = doc(
+      this.db,
+      'approvalRequests',
+      requestId,
+      'workflow',
+      'steps'
+    );
     await setDoc(stepsRef, { steps });
   }
 
@@ -476,7 +495,10 @@ export class TemplateApprovalService {
 
     return snapshot.empty
       ? null
-      : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as ApprovalWorkflow;
+      : ({
+          id: snapshot.docs[0].id,
+          ...snapshot.docs[0].data(),
+        } as ApprovalWorkflow);
   }
 
   private getStartDate(timeframe: string): Date {

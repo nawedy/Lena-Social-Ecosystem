@@ -36,7 +36,9 @@ export function TemplateAnalytics({
 }: TemplateAnalyticsProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>(
+    'week'
+  );
   const [metrics, setMetrics] = useState<any>(null);
   const [topTemplates, setTopTemplates] = useState<any[]>([]);
   const [usageByCategory, setUsageByCategory] = useState<any[]>([]);
@@ -44,16 +46,16 @@ export function TemplateAnalytics({
   const [usageOverTime, setUsageOverTime] = useState<any[]>([]);
   const [engagementData, setEngagementData] = useState<any[]>([]);
 
-  const templateService = ContentTemplateService.getInstance();
-  const apiUsageService = APIUsageService.getInstance();
+  const _templateService = ContentTemplateService.getInstance();
+  const _apiUsageService = APIUsageService.getInstance();
 
   useEffect(() => {
     loadAnalytics();
   }, [period, templateId]);
 
-  const getPeriodDates = (): AnalyticsPeriod => {
-    const endDate = new Date();
-    const startDate = new Date();
+  const _getPeriodDates = (): AnalyticsPeriod => {
+    const _endDate = new Date();
+    const _startDate = new Date();
 
     switch (period) {
       case 'day':
@@ -73,31 +75,31 @@ export function TemplateAnalytics({
     }
   };
 
-  const loadAnalytics = async () => {
+  const _loadAnalytics = async () => {
     setLoading(true);
     try {
       const { startDate, endDate } = getPeriodDates();
 
       // Load usage report
-      const report = await apiUsageService.generateUsageReport(
+      const _report = await apiUsageService.generateUsageReport(
         userId,
         startDate,
         endDate
       );
 
       // Get top templates
-      const templates = await templateService.listTemplates({
+      const _templates = await templateService.listTemplates({
         userId: templateId ? undefined : userId,
         orderBy: 'usageCount',
         limit: 5,
       });
 
       // Process metrics
-      const metrics = processMetrics(report);
-      const categoryData = processCategoryData(report);
-      const typeData = processTypeData(report);
-      const timeData = processTimeData(report);
-      const engagement = processEngagementData(templates);
+      const _metrics = processMetrics(report);
+      const _categoryData = processCategoryData(report);
+      const _typeData = processTypeData(report);
+      const _timeData = processTimeData(report);
+      const _engagement = processEngagementData(templates);
 
       setMetrics(metrics);
       setTopTemplates(templates);
@@ -112,20 +114,22 @@ export function TemplateAnalytics({
     }
   };
 
-  const processMetrics = (report: any) => ({
+  const _processMetrics = (report: any) => ({
     totalUsage: report.summary.operationCount,
     totalCost: report.summary.totalCost,
     averageRating: calculateAverageRating(report),
     successRate: calculateSuccessRate(report),
   });
 
-  const processCategoryData = (report: any) => {
+  const _processCategoryData = (report: any) => {
     const categories: Record<string, number> = {};
     Object.values(report.providers).forEach((provider: any) => {
-      Object.entries(provider.breakdown).forEach(([operation, stats]: [string, any]) => {
-        const category = operation.split('_')[0];
-        categories[category] = (categories[category] || 0) + stats.count;
-      });
+      Object.entries(provider.breakdown).forEach(
+        ([operation, stats]: [string, any]) => {
+          const _category = operation.split('_')[0];
+          categories[category] = (categories[category] || 0) + stats.count;
+        }
+      );
     });
 
     return Object.entries(categories).map(([name, count]) => ({
@@ -135,22 +139,24 @@ export function TemplateAnalytics({
     }));
   };
 
-  const processTypeData = (report: any) => {
-    const types = {
+  const _processTypeData = (report: any) => {
+    const _types = {
       text: 0,
       image: 0,
       video: 0,
     };
 
     Object.values(report.providers).forEach((provider: any) => {
-      Object.entries(provider.breakdown).forEach(([operation, stats]: [string, any]) => {
-        const type = operation.includes('text')
-          ? 'text'
-          : operation.includes('image')
-          ? 'image'
-          : 'video';
-        types[type] += stats.count;
-      });
+      Object.entries(provider.breakdown).forEach(
+        ([operation, stats]: [string, any]) => {
+          const _type = operation.includes('text')
+            ? 'text'
+            : operation.includes('image')
+              ? 'image'
+              : 'video';
+          types[type] += stats.count;
+        }
+      );
     });
 
     return Object.entries(types).map(([name, count]) => ({
@@ -160,13 +166,13 @@ export function TemplateAnalytics({
     }));
   };
 
-  const processTimeData = (report: any) => {
+  const _processTimeData = (report: any) => {
     // Process time series data based on period
     // Implementation depends on how the report data is structured
     return [];
   };
 
-  const processEngagementData = (templates: any[]) => {
+  const _processEngagementData = (templates: any[]) => {
     return templates.map(template => ({
       template: template.name,
       usage: template.usageCount,
@@ -175,23 +181,23 @@ export function TemplateAnalytics({
     }));
   };
 
-  const calculateAverageRating = (report: any) => {
+  const _calculateAverageRating = (report: any) => {
     // Calculate average rating from report data
     return 4.5; // Placeholder
   };
 
-  const calculateSuccessRate = (report: any) => {
+  const _calculateSuccessRate = (report: any) => {
     // Calculate success rate from report data
     return 0.95; // Placeholder
   };
 
-  const calculateEngagement = (template: any) => {
+  const _calculateEngagement = (template: any) => {
     // Calculate engagement score based on usage, ratings, and other factors
     return (template.usageCount * template.rating) / 100;
   };
 
-  const getRandomColor = () => {
-    const letters = '0123456789ABCDEF';
+  const _getRandomColor = () => {
+    const _letters = '0123456789ABCDEF';
     let color = '#';
     for (let i = 0; i < 6; i++) {
       color += letters[Math.floor(Math.random() * 16)];
@@ -199,7 +205,7 @@ export function TemplateAnalytics({
     return color;
   };
 
-  const renderMetricsCards = () => (
+  const _renderMetricsCards = () => (
     <View style={styles.metricsContainer}>
       <View style={styles.metricCard}>
         <Text style={styles.metricValue}>{metrics.totalUsage}</Text>
@@ -210,7 +216,9 @@ export function TemplateAnalytics({
         <Text style={styles.metricLabel}>{t('analytics.totalCost')}</Text>
       </View>
       <View style={styles.metricCard}>
-        <Text style={styles.metricValue}>{metrics.averageRating.toFixed(1)}</Text>
+        <Text style={styles.metricValue}>
+          {metrics.averageRating.toFixed(1)}
+        </Text>
         <Text style={styles.metricLabel}>{t('analytics.avgRating')}</Text>
       </View>
       <View style={styles.metricCard}>
@@ -222,7 +230,7 @@ export function TemplateAnalytics({
     </View>
   );
 
-  const renderUsageChart = () => (
+  const _renderUsageChart = () => (
     <View style={styles.chartContainer}>
       <Text style={styles.chartTitle}>{t('analytics.usageOverTime')}</Text>
       <LineChart
@@ -252,7 +260,7 @@ export function TemplateAnalytics({
     </View>
   );
 
-  const renderCategoryChart = () => (
+  const _renderCategoryChart = () => (
     <View style={styles.chartContainer}>
       <Text style={styles.chartTitle}>{t('analytics.usageByCategory')}</Text>
       <PieChart
@@ -269,7 +277,7 @@ export function TemplateAnalytics({
     </View>
   );
 
-  const renderTypeChart = () => (
+  const _renderTypeChart = () => (
     <View style={styles.chartContainer}>
       <Text style={styles.chartTitle}>{t('analytics.usageByType')}</Text>
       <BarChart
@@ -295,7 +303,7 @@ export function TemplateAnalytics({
     </View>
   );
 
-  const renderEngagementChart = () => (
+  const _renderEngagementChart = () => (
     <View style={styles.chartContainer}>
       <Text style={styles.chartTitle}>{t('analytics.templateEngagement')}</Text>
       <ContributionGraph
@@ -334,7 +342,10 @@ export function TemplateAnalytics({
         </Text>
         <View style={styles.periodSelector}>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'day' && styles.periodButtonSelected]}
+            style={[
+              styles.periodButton,
+              period === 'day' && styles.periodButtonSelected,
+            ]}
             onPress={() => setPeriod('day')}
           >
             <Text
@@ -411,8 +422,8 @@ export function TemplateAnalytics({
             <View style={styles.templateInfo}>
               <Text style={styles.templateName}>{template.name}</Text>
               <Text style={styles.templateStats}>
-                {template.usageCount} {t('analytics.uses')} • {template.rating.toFixed(1)}{' '}
-                {t('analytics.rating')}
+                {template.usageCount} {t('analytics.uses')} •{' '}
+                {template.rating.toFixed(1)} {t('analytics.rating')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#666" />
@@ -423,7 +434,7 @@ export function TemplateAnalytics({
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',

@@ -15,13 +15,13 @@ export function ProfileScreen() {
   const [profile, setProfile] = useState<UserIdentity | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchProfile = async () => {
+  const _fetchProfile = async () => {
     try {
-      const api = ApiService.getInstance();
-      const session = api.getAgent().session;
+      const _api = ApiService.getInstance();
+      const _session = api.getAgent().session;
       if (!session) return;
 
-      const response = await api.getAgent().getProfile({
+      const _response = await api.getAgent().getProfile({
         actor: session.handle,
       });
 
@@ -45,7 +45,7 @@ export function ProfileScreen() {
     fetchProfile();
   }, []);
 
-  const onRefresh = () => {
+  const _onRefresh = () => {
     setRefreshing(true);
     fetchProfile();
   };
@@ -103,7 +103,7 @@ export function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const _styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
