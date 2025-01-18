@@ -1,4 +1,4 @@
-import { AtpAgent, BskyAgent } from '@atproto/api';
+import { BskyAgent } from '@atproto/api';
 
 export interface UserIdentity {
   did: string;
@@ -14,14 +14,11 @@ export interface UserIdentity {
 export class IdentityManager {
   private agent: BskyAgent;
 
-  constructor(serviceUrl: string = 'https://bsky.social') {
+  constructor(serviceUrl = 'https://bsky.social') {
     this.agent = new BskyAgent({ service: serviceUrl });
   }
 
-  async createSession(
-    identifier: string,
-    password: string
-  ): Promise<UserIdentity> {
+  async createSession(identifier: string, password: string): Promise<UserIdentity> {
     const response = await this.agent.login({ identifier, password });
 
     return {
@@ -48,10 +45,8 @@ export class IdentityManager {
     };
   }
 
-  async updateProfile(
-    profile: Partial<UserIdentity['profileData']>
-  ): Promise<void> {
-    await this.agent.upsertProfile(existing => ({
+  async updateProfile(profile: Partial<UserIdentity['profileData']>): Promise<void> {
+    await this.agent.upsertProfile((existing) => ({
       ...existing,
       ...profile,
     }));

@@ -1,8 +1,10 @@
 import * as k8s from '@kubernetes/client-node';
-import { APMService } from './apm';
-import { MetricsService } from '../services/metrics';
+
 import { ConfigService } from '../services/config';
 import { LoggerService } from '../services/logger';
+import { MetricsService } from '../services/metrics';
+
+import { APMService } from './apm';
 
 interface ScalingRule {
   metric: string;
@@ -54,10 +56,7 @@ export class AutoScalingService {
 
   private initializeRules() {
     // Load scaling rules from configuration
-    const rules = this.config.get('scaling.rules') as Record<
-      string,
-      ScalingRule
-    >;
+    const rules = this.config.get('scaling.rules') as Record<string, ScalingRule>;
 
     for (const [service, rule] of Object.entries(rules)) {
       this.rules.set(service, rule);
@@ -79,10 +78,7 @@ export class AutoScalingService {
   }
 
   private async checkAndScale() {
-    const transaction = this.apm.startTransaction(
-      'auto-scaling-check',
-      'auto-scaling'
-    );
+    const transaction = this.apm.startTransaction('auto-scaling-check', 'auto-scaling');
 
     try {
       for (const [service, rule] of this.rules.entries()) {
@@ -97,12 +93,7 @@ export class AutoScalingService {
           }
 
           const currentReplicas = deployment.spec.replicas || 1;
-          const decision = this.makeScalingDecision(
-            service,
-            rule,
-            metrics,
-            currentReplicas
-          );
+          const decision = this.makeScalingDecision(service, rule, metrics, currentReplicas);
 
           if (decision !== currentReplicas) {
             await this.scaleDeployment(service, decision);
@@ -137,10 +128,7 @@ export class AutoScalingService {
 
     try {
       const namespace = this.config.get('kubernetes.namespace');
-      const response = await this.k8sApi.readNamespacedDeployment(
-        service,
-        namespace
-      );
+      const response = await this.k8sApi.readNamespacedDeployment(service, namespace);
       return response.body;
     } catch (error) {
       this.logger.error('Failed to get deployment', { service, error });

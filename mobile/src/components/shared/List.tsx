@@ -1,3 +1,4 @@
+import LottieView from 'lottie-react-native';
 import React, { useCallback, useRef } from 'react';
 import {
   FlatList,
@@ -10,8 +11,8 @@ import {
   ViewStyle,
   ListRenderItem,
 } from 'react-native';
+
 import { useTheme } from '../../theme';
-import LottieView from 'lottie-react-native';
 
 interface ListProps<T> {
   data: T[];

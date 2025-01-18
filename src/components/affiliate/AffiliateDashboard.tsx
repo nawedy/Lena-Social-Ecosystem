@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useATProto } from '../../hooks/useATProto';
-import { ATAffiliateService } from '../../services/affiliate/ATAffiliateService';
+import { CopyOutlined, LinkOutlined, DollarOutlined, UserOutlined } from '@ant-design/icons';
 import {
   Card,
   Table,
@@ -18,15 +16,36 @@ import {
   Typography,
   Space,
 } from 'antd';
-import { Line, Pie } from '@ant-design/charts';
 import {
-  CopyOutlined,
-  LinkOutlined,
-  DollarOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Line, Pie } from 'react-chartjs-2';
 
-const { Title } = Typography;
+import { useATProto } from '../../hooks/useATProto';
+import { ATAffiliateService } from '../../services/affiliate/ATAffiliateService';
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
+
+const { Title: AntTitle } = Typography;
 const { TabPane } = Tabs;
 
 interface AffiliateStats {
@@ -34,11 +53,21 @@ interface AffiliateStats {
   conversions: number;
   earnings: number;
   period: 'day' | 'week' | 'month' | 'year';
+  timeSeriesData: Array<{
+    date: string;
+    earnings: number;
+    clicks: number;
+    conversions: number;
+  }>;
+  conversionsBySource: Array<{
+    source: string;
+    value: number;
+  }>;
 }
 
 export function AffiliateDashboard() {
   const { agent } = useATProto();
-  const _affiliateService = new ATAffiliateService(agent);
+  const affiliateService = new ATAffiliateService(agent);
 
   const [stats, setStats] = useState<AffiliateStats | null>(null);
   const [programs, setPrograms] = useState([]);
@@ -48,37 +77,45 @@ export function AffiliateDashboard() {
   const [showCreateProgram, setShowCreateProgram] = useState(false);
   const [showCreateLink, setShowCreateLink] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-  const [timePeriod, setTimePeriod] = useState<
-    'day' | 'week' | 'month' | 'year'
-  >('month');
+  const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
 
-  const _loadDashboardData = useCallback(async () => {
+  const loadDashboardData = useCallback(async () => {
+    if (!agent.session?.did) {
+      setError('Please connect your AT Protocol account');
+      return;
+    }
+
     try {
       setLoading(true);
       const [statsData, programsData, linksData] = await Promise.all([
-        affiliateService.getAffiliateStats(
-          agent.session?.did || '',
-          timePeriod
-        ),
+        affiliateService.getAffiliateStats(agent.session.did, timePeriod),
         affiliateService.getAffiliatePrograms(),
-        affiliateService.getAffiliateLinks(agent.session?.did || ''),
+        affiliateService.getAffiliateLinks(agent.session.did),
       ]);
 
       setStats(statsData);
       setPrograms(programsData);
       setLinks(linksData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data');
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(errorMessage);
+      console.error('Error loading dashboard data:', err);
     } finally {
       setLoading(false);
     }
-  }, [agent.session?.did, timePeriod]);
+  }, [agent.session?.did, timePeriod, affiliateService]);
 
   useEffect(() => {
-    loadDashboardData();
+    void loadDashboardData();
   }, [loadDashboardData]);
 
-  const _handleCreateProgram = async (values: any) => {
+  const handleCreateProgram = async (values: any) => {
+    if (!agent.session?.did) {
+      setError('Please connect your AT Protocol account');
+      return;
+    }
+
     try {
       setLoading(true);
       await affiliateService.createAffiliateProgram({
@@ -87,41 +124,44 @@ export function AffiliateDashboard() {
         commission: values.commission,
         requirements: values.requirements.split('\n'),
         terms: values.terms,
+        creatorDid: agent.session.did,
       });
       setShowCreateProgram(false);
-      loadDashboardData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create program');
+      void loadDashboardData();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create program';
+      setError(errorMessage);
+      console.error('Error creating program:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const _handleCreateLink = async (values: any) => {
+  const handleCreateLink = async (values: any) => {
+    if (!agent.session?.did || !selectedProgram) {
+      setError('Please connect your AT Protocol account and select a program');
+      return;
+    }
+
     try {
       setLoading(true);
-      await affiliateService.createAffiliateLink(
-        selectedProgram!,
-        values.customId
-      );
+      await affiliateService.createAffiliateLink(selectedProgram, values.customId, agent.session.did);
       setShowCreateLink(false);
-      loadDashboardData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to create link');
+      void loadDashboardData();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create link';
+      setError(errorMessage);
+      console.error('Error creating link:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const _renderStats = () => (
+  const renderStats = () => (
     <Row gutter={[16, 16]} className="mb-8">
       <Col span={6}>
         <Card>
-          <Statistic
-            title="Total Clicks"
-            value={stats?.clicks || 0}
-            prefix={<LinkOutlined />}
-          />
+          <Statistic title="Total Clicks" value={stats?.clicks || 0} prefix={<LinkOutlined />} />
         </Card>
       </Col>
       <Col span={6}>
@@ -156,34 +196,77 @@ export function AffiliateDashboard() {
     </Row>
   );
 
-  const _renderCharts = () => (
-    <Row gutter={[16, 16]} className="mb-8">
-      <Col span={12}>
-        <Card title="Earnings Trend">
-          <Line
-            data={[]} // Add your time-series data here
-            xField="date"
-            yField="earnings"
-            point={{ size: 5, shape: 'diamond' }}
-            label={{ style: { fill: '#aaa' } }}
-          />
-        </Card>
-      </Col>
-      <Col span={12}>
-        <Card title="Conversion Distribution">
-          <Pie
-            data={[]} // Add your conversion distribution data here
-            angleField="value"
-            colorField="type"
-            radius={0.8}
-            label={{ type: 'outer' }}
-          />
-        </Card>
-      </Col>
-    </Row>
-  );
+  const renderCharts = () => {
+    if (!stats?.timeSeriesData || !stats?.conversionsBySource) return null;
 
-  const _programColumns = [
+    const lineChartData = {
+      labels: stats.timeSeriesData.map(item => item.date),
+      datasets: [
+        {
+          label: 'Earnings',
+          data: stats.timeSeriesData.map(item => item.earnings),
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1,
+        },
+      ],
+    };
+
+    const pieChartData = {
+      labels: stats.conversionsBySource.map(item => item.source),
+      datasets: [
+        {
+          data: stats.conversionsBySource.map(item => item.value),
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.8)',
+            'rgba(54, 162, 235, 0.8)',
+            'rgba(255, 206, 86, 0.8)',
+            'rgba(75, 192, 192, 0.8)',
+          ],
+        },
+      ],
+    };
+
+    return (
+      <Row gutter={[16, 16]} className="mb-8">
+        <Col span={12}>
+          <Card title="Earnings Trend">
+            <Line
+              data={lineChartData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top' as const,
+                  },
+                  title: {
+                    display: true,
+                    text: 'Earnings Over Time',
+                  },
+                },
+              }}
+            />
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title="Conversion Distribution">
+            <Pie
+              data={pieChartData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'right' as const,
+                  },
+                },
+              }}
+            />
+          </Card>
+        </Col>
+      </Row>
+    );
+  };
+
+  const programColumns = [
     {
       title: 'Name',
       dataIndex: 'name',
@@ -198,7 +281,7 @@ export function AffiliateDashboard() {
     {
       title: 'Actions',
       key: 'actions',
-      render: (text: string, record: any) => (
+      render: (_text: string, record: any) => (
         <Space>
           <Button
             type="primary"
@@ -221,7 +304,7 @@ export function AffiliateDashboard() {
     },
   ];
 
-  const _linkColumns = [
+  const linkColumns = [
     {
       title: 'Custom ID',
       dataIndex: 'customId',
@@ -236,7 +319,7 @@ export function AffiliateDashboard() {
     {
       title: 'Actions',
       key: 'actions',
-      render: (text: string, record: any) => (
+      render: (_text: string, record: any) => (
         <Button
           icon={<CopyOutlined />}
           onClick={() => {
@@ -251,19 +334,13 @@ export function AffiliateDashboard() {
 
   return (
     <div className="p-6">
-      <Title level={2}>Affiliate Dashboard</Title>
+      <AntTitle level={2}>Affiliate Dashboard</AntTitle>
 
-      {error && (
-        <Alert message={error} type="error" showIcon className="mb-4" />
-      )}
+      {error && <Alert message={error} type="error" showIcon className="mb-4" />}
 
       <div className="mb-4">
         <Space>
-          <Select
-            value={timePeriod}
-            onChange={setTimePeriod}
-            style={{ width: 120 }}
-          >
+          <Select value={timePeriod} onChange={setTimePeriod} style={{ width: 120 }}>
             <Select.Option value="day">Today</Select.Option>
             <Select.Option value="week">This Week</Select.Option>
             <Select.Option value="month">This Month</Select.Option>
@@ -280,20 +357,10 @@ export function AffiliateDashboard() {
 
       <Tabs defaultActiveKey="programs">
         <TabPane tab="Programs" key="programs">
-          <Table
-            columns={programColumns}
-            dataSource={programs}
-            loading={loading}
-            rowKey="uri"
-          />
+          <Table columns={programColumns} dataSource={programs} loading={loading} rowKey="uri" />
         </TabPane>
         <TabPane tab="Links" key="links">
-          <Table
-            columns={linkColumns}
-            dataSource={links}
-            loading={loading}
-            rowKey="uri"
-          />
+          <Table columns={linkColumns} dataSource={links} loading={loading} rowKey="uri" />
         </TabPane>
       </Tabs>
 
@@ -304,32 +371,16 @@ export function AffiliateDashboard() {
         footer={null}
       >
         <Form onFinish={handleCreateProgram}>
-          <Form.Item
-            name="name"
-            label="Program Name"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="name" label="Program Name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
             <Input.TextArea />
           </Form.Item>
-          <Form.Item
-            name="commission"
-            label="Commission (%)"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="commission" label="Commission (%)" rules={[{ required: true }]}>
             <InputNumber min={0} max={100} />
           </Form.Item>
-          <Form.Item
-            name="requirements"
-            label="Requirements"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="requirements" label="Requirements" rules={[{ required: true }]}>
             <Input.TextArea placeholder="Enter requirements (one per line)" />
           </Form.Item>
           <Form.Item name="terms" label="Terms" rules={[{ required: true }]}>
@@ -350,11 +401,7 @@ export function AffiliateDashboard() {
         footer={null}
       >
         <Form onFinish={handleCreateLink}>
-          <Form.Item
-            name="customId"
-            label="Custom ID"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="customId" label="Custom ID" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
           <Form.Item>

@@ -1,7 +1,7 @@
-import { APMService } from '../utils/apm';
-import { MetricsService } from '../services/metrics';
-import { LoggerService } from '../services/logger';
 import { KubernetesService } from '../services/kubernetes';
+import { LoggerService } from '../services/logger';
+import { MetricsService } from '../services/metrics';
+import { APMService } from '../utils/apm';
 
 interface ScalingRule {
   metric: string;
@@ -137,10 +137,7 @@ export class AutoScaler {
     }
   }
 
-  private async checkServiceScaling(
-    service: string,
-    rules: ScalingRule[]
-  ): Promise<void> {
+  private async checkServiceScaling(service: string, rules: ScalingRule[]): Promise<void> {
     const span = this.apm.startSpan('check-service-scaling');
 
     try {
@@ -160,12 +157,7 @@ export class AutoScaler {
       }
 
       // Evaluate scaling rules
-      const decision = this.evaluateScalingRules(
-        service,
-        rules,
-        metrics,
-        currentReplicas
-      );
+      const decision = this.evaluateScalingRules(service, rules, metrics, currentReplicas);
 
       // Apply scaling if needed
       if (decision.targetReplicas !== currentReplicas) {
@@ -176,9 +168,7 @@ export class AutoScaler {
     }
   }
 
-  private async collectServiceMetrics(
-    service: string
-  ): Promise<Record<string, number>> {
+  private async collectServiceMetrics(service: string): Promise<Record<string, number>> {
     const span = this.apm.startSpan('collect-service-metrics');
 
     try {
@@ -188,8 +178,7 @@ export class AutoScaler {
       metrics.cpu_utilization = await this.metrics.getCPUUtilization(service);
 
       // Collect memory metrics
-      metrics.memory_utilization =
-        await this.metrics.getMemoryUtilization(service);
+      metrics.memory_utilization = await this.metrics.getMemoryUtilization(service);
 
       // Collect request rate
       metrics.request_rate = await this.metrics.getRequestRate(service);
@@ -215,9 +204,7 @@ export class AutoScaler {
     const lastScale = this.lastScaleTime[service];
     if (!lastScale) return false;
 
-    const cooldownPeriod = Math.max(
-      ...this.scalingRules[service].map(rule => rule.cooldown)
-    );
+    const cooldownPeriod = Math.max(...this.scalingRules[service].map((rule) => rule.cooldown));
     return Date.now() - lastScale < cooldownPeriod * 1000;
   }
 
@@ -235,19 +222,13 @@ export class AutoScaler {
       if (!metricValue) continue;
 
       if (rule.action === 'scale_up' && metricValue >= rule.threshold) {
-        const newTarget = Math.min(
-          currentReplicas + rule.scaleIncrement,
-          rule.maxReplicas
-        );
+        const newTarget = Math.min(currentReplicas + rule.scaleIncrement, rule.maxReplicas);
         if (newTarget > targetReplicas) {
           targetReplicas = newTarget;
           scaleReason = `${rule.metric} above threshold (${metricValue} >= ${rule.threshold})`;
         }
       } else if (rule.action === 'scale_down' && metricValue < rule.threshold) {
-        const newTarget = Math.max(
-          currentReplicas - rule.scaleIncrement,
-          rule.minReplicas
-        );
+        const newTarget = Math.max(currentReplicas - rule.scaleIncrement, rule.minReplicas);
         if (newTarget < targetReplicas) {
           targetReplicas = newTarget;
           scaleReason = `${rule.metric} below threshold (${metricValue} < ${rule.threshold})`;
@@ -271,10 +252,7 @@ export class AutoScaler {
       this.logger.info('Applying scaling decision', { decision });
 
       // Apply the scaling
-      await this.kubernetes.scaleDeployment(
-        decision.service,
-        decision.targetReplicas
-      );
+      await this.kubernetes.scaleDeployment(decision.service, decision.targetReplicas);
 
       // Update last scale time
       this.lastScaleTime[decision.service] = Date.now();
@@ -307,10 +285,7 @@ export class AutoScaler {
     }
   }
 
-  public async getScalingHistory(
-    service: string,
-    duration: number
-  ): Promise<any[]> {
+  public async getScalingHistory(service: string, duration: number): Promise<any[]> {
     const span = this.apm.startSpan('get-scaling-history');
 
     try {
@@ -319,12 +294,9 @@ export class AutoScaler {
 
       // Enrich events with additional context
       const enrichedEvents = await Promise.all(
-        events.map(async event => ({
+        events.map(async (event) => ({
           ...event,
-          metrics: await this.metrics.getMetricsAtTime(
-            service,
-            event.timestamp
-          ),
+          metrics: await this.metrics.getMetricsAtTime(service, event.timestamp),
         }))
       );
 
@@ -351,7 +323,7 @@ Total Scaling Events: ${events.length}
 ### Scaling Events:
 ${events
   .map(
-    event => `
+    (event) => `
 - Time: ${event.timestamp}
   * Previous Replicas: ${event.previousReplicas}
   * New Replicas: ${event.newReplicas}

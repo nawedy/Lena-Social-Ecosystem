@@ -1,6 +1,6 @@
-import { Platform } from 'react-native';
 import analytics from '@react-native-firebase/analytics';
 import perf, { FirebasePerformanceTypes } from '@react-native-firebase/perf';
+import { Platform } from 'react-native';
 
 class PerformanceMonitor {
   private static instance: PerformanceMonitor;

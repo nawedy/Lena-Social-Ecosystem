@@ -1,10 +1,13 @@
 import { BskyAgent } from '@atproto/api';
-import { atproto } from './atproto';
-import { analytics } from './analytics';
-import { config } from '../config';
-import { Storage } from '@google-cloud/storage';
-import { PubSub } from '@google-cloud/pubsub';
 import { Datastore } from '@google-cloud/datastore';
+import { PubSub } from '@google-cloud/pubsub';
+import { Storage } from '@google-cloud/storage';
+
+import { config } from '../config';
+
+import { analytics } from './analytics';
+import { atproto } from './atproto';
+
 
 interface BetaTester {
   id: string;
@@ -81,9 +84,7 @@ export class BetaTestingService {
     const batch: InvitationBatch = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      expiresAt: new Date(
-        Date.now() + params.expiresInDays * 86400000
-      ).toISOString(),
+      expiresAt: new Date(Date.now() + params.expiresInDays * 86400000).toISOString(),
       maxInvites: params.maxInvites,
       invitedCount: 0,
       features: params.features,
@@ -239,11 +240,7 @@ export class BetaTestingService {
   }
 
   // Feature Management
-  async toggleFeature(
-    testerId: string,
-    feature: string,
-    enabled: boolean
-  ): Promise<void> {
+  async toggleFeature(testerId: string, feature: string, enabled: boolean): Promise<void> {
     const testerKey = this.datastore.key(['BetaTester', testerId]);
     const [tester] = await this.datastore.get(testerKey);
 
@@ -304,22 +301,17 @@ export class BetaTestingService {
       activeTesters: stats.activeTesters,
       feedbackCount: stats.feedbackCount,
       averageSessionDuration:
-        stats.totalSessions > 0
-          ? stats.totalSessionDuration / stats.totalSessions
-          : 0,
+        stats.totalSessions > 0 ? stats.totalSessionDuration / stats.totalSessions : 0,
     };
   }
 
   // Private helper methods
-  private async sendInvitationEmail(tester: BetaTester): Promise<void> {
+  private async sendInvitationEmail(_tester: BetaTester): Promise<void> {
     // Implementation for sending invitation email
     // This would typically integrate with your email service provider
   }
 
-  private async publishEvent(
-    eventType: string,
-    data: Record<string, any>
-  ): Promise<void> {
+  private async publishEvent(eventType: string, data: Record<string, any>): Promise<void> {
     const topic = this.pubsub.topic(this.TOPIC_NAME);
     const messageData = {
       eventType,

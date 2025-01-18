@@ -24,23 +24,19 @@ export class ThreadService {
   }
 
   // Build thread tree from flat structure
-  private buildThreadTree(thread: any, depth: number = 0): ThreadViewPost {
+  private buildThreadTree(thread: any, depth = 0): ThreadViewPost {
     const post = thread.post as AppBskyFeedDefs.FeedViewPost;
     const replies = thread.replies || [];
 
     return {
       ...post,
       depth,
-      children: replies.map((reply: any) =>
-        this.buildThreadTree(reply, depth + 1)
-      ),
+      children: replies.map((reply: any) => this.buildThreadTree(reply, depth + 1)),
     };
   }
 
   // Create a new thread
-  public async createThread(
-    posts: { text: string; media?: Blob[] }[]
-  ): Promise<string[]> {
+  public async createThread(posts: { text: string; media?: Blob[] }[]): Promise<string[]> {
     const threadUris: string[] = [];
     let parentUri: string | undefined;
     let parentCid: string | undefined;
@@ -50,7 +46,7 @@ export class ThreadService {
       await rt.detectFacets(this.agent);
 
       const postBlobs = await Promise.all(
-        (post.media || []).map(blob => this.agent.uploadBlob(blob))
+        (post.media || []).map((blob) => this.agent.uploadBlob(blob))
       );
 
       const response = await this.agent.post({
@@ -70,8 +66,7 @@ export class ThreadService {
           ? {
               root: {
                 uri: threadUris[0],
-                cid: (await this.agent.getPost({ uri: threadUris[0] })).data
-                  .cid,
+                cid: (await this.agent.getPost({ uri: threadUris[0] })).data.cid,
               },
               parent: {
                 uri: parentUri,

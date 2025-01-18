@@ -9,13 +9,7 @@ interface ButtonProps {
   testID?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({
-  title,
-  onPress,
-  style,
-  disabled,
-  testID,
-}) => {
+const Button: React.FC<ButtonProps> = ({ title, onPress, style, disabled, testID }) => {
   return (
     <TouchableOpacity
       onPress={onPress}

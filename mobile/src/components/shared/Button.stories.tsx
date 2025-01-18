@@ -1,7 +1,8 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
 import React from 'react';
 import { View } from 'react-native';
+
 import { Button } from './Button';
-import type { Meta, StoryObj } from '@storybook/react-native';
 
 const meta: Meta<typeof Button> = {
   title: 'components/Button',

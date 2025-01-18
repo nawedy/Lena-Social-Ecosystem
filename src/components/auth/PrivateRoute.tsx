@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+
 import { useAuth } from '../../contexts/AuthContext';
 
 interface PrivateRouteProps {
@@ -13,7 +14,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
     return <div>Loading...</div>;
   }
 
-  return currentUser ? <>{children}</> : <Navigate to="/login" />;
+  return currentUser ? <>{children}</> : <Navigate to='/login' />;
 };
 
 export default PrivateRoute;

@@ -1,3 +1,4 @@
+import LottieView from 'lottie-react-native';
 import React, { useState, useCallback } from 'react';
 import {
   View,
@@ -8,9 +9,9 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import FastImage, { FastImageProps, ImageStyle } from 'react-native-fast-image';
-import { useTheme } from '../../theme';
 import Icon from 'react-native-vector-icons/Ionicons';
-import LottieView from 'lottie-react-native';
+
+import { useTheme } from '../../theme';
 
 interface ImageProps extends Omit<FastImageProps, 'source'> {
   source: string | { uri: string };

@@ -1,8 +1,8 @@
 import { BskyAgent } from '@atproto/api';
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
-import { SecurityCenterClient } from '@google-cloud/security-center';
 import { CloudKMSClient } from '@google-cloud/kms';
 import { PubSub } from '@google-cloud/pubsub';
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import { SecurityCenterClient } from '@google-cloud/security-center';
 
 interface SecurityEvent {
   type: 'auth' | 'content' | 'api' | 'system';
@@ -153,10 +153,7 @@ export class SecurityService {
     }
   }
 
-  async validateContentSecurity(
-    content: string | Buffer,
-    contentType: string
-  ): Promise<boolean> {
+  async validateContentSecurity(content: string | Buffer, contentType: string): Promise<boolean> {
     if (!this.config.contentSecurity.enabled) return true;
 
     try {
@@ -251,7 +248,7 @@ export class SecurityService {
   }
 
   private async setupSecurityEventHandlers(): Promise<void> {
-    const subscription = this.pubsub
+    const _subscription = this.pubsub
       .subscription('security-events')
       .on('message', this.handleSecurityEvent.bind(this))
       .on('error', this.handleSecurityError.bind(this));
@@ -288,10 +285,7 @@ export class SecurityService {
     console.error('Security event handler error:', error);
   }
 
-  private async checkRateLimit(
-    userId: string,
-    requestType: string
-  ): Promise<boolean> {
+  private async checkRateLimit(_userId: string, _requestType: string): Promise<boolean> {
     // Implement rate limiting using Redis or similar
     // This is a placeholder implementation
     return false;
@@ -309,15 +303,11 @@ export class SecurityService {
 
   private async getEncryptionKey(): Promise<string> {
     // Get or create encryption key
-    const keyName =
-      'projects/your-project/locations/global/keyRings/app-keys/cryptoKeys/data-key';
+    const keyName = 'projects/your-project/locations/global/keyRings/app-keys/cryptoKeys/data-key';
     return keyName;
   }
 
-  private async scanForThreats(
-    content: string | Buffer,
-    contentType: string
-  ): Promise<string[]> {
+  private async scanForThreats(_content: string | Buffer, _contentType: string): Promise<string[]> {
     // Implement threat scanning
     // This is a placeholder implementation
     return [];
@@ -338,19 +328,19 @@ export class SecurityService {
     await topic.publish(Buffer.from(JSON.stringify(event)));
   }
 
-  private async handleAuthEvent(event: SecurityEvent): Promise<void> {
+  private async handleAuthEvent(_event: SecurityEvent): Promise<void> {
     // Handle authentication-related security events
   }
 
-  private async handleContentEvent(event: SecurityEvent): Promise<void> {
+  private async handleContentEvent(_event: SecurityEvent): Promise<void> {
     // Handle content-related security events
   }
 
-  private async handleAPIEvent(event: SecurityEvent): Promise<void> {
+  private async handleAPIEvent(_event: SecurityEvent): Promise<void> {
     // Handle API-related security events
   }
 
-  private async handleSystemEvent(event: SecurityEvent): Promise<void> {
+  private async handleSystemEvent(_event: SecurityEvent): Promise<void> {
     // Handle system-related security events
   }
 }

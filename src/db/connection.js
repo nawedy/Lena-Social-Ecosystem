@@ -11,8 +11,6 @@ class DatabaseConnection {
   pool;
   initialized = false;
 
-  constructor() {}
-
   static getInstance() {
     if (!DatabaseConnection.instance) {
       DatabaseConnection.instance = new DatabaseConnection();
@@ -27,9 +25,9 @@ class DatabaseConnection {
       const config = this.getConnectionConfig();
       console.log('Connection config:', {
         ...config,
-        password: '[REDACTED]'
+        password: '[REDACTED]',
       });
-      
+
       this.pool = new Pool(config);
 
       // Test the connection

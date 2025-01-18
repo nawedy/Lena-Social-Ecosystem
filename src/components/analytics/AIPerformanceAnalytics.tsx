@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -8,13 +9,8 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-  ContributionGraph,
-} from 'react-native-chart-kit';
+import { LineChart, BarChart, PieChart, ContributionGraph } from 'react-native-chart-kit';
+
 import { AnalyticsService } from '../../services/AnalyticsService';
 
 interface AIMetrics {
@@ -37,9 +33,7 @@ export function AIPerformanceAnalytics() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('week');
   const [metrics, setMetrics] = useState<Record<string, AIMetrics>>({});
-  const [timeSeriesData, setTimeSeriesData] = useState<
-    Record<string, TimeSeriesData>
-  >({});
+  const [timeSeriesData, setTimeSeriesData] = useState<Record<string, TimeSeriesData>>({});
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
   const _analyticsService = AnalyticsService.getInstance();
@@ -63,16 +57,14 @@ export function AIPerformanceAnalytics() {
 
   const _renderProviderComparison = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>
-        {t('analytics.providerComparison')}
-      </Text>
+      <Text style={styles.sectionTitle}>{t('analytics.providerComparison')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <BarChart
           data={{
             labels: Object.keys(metrics),
             datasets: [
               {
-                data: Object.values(metrics).map(m => m.successRate * 100),
+                data: Object.values(metrics).map((m) => m.successRate * 100),
               },
             ],
           }}
@@ -107,9 +99,9 @@ export function AIPerformanceAnalytics() {
         chartConfig={{
           color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
         }}
-        accessor="cost"
-        backgroundColor="transparent"
-        paddingLeft="15"
+        accessor='cost'
+        backgroundColor='transparent'
+        paddingLeft='15'
         absolute
       />
     </View>
@@ -122,36 +114,21 @@ export function AIPerformanceAnalytics() {
         {Object.entries(metrics).map(([provider, data]) => (
           <TouchableOpacity
             key={provider}
-            style={[
-              styles.providerCard,
-              selectedProvider === provider && styles.selectedCard,
-            ]}
+            style={[styles.providerCard, selectedProvider === provider && styles.selectedCard]}
             onPress={() => setSelectedProvider(provider)}
           >
             <Text style={styles.providerName}>{provider}</Text>
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>
-                {t('analytics.successRate')}
-              </Text>
-              <Text style={styles.metricValue}>
-                {(data.successRate * 100).toFixed(1)}%
-              </Text>
+              <Text style={styles.metricLabel}>{t('analytics.successRate')}</Text>
+              <Text style={styles.metricValue}>{(data.successRate * 100).toFixed(1)}%</Text>
             </View>
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>
-                {t('analytics.avgLatency')}
-              </Text>
-              <Text style={styles.metricValue}>
-                {data.avgLatency.toFixed(0)}ms
-              </Text>
+              <Text style={styles.metricLabel}>{t('analytics.avgLatency')}</Text>
+              <Text style={styles.metricValue}>{data.avgLatency.toFixed(0)}ms</Text>
             </View>
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>
-                {t('analytics.costPerToken')}
-              </Text>
-              <Text style={styles.metricValue}>
-                ${data.costPerToken.toFixed(5)}
-              </Text>
+              <Text style={styles.metricLabel}>{t('analytics.costPerToken')}</Text>
+              <Text style={styles.metricValue}>${data.costPerToken.toFixed(5)}</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -197,7 +174,7 @@ export function AIPerformanceAnalytics() {
             labels: Object.keys(metrics),
             datasets: [
               {
-                data: Object.values(metrics).map(m => m.errorRate * 100),
+                data: Object.values(metrics).map((m) => m.errorRate * 100),
               },
             ],
           }}
@@ -217,7 +194,7 @@ export function AIPerformanceAnalytics() {
     </View>
   );
 
-  const _getProviderColor = (provider: string, opacity: number = 1) => {
+  const _getProviderColor = (provider: string, opacity = 1) => {
     const colors: Record<string, string> = {
       openai: `rgba(0, 122, 255, ${opacity})`,
       anthropic: `rgba(75, 192, 192, ${opacity})`,
@@ -233,7 +210,7 @@ export function AIPerformanceAnalytics() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size='large' color='#007AFF' />
       </View>
     );
   }
@@ -244,50 +221,26 @@ export function AIPerformanceAnalytics() {
         <Text style={styles.title}>{t('analytics.aiPerformance')}</Text>
         <View style={styles.periodSelector}>
           <TouchableOpacity
-            style={[
-              styles.periodButton,
-              period === 'day' && styles.activePeriod,
-            ]}
+            style={[styles.periodButton, period === 'day' && styles.activePeriod]}
             onPress={() => setPeriod('day')}
           >
-            <Text
-              style={[
-                styles.periodText,
-                period === 'day' && styles.activePeriodText,
-              ]}
-            >
+            <Text style={[styles.periodText, period === 'day' && styles.activePeriodText]}>
               {t('analytics.day')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.periodButton,
-              period === 'week' && styles.activePeriod,
-            ]}
+            style={[styles.periodButton, period === 'week' && styles.activePeriod]}
             onPress={() => setPeriod('week')}
           >
-            <Text
-              style={[
-                styles.periodText,
-                period === 'week' && styles.activePeriodText,
-              ]}
-            >
+            <Text style={[styles.periodText, period === 'week' && styles.activePeriodText]}>
               {t('analytics.week')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.periodButton,
-              period === 'month' && styles.activePeriod,
-            ]}
+            style={[styles.periodButton, period === 'month' && styles.activePeriod]}
             onPress={() => setPeriod('month')}
           >
-            <Text
-              style={[
-                styles.periodText,
-                period === 'month' && styles.activePeriodText,
-              ]}
-            >
+            <Text style={[styles.periodText, period === 'month' && styles.activePeriodText]}>
               {t('analytics.month')}
             </Text>
           </TouchableOpacity>

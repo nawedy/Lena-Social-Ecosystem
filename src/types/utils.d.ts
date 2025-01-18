@@ -1,9 +1,6 @@
 declare module '../utils/email' {
   export function validateEmail(email: string): boolean;
-  export function generateEmailTemplate(
-    template: string,
-    data: Record<string, any>
-  ): string;
+  export function generateEmailTemplate(template: string, data: Record<string, any>): string;
   export function parseEmailTemplate(templatePath: string): Promise<string>;
   export function sanitizeEmailContent(content: string): string;
 }
@@ -11,11 +8,7 @@ declare module '../utils/email' {
 declare module '../utils/crypto' {
   export function generateSalt(length?: number): string;
   export function hashPassword(password: string, salt: string): string;
-  export function comparePasswords(
-    password: string,
-    hashedPassword: string,
-    salt: string
-  ): boolean;
+  export function comparePasswords(password: string, hashedPassword: string, salt: string): boolean;
   export function generateToken(length?: number): string;
   export function encryptData(data: string, key: string): string;
   export function decryptData(encryptedData: string, key: string): string;
@@ -36,11 +29,7 @@ declare module '../hooks/useAuth' {
     error: Error | null;
     signIn: (email: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
-    signUp: (
-      email: string,
-      password: string,
-      displayName?: string
-    ) => Promise<void>;
+    signUp: (email: string, password: string, displayName?: string) => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
     updateProfile: (data: Partial<AuthUser>) => Promise<void>;
   }

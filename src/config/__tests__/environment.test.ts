@@ -1,3 +1,5 @@
+import { jest, describe, it, expect } from '@jest/globals';
+
 import {
   environment,
   getApiUrl,
@@ -65,18 +67,12 @@ describe('Environment Configuration', () => {
     it('should generate correct asset URL', () => {
       const path = 'images/logo.png';
       const url = getAssetUrl(path);
-      expect(url).toBe(
-        'https://eri-ethio.com/tiktoktoe/assets/images/logo.png'
-      );
+      expect(url).toBe('https://eri-ethio.com/tiktoktoe/assets/images/logo.png');
     });
 
     it('should handle leading slashes in endpoints', () => {
-      expect(getApiUrl('/users')).toBe(
-        'https://eri-ethio.com/tiktoktoe/api/users'
-      );
-      expect(getWebSocketUrl('/game')).toBe(
-        'https://eri-ethio.com/tiktoktoe/ws/game'
-      );
+      expect(getApiUrl('/users')).toBe('https://eri-ethio.com/tiktoktoe/api/users');
+      expect(getWebSocketUrl('/game')).toBe('https://eri-ethio.com/tiktoktoe/ws/game');
       expect(getAssetUrl('/images/logo.png')).toBe(
         'https://eri-ethio.com/tiktoktoe/assets/images/logo.png'
       );
@@ -92,9 +88,7 @@ describe('Environment Configuration', () => {
       expect(getApiUrl('//users///profile')).toBe(
         'https://eri-ethio.com/tiktoktoe/api/users/profile'
       );
-      expect(getWebSocketUrl('//game//room')).toBe(
-        'https://eri-ethio.com/tiktoktoe/ws/game/room'
-      );
+      expect(getWebSocketUrl('//game//room')).toBe('https://eri-ethio.com/tiktoktoe/ws/game/room');
       expect(getAssetUrl('//images//logo.png')).toBe(
         'https://eri-ethio.com/tiktoktoe/assets/images/logo.png'
       );

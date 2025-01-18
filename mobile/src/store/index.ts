@@ -1,14 +1,14 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { configureStore } from '@reduxjs/toolkit';
 import { combineReducers } from 'redux';
+import { persistStore, persistReducer } from 'redux-persist';
 
 import authReducer from './slices/auth';
 import feedReducer from './slices/feed';
-import profileReducer from './slices/profile';
-import notificationsReducer from './slices/notifications';
-import settingsReducer from './slices/settings';
 import mediaReducer from './slices/media';
+import notificationsReducer from './slices/notifications';
+import profileReducer from './slices/profile';
+import settingsReducer from './slices/settings';
 
 const persistConfig = {
   key: 'root',

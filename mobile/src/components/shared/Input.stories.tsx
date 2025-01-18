@@ -1,7 +1,8 @@
+import type { Meta, StoryObj } from '@storybook/react-native';
 import React from 'react';
 import { View } from 'react-native';
+
 import { Input } from './Input';
-import type { Meta, StoryObj } from '@storybook/react-native';
 
 const meta: Meta<typeof Input> = {
   title: 'components/Input',

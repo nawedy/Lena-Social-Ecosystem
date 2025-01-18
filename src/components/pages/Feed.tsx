@@ -1,19 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useATProto } from '../../contexts/ATProtoContext';
-import { FeedViewPost, MediaCarouselItem } from '../../types/feed';
-import MediaCarousel from '../shared/MediaCarousel';
 import {
   AppBskyEmbedImages,
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
   RichText,
 } from '@atproto/api';
-import InfiniteScroll from 'react-infinite-scroll-component';
 import { formatDistanceToNow } from 'date-fns';
+import React, { useEffect, useState, useCallback } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
-const Feed: React.FC<{ algorithm?: string }> = ({
-  algorithm = 'reverse-chronological',
-}) => {
+import { useATProto } from '../../contexts/ATProtoContext';
+import { FeedViewPost, MediaCarouselItem } from '../../types/feed';
+import MediaCarousel from '../shared/MediaCarousel';
+
+const Feed: React.FC<{ algorithm?: string }> = ({ algorithm = 'reverse-chronological' }) => {
   const { getTimeline, like, unlike, repost, unrepost } = useATProto();
   const [posts, setPosts] = useState<FeedViewPost[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -29,7 +28,7 @@ const Feed: React.FC<{ algorithm?: string }> = ({
         const _response = await getTimeline({ limit: 20, cursor, algorithm });
         const _newPosts = response.data.feed;
 
-        setPosts(prev => (cursor ? [...prev, ...newPosts] : newPosts));
+        setPosts((prev) => (cursor ? [...prev, ...newPosts] : newPosts));
         setCursor(response.data.cursor);
         setHasMore(!!response.data.cursor);
       } catch (error) {
@@ -49,8 +48,8 @@ const Feed: React.FC<{ algorithm?: string }> = ({
     try {
       if (post.viewer?.like) {
         await unlike(post.post.uri, post.post.cid);
-        setPosts(prev =>
-          prev.map(p =>
+        setPosts((prev) =>
+          prev.map((p) =>
             p.post.uri === post.post.uri
               ? {
                   ...p,
@@ -62,8 +61,8 @@ const Feed: React.FC<{ algorithm?: string }> = ({
         );
       } else {
         await like(post.post.uri, post.post.cid);
-        setPosts(prev =>
-          prev.map(p =>
+        setPosts((prev) =>
+          prev.map((p) =>
             p.post.uri === post.post.uri
               ? {
                   ...p,
@@ -83,8 +82,8 @@ const Feed: React.FC<{ algorithm?: string }> = ({
     try {
       if (post.viewer?.repost) {
         await unrepost(post.post.uri, post.post.cid);
-        setPosts(prev =>
-          prev.map(p =>
+        setPosts((prev) =>
+          prev.map((p) =>
             p.post.uri === post.post.uri
               ? {
                   ...p,
@@ -96,8 +95,8 @@ const Feed: React.FC<{ algorithm?: string }> = ({
         );
       } else {
         await repost(post.post.uri, post.post.cid);
-        setPosts(prev =>
-          prev.map(p =>
+        setPosts((prev) =>
+          prev.map((p) =>
             p.post.uri === post.post.uri
               ? {
                   ...p,
@@ -118,7 +117,7 @@ const Feed: React.FC<{ algorithm?: string }> = ({
     if (!embed) return [];
 
     if (AppBskyEmbedImages.isView(embed)) {
-      return embed.images.map(img => ({
+      return embed.images.map((img) => ({
         type: 'image',
         uri: img.fullsize,
         alt: img.alt,
@@ -129,7 +128,7 @@ const Feed: React.FC<{ algorithm?: string }> = ({
 
     if (AppBskyEmbedRecordWithMedia.isView(embed) && embed.media) {
       if (AppBskyEmbedImages.isView(embed.media)) {
-        return embed.media.images.map(img => ({
+        return embed.media.images.map((img) => ({
           type: 'image',
           uri: img.fullsize,
           alt: img.alt,
@@ -147,14 +146,14 @@ const Feed: React.FC<{ algorithm?: string }> = ({
     const _rt = new RichText({ text: record.text, facets: record.facets });
 
     return (
-      <div className="whitespace-pre-wrap">
+      <div className='whitespace-pre-wrap'>
         {rt.segments.map((segment, i) => {
           if (segment.isMention()) {
             return (
               <a
                 key={i}
                 href={`/profile/${segment.text}`}
-                className="text-blue-500 hover:underline"
+                className='text-blue-500 hover:underline'
               >
                 {segment.text}
               </a>
@@ -164,10 +163,10 @@ const Feed: React.FC<{ algorithm?: string }> = ({
             return (
               <a
                 key={i}
-                href={segment.link!.uri}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
+                href={segment.link?.uri}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-blue-500 hover:underline'
               >
                 {segment.text}
               </a>
@@ -177,8 +176,8 @@ const Feed: React.FC<{ algorithm?: string }> = ({
             return (
               <a
                 key={i}
-                href={`/tag/${segment.tag!.tag}`}
-                className="text-blue-500 hover:underline"
+                href={`/tag/${segment.tag?.tag}`}
+                className='text-blue-500 hover:underline'
               >
                 {segment.text}
               </a>
@@ -191,37 +190,35 @@ const Feed: React.FC<{ algorithm?: string }> = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className='max-w-2xl mx-auto'>
       <InfiniteScroll
         dataLength={posts.length}
         next={() => fetchPosts(cursor)}
         hasMore={hasMore}
-        loader={<div className="text-center py-4">Loading...</div>}
-        endMessage={<div className="text-center py-4">No more posts</div>}
+        loader={<div className='text-center py-4'>Loading...</div>}
+        endMessage={<div className='text-center py-4'>No more posts</div>}
       >
-        {posts.map(post => {
+        {posts.map((post) => {
           const _media = getMediaFromPost(post);
           return (
             <article
               key={post.post.uri}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6"
+              className='bg-white dark:bg-gray-800 rounded-lg shadow mb-6'
             >
-              <div className="p-4">
-                <div className="flex items-center mb-4">
+              <div className='p-4'>
+                <div className='flex items-center mb-4'>
                   <img
                     src={post.post.author.avatar}
-                    alt={
-                      post.post.author.displayName || post.post.author.handle
-                    }
-                    className="w-10 h-10 rounded-full"
+                    alt={post.post.author.displayName || post.post.author.handle}
+                    className='w-10 h-10 rounded-full'
                   />
-                  <div className="ml-3">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                  <div className='ml-3'>
+                    <h3 className='font-semibold text-gray-900 dark:text-white'>
                       {post.post.author.displayName || post.post.author.handle}
                     </h3>
-                    <div className="flex items-center text-sm text-gray-500">
+                    <div className='flex items-center text-sm text-gray-500'>
                       <span>@{post.post.author.handle}</span>
-                      <span className="mx-1">·</span>
+                      <span className='mx-1'>·</span>
                       <time>
                         {formatDistanceToNow(new Date(post.post.indexedAt), {
                           addSuffix: true,
@@ -231,17 +228,15 @@ const Feed: React.FC<{ algorithm?: string }> = ({
                   </div>
                 </div>
 
-                <div className="text-gray-800 dark:text-gray-200 mb-4">
-                  {renderPostText(post)}
-                </div>
+                <div className='text-gray-800 dark:text-gray-200 mb-4'>{renderPostText(post)}</div>
 
                 {media.length > 0 && (
-                  <div className="mb-4">
+                  <div className='mb-4'>
                     <MediaCarousel items={media} />
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-gray-500">
+                <div className='flex items-center justify-between text-gray-500'>
                   <button
                     onClick={() => handleLike(post)}
                     className={`flex items-center space-x-2 ${
@@ -254,15 +249,13 @@ const Feed: React.FC<{ algorithm?: string }> = ({
                   <button
                     onClick={() => handleRepost(post)}
                     className={`flex items-center space-x-2 ${
-                      post.viewer?.repost
-                        ? 'text-green-500'
-                        : 'hover:text-green-500'
+                      post.viewer?.repost ? 'text-green-500' : 'hover:text-green-500'
                     }`}
                   >
                     <span>🔄</span>
                     <span>{post.repostCount || 0}</span>
                   </button>
-                  <button className="flex items-center space-x-2 hover:text-blue-500">
+                  <button className='flex items-center space-x-2 hover:text-blue-500'>
                     <span>💭</span>
                     <span>{post.replyCount || 0}</span>
                   </button>

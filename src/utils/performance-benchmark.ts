@@ -1,8 +1,9 @@
-import { APMService } from './apm';
-import { MetricsService } from '../services/metrics';
 import { DatabaseService } from '../services/database';
-import { RedisService } from '../services/redis';
 import { LoggerService } from '../services/logger';
+import { MetricsService } from '../services/metrics';
+import { RedisService } from '../services/redis';
+
+import { APMService } from './apm';
 
 interface BenchmarkConfig {
   name: string;
@@ -59,10 +60,7 @@ export class PerformanceBenchmark {
   }
 
   public async runBenchmark(config: BenchmarkConfig): Promise<BenchmarkResult> {
-    const transaction = this.apm.startTransaction(
-      `benchmark-${config.name}`,
-      'benchmark'
-    );
+    const transaction = this.apm.startTransaction(`benchmark-${config.name}`, 'benchmark');
 
     try {
       // Prepare system
@@ -129,8 +127,8 @@ export class PerformanceBenchmark {
       const startTime = Date.now();
       const metrics: number[] = [];
       const latencies: number[] = [];
-      let successCount = 0;
-      let failureCount = 0;
+      const successCount = 0;
+      const failureCount = 0;
 
       // Create worker pool
       const workers = new Array(config.concurrency)
@@ -201,7 +199,7 @@ export class PerformanceBenchmark {
 
         const elapsed = Date.now() - startTime;
         if (elapsed < interval) {
-          await new Promise(resolve => setTimeout(resolve, interval - elapsed));
+          await new Promise((resolve) => setTimeout(resolve, interval - elapsed));
         }
       }
     } finally {
@@ -212,14 +210,14 @@ export class PerformanceBenchmark {
   private async executeRequest(): Promise<void> {
     // Implement your request logic here
     // This is just a placeholder
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+    await new Promise((resolve) => setTimeout(resolve, Math.random() * 100));
   }
 
   private async cooldown(config: BenchmarkConfig): Promise<void> {
     const span = this.apm.startSpan('benchmark-cooldown');
 
     try {
-      await new Promise(resolve => setTimeout(resolve, config.cooldown));
+      await new Promise((resolve) => setTimeout(resolve, config.cooldown));
       this.logger.info('Cooldown complete');
     } finally {
       span?.end();
@@ -237,12 +235,7 @@ export class PerformanceBenchmark {
       );
 
       // Store in Redis for quick access
-      await this.redis.set(
-        `benchmark:${result.name}:latest`,
-        JSON.stringify(result),
-        'EX',
-        86400
-      );
+      await this.redis.set(`benchmark:${result.name}:latest`, JSON.stringify(result), 'EX', 86400);
 
       // Record metrics
       this.metrics.recordBenchmarkResult(result);
@@ -270,21 +263,15 @@ export class PerformanceBenchmark {
     }
   }
 
-  public async getHistoricalResults(
-    name: string,
-    limit: number = 10
-  ): Promise<BenchmarkResult[]> {
+  public async getHistoricalResults(name: string, limit = 10): Promise<BenchmarkResult[]> {
     const results = await this.db.query(
       'SELECT data FROM benchmark_results WHERE name = $1 ORDER BY timestamp DESC LIMIT $2',
       [name, limit]
     );
-    return results.rows.map(row => row.data);
+    return results.rows.map((row) => row.data);
   }
 
-  public async compareResults(
-    baseline: string,
-    current: string
-  ): Promise<Record<string, number>> {
+  public async compareResults(baseline: string, current: string): Promise<Record<string, number>> {
     const [baselineResult, currentResult] = await Promise.all([
       this.db.query(
         'SELECT data FROM benchmark_results WHERE name = $1 ORDER BY timestamp DESC LIMIT 1',
@@ -304,23 +291,16 @@ export class PerformanceBenchmark {
     }
 
     return {
-      rpsChange:
-        ((currentData.rps - baselineData.rps) / baselineData.rps) * 100,
+      rpsChange: ((currentData.rps - baselineData.rps) / baselineData.rps) * 100,
       latencyChange:
-        ((currentData.averageLatency - baselineData.averageLatency) /
-          baselineData.averageLatency) *
+        ((currentData.averageLatency - baselineData.averageLatency) / baselineData.averageLatency) *
         100,
       errorRateChange:
-        ((currentData.errorRate - baselineData.errorRate) /
-          baselineData.errorRate) *
-        100,
+        ((currentData.errorRate - baselineData.errorRate) / baselineData.errorRate) * 100,
       cpuChange:
-        ((currentData.cpu.average - baselineData.cpu.average) /
-          baselineData.cpu.average) *
-        100,
+        ((currentData.cpu.average - baselineData.cpu.average) / baselineData.cpu.average) * 100,
       memoryChange:
-        ((currentData.memory.average - baselineData.memory.average) /
-          baselineData.memory.average) *
+        ((currentData.memory.average - baselineData.memory.average) / baselineData.memory.average) *
         100,
     };
   }

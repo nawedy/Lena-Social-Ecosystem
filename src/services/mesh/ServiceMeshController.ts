@@ -1,7 +1,7 @@
 import { performanceMonitor } from '../../utils/performance';
-import { SecurityAuditService } from '../security/SecurityAuditService';
-import { AdvancedCacheService } from '../cache/AdvancedCacheService';
 import { PerformanceOptimizer } from '../../utils/performance/PerformanceOptimizer';
+import { AdvancedCacheService } from '../cache/AdvancedCacheService';
+import { SecurityAuditService } from '../security/SecurityAuditService';
 
 interface ServiceConfig {
   name: string;
@@ -72,8 +72,7 @@ export class ServiceMeshController {
   private async loadServiceConfigs(): Promise<void> {
     const trace = performanceMonitor.startTrace('load_service_configs');
     try {
-      const cachedConfigs =
-        await this.cache.get<Map<string, ServiceConfig>>('service_configs');
+      const cachedConfigs = await this.cache.get<Map<string, ServiceConfig>>('service_configs');
       if (cachedConfigs) {
         this.services = cachedConfigs;
       }
@@ -95,7 +94,7 @@ export class ServiceMeshController {
   }
 
   private initializeMetrics(): void {
-    this.services.forEach((config, serviceName) => {
+    this.services.forEach((_config, serviceName) => {
       this.metrics.set(serviceName, {
         requests: 0,
         errors: 0,
@@ -152,20 +151,12 @@ export class ServiceMeshController {
   }
 
   private validateServiceConfig(config: ServiceConfig): void {
-    if (
-      !config.name ||
-      !config.version ||
-      !config.endpoint ||
-      !config.healthCheck
-    ) {
+    if (!config.name || !config.version || !config.endpoint || !config.healthCheck) {
       throw new Error('Invalid service configuration');
     }
   }
 
-  public async makeRequest(
-    serviceName: string,
-    request: Request
-  ): Promise<Response> {
+  public async makeRequest(serviceName: string, request: Request): Promise<Response> {
     const trace = performanceMonitor.startTrace('service_request');
     const startTime = Date.now();
 
@@ -197,10 +188,7 @@ export class ServiceMeshController {
     }
   }
 
-  private async retryRequest(
-    config: ServiceConfig,
-    request: Request
-  ): Promise<Response> {
+  private async retryRequest(config: ServiceConfig, request: Request): Promise<Response> {
     const maxRetries = config.retries || 3;
     const timeout = config.timeout || 5000;
 
@@ -214,19 +202,14 @@ export class ServiceMeshController {
         if (attempt === maxRetries - 1) {
           throw error;
         }
-        await new Promise(resolve =>
-          setTimeout(resolve, 1000 * Math.pow(2, attempt))
-        );
+        await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
       }
     }
 
     throw new Error('Max retries exceeded');
   }
 
-  private async checkServiceHealth(
-    serviceName: string,
-    config: ServiceConfig
-  ): Promise<void> {
+  private async checkServiceHealth(serviceName: string, config: ServiceConfig): Promise<void> {
     const trace = performanceMonitor.startTrace('health_check');
     try {
       const response = await fetch(config.healthCheck);
@@ -240,7 +223,7 @@ export class ServiceMeshController {
       }
 
       trace.putMetric('success', 1);
-    } catch (error) {
+    } catch (_error) {
       trace.putMetric('error', 1);
       const metrics = this.metrics.get(serviceName);
       if (metrics) {
@@ -252,11 +235,7 @@ export class ServiceMeshController {
     }
   }
 
-  private updateMetrics(
-    serviceName: string,
-    success: boolean,
-    latency: number
-  ): void {
+  private updateMetrics(serviceName: string, success: boolean, latency: number): void {
     const metrics = this.metrics.get(serviceName);
     if (metrics) {
       metrics.requests++;
@@ -285,9 +264,7 @@ export class ServiceMeshController {
     }
   }
 
-  public async getServiceMetrics(
-    serviceName: string
-  ): Promise<ServiceMetrics | undefined> {
+  public async getServiceMetrics(serviceName: string): Promise<ServiceMetrics | undefined> {
     return this.metrics.get(serviceName);
   }
 
@@ -295,9 +272,7 @@ export class ServiceMeshController {
     return new Map(this.metrics);
   }
 
-  public async getCircuitStatus(
-    serviceName: string
-  ): Promise<boolean | undefined> {
+  public async getCircuitStatus(serviceName: string): Promise<boolean | undefined> {
     return this.circuitStates.get(serviceName);
   }
 

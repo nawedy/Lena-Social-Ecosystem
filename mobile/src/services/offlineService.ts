@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import BackgroundFetch from 'react-native-background-fetch';
+
 import { store } from '../store';
 import { refreshSession } from '../store/slices/auth';
 
@@ -21,7 +22,7 @@ interface SyncOperation {
 
 class OfflineService {
   private static instance: OfflineService;
-  private isOnline: boolean = true;
+  private isOnline = true;
   private syncQueue: SyncOperation[] = [];
   private readonly SYNC_QUEUE_KEY = '@sync_queue';
   private readonly MAX_RETRIES = 3;

@@ -1,7 +1,9 @@
-import { RBACService, Permission } from './RBACService';
-import { NotificationService } from './NotificationService';
 import * as crypto from 'crypto';
+
 import * as jwt from 'jsonwebtoken';
+
+import { NotificationService } from './NotificationService';
+import { RBACService } from './RBACService';
 import { User } from './UserService';
 
 interface SecurityConfig {
@@ -46,7 +48,7 @@ interface SecurityEvent {
   ip?: string;
   userAgent?: string;
   location?: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
@@ -206,10 +208,7 @@ export class SecurityService {
 
   public async validateToken(token: string): Promise<TokenPayload> {
     try {
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET!
-      ) as TokenPayload;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload;
       const session = this.sessions.get(decoded.sessionId);
 
       if (!session) {
@@ -222,23 +221,18 @@ export class SecurityService {
 
       if (this.config.session.extendOnActivity) {
         session.lastActivity = new Date();
-        session.expiresAt = new Date(
-          Date.now() + this.config.session.duration * 1000
-        );
+        session.expiresAt = new Date(Date.now() + this.config.session.duration * 1000);
       }
 
       return decoded;
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Invalid token');
     }
   }
 
   public async refreshToken(refreshToken: string): Promise<string> {
     try {
-      const decoded = jwt.verify(
-        refreshToken,
-        process.env.JWT_REFRESH_SECRET!
-      ) as TokenPayload;
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as TokenPayload;
 
       const session = this.sessions.get(decoded.sessionId);
       if (!session || session.refreshToken !== refreshToken) {
@@ -250,7 +244,7 @@ export class SecurityService {
       session.lastActivity = new Date();
 
       return newToken;
-    } catch (error) {
+    } catch (_error) {
       throw new Error('Invalid refresh token');
     }
   }
@@ -268,9 +262,7 @@ export class SecurityService {
     }
   }
 
-  public async logSecurityEvent(
-    event: Omit<SecurityEvent, 'id' | 'timestamp'>
-  ): Promise<void> {
+  public async logSecurityEvent(event: Omit<SecurityEvent, 'id' | 'timestamp'>): Promise<void> {
     const securityEvent: SecurityEvent = {
       id: crypto.randomUUID(),
       timestamp: new Date(),
@@ -287,19 +279,12 @@ export class SecurityService {
     }
   }
 
-  private async verifyCredentials(
-    username: string,
-    password: string
-  ): Promise<User> {
+  private async verifyCredentials(_username: string, _password: string): Promise<User> {
     // Implementation would verify against user service/database
     throw new Error('Not implemented');
   }
 
-  private async createSession(
-    userId: string,
-    ip: string,
-    userAgent: string
-  ): Promise<Session> {
+  private async createSession(userId: string, ip: string, userAgent: string): Promise<Session> {
     if (this.config.session.singleSession) {
       // Remove existing sessions for user
       for (const [id, session] of this.sessions.entries()) {

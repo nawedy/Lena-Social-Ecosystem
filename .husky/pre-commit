@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Run lint-staged
+npx lint-staged
+
+# Run tests
+npm run test --watchAll=false

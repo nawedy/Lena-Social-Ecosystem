@@ -1,8 +1,10 @@
-import { Redis } from 'ioredis';
 import { BigQuery } from '@google-cloud/bigquery';
+import { Redis } from 'ioredis';
+
 import { config } from '../config';
-import { performanceMonitoring } from './performanceMonitoring';
+
 import { advancedAnalytics } from './advancedAnalytics';
+import { performanceMonitoring } from './performanceMonitoring';
 
 interface CachePattern {
   pattern: string;
@@ -109,7 +111,7 @@ export class CacheWarmingService {
 
     try {
       await Promise.all(
-        keys.map(async key => {
+        keys.map(async (key) => {
           const value = await this.redis.get(key);
           if (value) {
             await this.redis.setex(key, cachePattern.ttl, value);
@@ -141,7 +143,7 @@ export class CacheWarmingService {
   async warmCacheByQuery(params: {
     pattern: string;
     query: string;
-    params?: any[];
+    params?: unknown[];
   }): Promise<void> {
     const startTime = Date.now();
     try {
@@ -151,7 +153,7 @@ export class CacheWarmingService {
       });
 
       await Promise.all(
-        rows.map(async row => {
+        rows.map(async (row) => {
           const key = this.generateCacheKey(params.pattern, row);
           await this.redis.setex(
             key,
@@ -176,9 +178,7 @@ export class CacheWarmingService {
   }
 
   // Cache Analytics Methods
-  async getCacheAnalytics(
-    pattern: string
-  ): Promise<CacheAnalytics | undefined> {
+  async getCacheAnalytics(pattern: string): Promise<CacheAnalytics | undefined> {
     return this.analytics.get(pattern);
   }
 
@@ -254,7 +254,7 @@ export class CacheWarmingService {
           const keys = await this.redis.keys(pattern);
           const pipeline = this.redis.pipeline();
 
-          keys.forEach(key => {
+          keys.forEach((key) => {
             pipeline.object('IDLETIME', key);
             pipeline.memory('USAGE', key);
           });
@@ -262,20 +262,12 @@ export class CacheWarmingService {
           const results = await pipeline.exec();
           if (!results) continue;
 
-          const idleTimes = results
-            .filter((_, i) => i % 2 === 0)
-            .map(r => r?.[1]);
-          const memorySizes = results
-            .filter((_, i) => i % 2 === 1)
-            .map(r => r?.[1]);
+          const idleTimes = results.filter((_, i) => i % 2 === 0).map((r) => r?.[1]);
+          const memorySizes = results.filter((_, i) => i % 2 === 1).map((r) => r?.[1]);
 
-          const totalSize = memorySizes.reduce(
-            (sum, size) => sum + ((size as number) || 0),
-            0
-          );
+          const totalSize = memorySizes.reduce((sum, size) => sum + ((size as number) || 0), 0);
           const avgIdleTime =
-            idleTimes.reduce((sum, time) => sum + ((time as number) || 0), 0) /
-            idleTimes.length;
+            idleTimes.reduce((sum, time) => sum + ((time as number) || 0), 0) / idleTimes.length;
 
           const analytics = this.analytics.get(pattern) || {
             pattern,
@@ -339,15 +331,10 @@ export class CacheWarmingService {
     if (this.isWarming || this.warmingQueue.length === 0) return;
 
     this.isWarming = true;
-    const concurrentPatterns = this.warmingQueue.splice(
-      0,
-      this.WARMING_CONCURRENCY
-    );
+    const concurrentPatterns = this.warmingQueue.splice(0, this.WARMING_CONCURRENCY);
 
     try {
-      await Promise.all(
-        concurrentPatterns.map(pattern => this.warmCache(pattern))
-      );
+      await Promise.all(concurrentPatterns.map((pattern) => this.warmCache(pattern)));
     } catch (error) {
       performanceMonitoring.recordError(error as Error, {
         operation: 'processWarmingQueue',
@@ -381,7 +368,7 @@ export class CacheWarmingService {
     return now.getTime() - lastWarmed.getTime() >= scheduleHour * 3600000;
   }
 
-  private generateCacheKey(pattern: string, data: any): string {
+  private generateCacheKey(pattern: string, data: Record<string, unknown>): string {
     // Replace wildcards with actual values from data
     return pattern.replace(/\*/g, (match, offset) => {
       const field = pattern.substring(0, offset).split(':').pop();
@@ -389,10 +376,7 @@ export class CacheWarmingService {
     });
   }
 
-  private async updateAnalytics(
-    pattern: string,
-    updates: Partial<CacheAnalytics>
-  ): Promise<void> {
+  private async updateAnalytics(pattern: string, updates: Partial<CacheAnalytics>): Promise<void> {
     const analytics = this.analytics.get(pattern);
     if (!analytics) return;
 

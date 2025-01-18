@@ -4,7 +4,7 @@ export class ApiService {
   private agent: BskyAgent;
   private static instance: ApiService;
 
-  private constructor(serviceUrl: string = 'https://bsky.social') {
+  private constructor(serviceUrl = 'https://bsky.social') {
     this.agent = new BskyAgent({ service: serviceUrl });
   }
 

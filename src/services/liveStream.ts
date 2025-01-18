@@ -124,7 +124,7 @@ export class LiveStreamService {
 
   // Subscribe to stream events
   public subscribeToStream(
-    streamUri: string,
+    _streamUri: string,
     callbacks: {
       onViewerJoin?: (did: string) => void;
       onViewerLeave?: (did: string) => void;
@@ -132,11 +132,9 @@ export class LiveStreamService {
       onStreamEnd?: () => void;
     }
   ): () => void {
-    const ws = new WebSocket(
-      `${this.mediaServer.replace('http', 'ws')}/stream/events`
-    );
+    const ws = new WebSocket(`${this.mediaServer.replace('http', 'ws')}/stream/events`);
 
-    ws.onmessage = event => {
+    ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
       switch (data.type) {
@@ -179,7 +177,7 @@ export class LiveStreamService {
   // Get stream chat history
   public async getChatHistory(
     streamUri: string,
-    limit: number = 50
+    limit = 50
   ): Promise<
     {
       author: string;
@@ -194,8 +192,8 @@ export class LiveStreamService {
     });
 
     return response.data.records
-      .filter(record => record.value.streamUri === streamUri)
-      .map(record => ({
+      .filter((record) => record.value.streamUri === streamUri)
+      .map((record) => ({
         author: record.value.author,
         text: record.value.text,
         createdAt: record.value.createdAt,
@@ -216,9 +214,7 @@ export class LiveStreamService {
       };
     }
   ): Promise<void> {
-    const rt = interaction.content
-      ? new RichText({ text: interaction.content })
-      : null;
+    const rt = interaction.content ? new RichText({ text: interaction.content }) : null;
     if (rt) await rt.detectFacets(this.agent);
 
     const record = {
@@ -259,15 +255,15 @@ export class LiveStreamService {
     });
 
     const interactions = response.data.records
-      .filter(record => record.value.streamUri === streamUri)
-      .filter(record => !type || record.value.type === type);
+      .filter((record) => record.value.streamUri === streamUri)
+      .filter((record) => !type || record.value.type === type);
 
     const products = interactions
-      .filter(record => record.value.type === 'shop' && record.value.product)
+      .filter((record) => record.value.type === 'shop' && record.value.product)
       .reduce(
         (acc, record) => {
           const product = record.value.product;
-          const existing = acc.find(p => p.url === product.url);
+          const existing = acc.find((p) => p.url === product.url);
           if (existing) {
             existing.purchases++;
           } else {
@@ -287,13 +283,10 @@ export class LiveStreamService {
       );
 
     return {
-      likes: interactions.filter(record => record.value.type === 'like').length,
-      reposts: interactions.filter(record => record.value.type === 'repost')
-        .length,
-      comments: interactions.filter(record => record.value.type === 'comment')
-        .length,
-      shares: interactions.filter(record => record.value.type === 'share')
-        .length,
+      likes: interactions.filter((record) => record.value.type === 'like').length,
+      reposts: interactions.filter((record) => record.value.type === 'repost').length,
+      comments: interactions.filter((record) => record.value.type === 'comment').length,
+      shares: interactions.filter((record) => record.value.type === 'share').length,
       products,
     };
   }
@@ -311,7 +304,7 @@ export class LiveStreamService {
     }>
   ): Promise<void> {
     const productBlobs = await Promise.all(
-      products.filter(p => p.image).map(p => this.agent.uploadBlob(p.image!))
+      products.filter((p) => p.image).map((p) => this.agent.uploadBlob(p.image!))
     );
 
     const record = {
@@ -373,8 +366,8 @@ export class LiveStreamService {
     const userId = this.agent.session?.did;
 
     // Remove previous vote if exists
-    Object.keys(votes).forEach(key => {
-      votes[key] = votes[key].filter(id => id !== userId);
+    Object.keys(votes).forEach((key) => {
+      votes[key] = votes[key].filter((id) => id !== userId);
     });
 
     // Add new vote
@@ -413,20 +406,14 @@ export class LiveStreamService {
     }
 
     const votes = poll.data.value.votes || {};
-    const totalVotes = Object.values(votes).reduce(
-      (sum, voters) => sum + voters.length,
-      0
-    );
+    const totalVotes = Object.values(votes).reduce((sum, voters) => sum + voters.length, 0);
 
     return {
       question: poll.data.value.question,
       options: poll.data.value.options.map((option: string, index: number) => ({
         text: option,
         votes: votes[index]?.length || 0,
-        percentage:
-          totalVotes === 0
-            ? 0
-            : ((votes[index]?.length || 0) / totalVotes) * 100,
+        percentage: totalVotes === 0 ? 0 : ((votes[index]?.length || 0) / totalVotes) * 100,
       })),
       totalVotes,
       hasEnded: new Date(poll.data.value.endsAt) < new Date(),

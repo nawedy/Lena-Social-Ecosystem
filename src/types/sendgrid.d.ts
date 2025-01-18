@@ -75,12 +75,8 @@ declare module '@sendgrid/mail' {
 
   interface MailService {
     setApiKey(apiKey: string): void;
-    send(
-      data: EmailData | EmailData[]
-    ): Promise<[ClientResponse, Record<string, unknown>]>;
-    sendMultiple(
-      data: EmailData
-    ): Promise<[ClientResponse, Record<string, unknown>]>;
+    send(data: EmailData | EmailData[]): Promise<[ClientResponse, Record<string, unknown>]>;
+    sendMultiple(data: EmailData): Promise<[ClientResponse, Record<string, unknown>]>;
     setSubstitutionWrappers(left: string, right: string): void;
     setDefaultRequest(defaultRequest: Record<string, any>): void;
   }

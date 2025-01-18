@@ -1,64 +1,92 @@
-export interface Follow {
+export interface FollowEvent {
+  id: string;
+  userId: string;
+  targetId: string;
+  timestamp: Date;
+  metadata?: Record<string, string | number | boolean>;
+}
+
+export interface FollowRelation {
   id: string;
   followerId: string;
   followingId: string;
+  status: 'active' | 'blocked' | 'muted';
   createdAt: Date;
-  status: 'active' | 'blocked' | 'pending';
-  metadata?: {
-    source?: string;
-    mutualFriend?: string;
-    notes?: string;
-  };
+  updatedAt: Date;
+}
+
+export interface FollowBulkAction {
+  userId: string;
+  userIds: string[];
+  action: 'follow' | 'unfollow' | 'block' | 'unblock';
+  metadata?: Record<string, string | number | boolean>;
 }
 
 export interface FollowStats {
+  userId: string;
   followersCount: number;
   followingCount: number;
-  mutualCount: number;
   blockedCount: number;
-  pendingCount: number;
-}
-
-export interface FollowRequest {
-  id: string;
-  fromUserId: string;
-  toUserId: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  createdAt: Date;
-  updatedAt: Date;
-  message?: string;
+  mutedCount: number;
+  lastUpdated: Date;
 }
 
 export interface FollowSuggestion {
   userId: string;
+  suggestedUserId: string;
   score: number;
   reason: string;
-  mutualFriends: string[];
-  lastActive: Date;
-  commonInterests?: string[];
+  timestamp: Date;
 }
 
-export interface FollowActivity {
+export interface FollowNotification {
   id: string;
-  type: 'follow' | 'unfollow' | 'block' | 'unblock';
+  userId: string;
   actorId: string;
-  targetId: string;
+  type: 'follow' | 'unfollow' | 'block' | 'unblock';
+  read: boolean;
   timestamp: Date;
-  metadata?: Record<string, any>;
 }
 
 export interface FollowFilter {
-  status?: 'active' | 'blocked' | 'pending';
+  userId?: string;
+  targetId?: string;
+  status?: 'active' | 'blocked' | 'muted';
   startDate?: Date;
   endDate?: Date;
-  source?: string;
-  hasMutualFriends?: boolean;
   limit?: number;
   offset?: number;
 }
 
 export interface FollowBatch {
-  userIds: string[];
+  id: string;
+  userId: string;
   action: 'follow' | 'unfollow' | 'block' | 'unblock';
-  metadata?: Record<string, any>;
+  targetIds: string[];
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  error?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FollowGraph {
+  nodes: Array<{
+    id: string;
+    type: 'user';
+    data: {
+      userId: string;
+      handle: string;
+      displayName?: string;
+      avatar?: string;
+    };
+  }>;
+  edges: Array<{
+    source: string;
+    target: string;
+    type: 'follows' | 'blocks' | 'mutes';
+    data: {
+      createdAt: Date;
+    };
+  }>;
 }

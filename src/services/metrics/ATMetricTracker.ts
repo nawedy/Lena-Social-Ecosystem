@@ -1,6 +1,6 @@
 import { BskyAgent } from '@atproto/api';
-import { PubSub } from '@google-cloud/pubsub';
 import { Monitoring } from '@google-cloud/monitoring';
+import { PubSub } from '@google-cloud/pubsub';
 
 interface CustomMetric {
   id: string;
@@ -32,9 +32,7 @@ export class ATMetricTracker {
     this.PROJECT_ID = projectId;
   }
 
-  async createCustomMetric(
-    params: Omit<CustomMetric, 'id'>
-  ): Promise<CustomMetric> {
+  async createCustomMetric(params: Omit<CustomMetric, 'id'>): Promise<CustomMetric> {
     try {
       // Create metric in AT Protocol
       const record = {
@@ -62,7 +60,7 @@ export class ATMetricTracker {
         description: params.description,
         displayName: params.name,
         labels:
-          params.labels?.map(label => ({
+          params.labels?.map((label) => ({
             key: label,
             valueType: 'STRING',
             description: `Label: ${label}`,
@@ -158,7 +156,7 @@ export class ATMetricTracker {
         limit: 100,
       });
 
-      return response.records.map(record => ({
+      return response.records.map((record) => ({
         id: record.uri,
         ...record.value,
       }));
@@ -172,7 +170,7 @@ export class ATMetricTracker {
     metricId: string,
     startTime?: Date,
     endTime?: Date,
-    limit: number = 100
+    limit = 100
   ): Promise<MetricValue[]> {
     try {
       const response = await this.agent.com.atproto.repo.listRecords({
@@ -182,15 +180,15 @@ export class ATMetricTracker {
       });
 
       let values = response.records
-        .map(record => record.value)
-        .filter(value => value.metricId === metricId);
+        .map((record) => record.value)
+        .filter((value) => value.metricId === metricId);
 
       if (startTime) {
-        values = values.filter(value => new Date(value.timestamp) >= startTime);
+        values = values.filter((value) => new Date(value.timestamp) >= startTime);
       }
 
       if (endTime) {
-        values = values.filter(value => new Date(value.timestamp) <= endTime);
+        values = values.filter((value) => new Date(value.timestamp) <= endTime);
       }
 
       return values;
@@ -225,7 +223,7 @@ export class ATMetricTracker {
   private async getMetricById(metricId: string): Promise<CustomMetric | null> {
     try {
       const metrics = await this.getMetrics();
-      return metrics.find(metric => metric.id === metricId) || null;
+      return metrics.find((metric) => metric.id === metricId) || null;
     } catch {
       return null;
     }

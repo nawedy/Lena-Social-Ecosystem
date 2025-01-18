@@ -10,8 +10,9 @@ import {
   KeyboardAvoidingView,
   ViewStyle,
 } from 'react-native';
-import { useTheme } from '../../theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useTheme } from '../../theme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 

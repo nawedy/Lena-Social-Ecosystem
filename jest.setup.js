@@ -1,4 +1,6 @@
 // Set up global variables for React Native
+// jest.setup.js
+import '@testing-library/jest-dom';
 globalThis.__DEV__ = true;
 
 // Mock react-native

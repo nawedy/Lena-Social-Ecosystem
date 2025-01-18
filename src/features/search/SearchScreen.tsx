@@ -1,14 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  TextInput,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { debounce } from 'lodash';
+import React, { useState, useCallback } from 'react';
+import { View, TextInput, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface SearchResult {
   id: string;
@@ -88,16 +81,11 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
   };
 
   const _renderSearchResult = ({ item }: { item: SearchResult }) => (
-    <TouchableOpacity
-      style={styles.resultItem}
-      onPress={() => handleResultPress(item)}
-    >
+    <TouchableOpacity style={styles.resultItem} onPress={() => handleResultPress(item)}>
       <LinearGradient colors={['#fff', '#f8f8f8']} style={styles.gradient}>
         <View>
           <Text style={styles.resultTitle}>{item.title}</Text>
-          {item.subtitle && (
-            <Text style={styles.resultSubtitle}>{item.subtitle}</Text>
-          )}
+          {item.subtitle && <Text style={styles.resultSubtitle}>{item.subtitle}</Text>}
         </View>
         <View style={styles.resultType}>
           <Text style={styles.resultTypeText}>{item.type}</Text>
@@ -111,10 +99,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search users, posts, or tags..."
+          placeholder='Search users, posts, or tags...'
           value={query}
           onChangeText={handleSearch}
-          autoCapitalize="none"
+          autoCapitalize='none'
           autoCorrect={false}
         />
       </View>
@@ -127,7 +115,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
         <FlatList
           data={results}
           renderItem={renderSearchResult}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.resultsList}
           ListEmptyComponent={
             query ? (

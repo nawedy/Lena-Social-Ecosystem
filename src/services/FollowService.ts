@@ -10,10 +10,12 @@ import {
   updateDoc,
   setDoc,
 } from 'firebase/firestore';
+
 import { Follow, FollowRequest } from '../types/follow';
 import { User } from '../types/user';
-import { NotificationService } from './NotificationService';
+
 import { BlockingService } from './BlockingService';
+import { NotificationService } from './NotificationService';
 
 export class FollowService {
   private static instance: FollowService;
@@ -36,10 +38,7 @@ export class FollowService {
 
   async followUser(followerId: string, followedId: string): Promise<void> {
     // Check if users can interact
-    const canInteract = await this.blockingService.canInteract(
-      followerId,
-      followedId
-    );
+    const canInteract = await this.blockingService.canInteract(followerId, followedId);
     if (!canInteract) {
       throw new Error('Unable to follow this user');
     }
@@ -134,10 +133,7 @@ export class FollowService {
     });
   }
 
-  private async createFollowRequest(
-    fromUserId: string,
-    toUserId: string
-  ): Promise<void> {
+  private async createFollowRequest(fromUserId: string, toUserId: string): Promise<void> {
     const request: FollowRequest = {
       id: `${fromUserId}_${toUserId}`,
       fromUserId,
@@ -169,10 +165,7 @@ export class FollowService {
     });
   }
 
-  private async createFollow(
-    followerId: string,
-    followingId: string
-  ): Promise<void> {
+  private async createFollow(followerId: string, followingId: string): Promise<void> {
     const follow: Follow = {
       id: `${followerId}_${followingId}`,
       followerId,

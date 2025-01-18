@@ -1,3 +1,6 @@
+import { format, subDays } from 'date-fns';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import React, { useState } from 'react';
 import {
   View,
@@ -9,10 +12,9 @@ import {
   Alert,
 } from 'react-native';
 import { LineChart, BarChart } from 'react-native-chart-kit';
-import { format, subDays } from 'date-fns';
+
 import { _admin } from '../../services/admin';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+
 
 interface FeedbackData {
   date: string;
@@ -160,9 +162,7 @@ export function FeedbackAnalytics({ data }: Props) {
             datasets: datasets.map((dataset, index) => ({
               data: dataset.data,
               color: (opacity = 1) =>
-                `rgba(${index * 50}, ${255 - index * 50}, ${
-                  index * 100
-                }, ${opacity})`,
+                `rgba(${index * 50}, ${255 - index * 50}, ${index * 100}, ${opacity})`,
             })),
           }}
           width={styles.chart.width}
@@ -178,9 +178,7 @@ export function FeedbackAnalytics({ data }: Props) {
                 style={[
                   styles.legendColor,
                   {
-                    backgroundColor: `rgba(${index * 50}, ${255 - index * 50}, ${
-                      index * 100
-                    }, 1)`,
+                    backgroundColor: `rgba(${index * 50}, ${255 - index * 50}, ${index * 100}, 1)`,
                   },
                 ]}
               />

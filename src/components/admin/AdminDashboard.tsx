@@ -6,7 +6,8 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import { useSession } from '../../hooks/useSession';
+
+import { admin } from '../../services/admin';
 import { DashboardData } from '../../types';
 
 const AdminDashboard: React.FC = () => {
@@ -15,18 +16,18 @@ const AdminDashboard: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { session } = useSession();
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      // Add your API call here to fetch dashboard data
-      const data = await fetch('/api/admin/dashboard').then(res => res.json());
+      const data = await admin.getDashboardData();
       setDashboardData(data);
       setError(null);
     } catch (err) {
-      setError('Failed to load dashboard data');
-      console.error(err);
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(errorMessage);
+      console.error('Dashboard data error:', err);
     } finally {
       setLoading(false);
     }

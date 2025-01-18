@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { performanceMonitor } from '../utils/performance';
 import { InteractionManager } from 'react-native';
+
+import { performanceMonitor } from '../utils/performance';
 
 interface PerformanceOptions {
   monitorRender?: boolean;

@@ -1,6 +1,7 @@
 import { BskyAgent } from '@atproto/api';
-import { atproto } from './atproto';
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
+
+import { atproto } from './atproto';
 
 interface ConflictDBSchema extends DBSchema {
   conflicts: {
@@ -111,11 +112,7 @@ export class ConflictResolutionService {
     });
   }
 
-  async detectConflicts(
-    local: any,
-    remote: any,
-    type: MergeStrategy['type']
-  ): Promise<boolean> {
+  async detectConflicts(local: any, remote: any, type: MergeStrategy['type']): Promise<boolean> {
     try {
       switch (type) {
         case 'post':
@@ -179,10 +176,7 @@ export class ConflictResolutionService {
     }
   }
 
-  async setMergeStrategy(
-    type: MergeStrategy['type'],
-    strategy: MergeStrategy
-  ): Promise<void> {
+  async setMergeStrategy(type: MergeStrategy['type'], strategy: MergeStrategy): Promise<void> {
     try {
       this.mergeStrategies.set(type, strategy);
       await this.db.put('mergeStrategies', {
@@ -217,10 +211,7 @@ export class ConflictResolutionService {
     return false;
   }
 
-  private async detectMessageConflict(
-    local: any,
-    remote: any
-  ): Promise<boolean> {
+  private async detectMessageConflict(local: any, remote: any): Promise<boolean> {
     if (!local || !remote) return false;
 
     // Compare message content and metadata
@@ -235,15 +226,12 @@ export class ConflictResolutionService {
     return false;
   }
 
-  private async detectProfileConflict(
-    local: any,
-    remote: any
-  ): Promise<boolean> {
+  private async detectProfileConflict(local: any, remote: any): Promise<boolean> {
     if (!local || !remote) return false;
 
     // Compare profile fields
     const fields = ['displayName', 'description', 'avatar'];
-    return fields.some(field => local[field] !== remote[field]);
+    return fields.some((field) => local[field] !== remote[field]);
   }
 
   private async detectMediaConflict(local: any, remote: any): Promise<boolean> {
@@ -274,13 +262,8 @@ export class ConflictResolutionService {
     }
 
     // Merge unique reactions and comments
-    merged.reactions = [
-      ...new Set([...(local.reactions || []), ...(remote.reactions || [])]),
-    ];
-    merged.comments = this.mergeComments(
-      local.comments || [],
-      remote.comments || []
-    );
+    merged.reactions = [...new Set([...(local.reactions || []), ...(remote.reactions || [])])];
+    merged.comments = this.mergeComments(local.comments || [], remote.comments || []);
 
     return merged;
   }
@@ -291,22 +274,15 @@ export class ConflictResolutionService {
 
     // Use most recent non-null values
     const fields = ['displayName', 'description', 'avatar'];
-    fields.forEach(field => {
-      if (
-        local[field] &&
-        (!remote[field] || local.updatedAt > remote.updatedAt)
-      ) {
+    fields.forEach((field) => {
+      if (local[field] && (!remote[field] || local.updatedAt > remote.updatedAt)) {
         merged[field] = local[field];
       }
     });
 
     // Merge arrays (e.g., followers, following)
-    merged.followers = [
-      ...new Set([...(local.followers || []), ...(remote.followers || [])]),
-    ];
-    merged.following = [
-      ...new Set([...(local.following || []), ...(remote.following || [])]),
-    ];
+    merged.followers = [...new Set([...(local.followers || []), ...(remote.followers || [])])];
+    merged.following = [...new Set([...(local.following || []), ...(remote.following || [])])];
 
     return merged;
   }
@@ -315,27 +291,20 @@ export class ConflictResolutionService {
     // Merge comments by ID and timestamp
     const commentMap = new Map();
 
-    [...local, ...remote].forEach(comment => {
+    [...local, ...remote].forEach((comment) => {
       const existing = commentMap.get(comment.id);
-      if (
-        !existing ||
-        new Date(comment.createdAt) > new Date(existing.createdAt)
-      ) {
+      if (!existing || new Date(comment.createdAt) > new Date(existing.createdAt)) {
         commentMap.set(comment.id, comment);
       }
     });
 
     return Array.from(commentMap.values()).sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
   }
 
   // Resolution Application
-  private async applyResolution(
-    conflictId: string,
-    resolvedVersion: any
-  ): Promise<void> {
+  private async applyResolution(conflictId: string, resolvedVersion: any): Promise<void> {
     try {
       const conflict = await this.db.get('conflicts', conflictId);
       if (!conflict) throw new Error('Conflict not found');
@@ -385,7 +354,7 @@ export class ConflictResolutionService {
     return this.db.getAllFromIndex('conflicts', 'by-status', 'pending');
   }
 
-  async getSyncLog(limit: number = 100): Promise<any[]> {
+  async getSyncLog(limit = 100): Promise<any[]> {
     return this.db.getAllFromIndex('syncLog', 'by-date', null, limit);
   }
 

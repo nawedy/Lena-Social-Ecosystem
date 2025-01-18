@@ -1,4 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -9,11 +12,9 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { TemplateRecommendationService } from '../../services/TemplateRecommendationService';
+
 import { ContentTemplate } from '../../services/ContentTemplateService';
+import { TemplateRecommendationService } from '../../services/TemplateRecommendationService';
 
 interface TemplateRecommendationsProps {
   userId: string;
@@ -33,9 +34,9 @@ export function TemplateRecommendations({
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [similarTemplates, setSimilarTemplates] = useState<any[]>([]);
   const [trendingTemplates, setTrendingTemplates] = useState<any[]>([]);
-  const [selectedSection, setSelectedSection] = useState<
-    'recommended' | 'similar' | 'trending'
-  >('recommended');
+  const [selectedSection, setSelectedSection] = useState<'recommended' | 'similar' | 'trending'>(
+    'recommended'
+  );
   const [refreshing, setRefreshing] = useState(false);
 
   const _recommendationService = TemplateRecommendationService.getInstance();
@@ -84,29 +85,19 @@ export function TemplateRecommendations({
       style={styles.templateCard}
       onPress={() => onTemplateSelect(template.templateId)}
     >
-      <LinearGradient
-        colors={['#f8f9fa', '#ffffff']}
-        style={styles.cardGradient}
-      >
+      <LinearGradient colors={['#f8f9fa', '#ffffff']} style={styles.cardGradient}>
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleContainer}>
             <Text style={styles.cardTitle}>{template.name}</Text>
             <View style={styles.scoreContainer}>
-              <Text style={styles.scoreText}>
-                {(template.score * 100).toFixed(0)}%
-              </Text>
+              <Text style={styles.scoreText}>{(template.score * 100).toFixed(0)}%</Text>
               <Text style={styles.matchText}>{t('recommendations.match')}</Text>
             </View>
           </View>
           <View style={styles.confidenceContainer}>
-            <Ionicons
-              name="analytics"
-              size={16}
-              color={getConfidenceColor(template.confidence)}
-            />
+            <Ionicons name='analytics' size={16} color={getConfidenceColor(template.confidence)} />
             <Text style={styles.confidenceText}>
-              {(template.confidence * 100).toFixed(0)}%{' '}
-              {t('recommendations.confidence')}
+              {(template.confidence * 100).toFixed(0)}% {t('recommendations.confidence')}
             </Text>
           </View>
         </View>
@@ -141,10 +132,7 @@ export function TemplateRecommendations({
     section: 'recommended' | 'similar' | 'trending'
   ) => (
     <TouchableOpacity
-      style={[
-        styles.sectionHeader,
-        selectedSection === section && styles.selectedSection,
-      ]}
+      style={[styles.sectionHeader, selectedSection === section && styles.selectedSection]}
       onPress={() => setSelectedSection(section)}
     >
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -157,7 +145,7 @@ export function TemplateRecommendations({
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size='large' color='#007AFF' />
       </View>
     );
   }
@@ -165,47 +153,29 @@ export function TemplateRecommendations({
   return (
     <View style={styles.container}>
       <View style={styles.sectionsContainer}>
-        {renderSectionHeader(
-          t('recommendations.forYou'),
-          recommendations.length,
-          'recommended'
-        )}
+        {renderSectionHeader(t('recommendations.forYou'), recommendations.length, 'recommended')}
         {currentTemplateId &&
-          renderSectionHeader(
-            t('recommendations.similar'),
-            similarTemplates.length,
-            'similar'
-          )}
-        {renderSectionHeader(
-          t('recommendations.trending'),
-          trendingTemplates.length,
-          'trending'
-        )}
+          renderSectionHeader(t('recommendations.similar'), similarTemplates.length, 'similar')}
+        {renderSectionHeader(t('recommendations.trending'), trendingTemplates.length, 'trending')}
       </View>
 
       <Animated.ScrollView
         style={styles.scrollView}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
-        )}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
         scrollEventThrottle={16}
         refreshing={refreshing}
         onRefresh={handleRefresh}
       >
-        {selectedSection === 'recommended' &&
-          recommendations.map(renderTemplateCard)}
-        {selectedSection === 'similar' &&
-          similarTemplates.map(renderTemplateCard)}
-        {selectedSection === 'trending' &&
-          trendingTemplates.map(renderTemplateCard)}
+        {selectedSection === 'recommended' && recommendations.map(renderTemplateCard)}
+        {selectedSection === 'similar' && similarTemplates.map(renderTemplateCard)}
+        {selectedSection === 'trending' && trendingTemplates.map(renderTemplateCard)}
 
         {getSelectedTemplates().length === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="search" size={48} color="#ccc" />
-            <Text style={styles.emptyStateText}>
-              {t('recommendations.noTemplates')}
-            </Text>
+            <Ionicons name='search' size={48} color='#ccc' />
+            <Text style={styles.emptyStateText}>{t('recommendations.noTemplates')}</Text>
           </View>
         )}
       </Animated.ScrollView>

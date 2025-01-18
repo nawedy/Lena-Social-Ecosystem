@@ -1,17 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
+
 import { query } from '../db';
 
-export async function validateBetaAccess(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function validateBetaAccess(req: Request, res: Response, next: NextFunction) {
   try {
     // Check if user is an active beta user
-    const { rows } = await query(
-      'SELECT status FROM beta_users WHERE did = $1',
-      [req.user.did]
-    );
+    const { rows } = await query('SELECT status FROM beta_users WHERE did = $1', [req.user.did]);
 
     if (rows.length === 0 || rows[0].status !== 'active') {
       return res.status(403).json({
@@ -21,10 +15,9 @@ export async function validateBetaAccess(
     }
 
     // Update last active timestamp
-    await query(
-      'UPDATE beta_users SET last_active_at = CURRENT_TIMESTAMP WHERE did = $1',
-      [req.user.did]
-    );
+    await query('UPDATE beta_users SET last_active_at = CURRENT_TIMESTAMP WHERE did = $1', [
+      req.user.did,
+    ]);
 
     next();
   } catch (error) {
@@ -33,11 +26,7 @@ export async function validateBetaAccess(
   }
 }
 
-export async function trackBetaAnalytics(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function trackBetaAnalytics(req: Request, res: Response, next: NextFunction) {
   try {
     const startTime = process.hrtime();
 
@@ -62,7 +51,7 @@ export async function trackBetaAnalytics(
             userAgent: req.headers['user-agent'],
           },
         ]
-      ).catch(error => {
+      ).catch((error) => {
         console.error('Error tracking beta analytics:', error);
       });
     });

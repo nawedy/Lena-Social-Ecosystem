@@ -1,9 +1,10 @@
 import * as k6 from 'k6';
-import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { APMService } from '../utils/apm';
-import { MetricsService } from '../services/metrics';
+import http from 'k6/http';
+
 import { LoggerService } from '../services/logger';
+import { MetricsService } from '../services/metrics';
+import { APMService } from '../utils/apm';
 
 interface TestConfig {
   vus: number;
@@ -27,12 +28,7 @@ export class PerformanceTestSuite {
   private logger: LoggerService;
   private baseUrl: string;
 
-  constructor(
-    apm: APMService,
-    metrics: MetricsService,
-    logger: LoggerService,
-    baseUrl: string
-  ) {
+  constructor(apm: APMService, metrics: MetricsService, logger: LoggerService, baseUrl: string) {
     this.apm = apm;
     this.metrics = metrics;
     this.logger = logger;
@@ -99,8 +95,12 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 0,
       stages: [
-        { duration: '${config.rampUpTime}', target: ${Math.floor((config.vus * scenario.weight) / 100)} },
-        { duration: '${config.duration}', target: ${Math.floor((config.vus * scenario.weight) / 100)} },
+        { duration: '${config.rampUpTime}', target: ${Math.floor(
+          (config.vus * scenario.weight) / 100
+        )} },
+        { duration: '${config.duration}', target: ${Math.floor(
+          (config.vus * scenario.weight) / 100
+        )} },
         { duration: '${config.rampDownTime}', target: 0 }
       ],
       gracefulRampDown: '30s',
@@ -126,13 +126,13 @@ export function teardown(data) {
 
 ${Object.entries(config.scenarios)
   .map(
-    ([key, scenario]) => `
+    ([_key, scenario]) => `
 // ${scenario.name}
 export function ${scenario.name}(data) {
   group('${scenario.name}', function() {
     ${scenario.flow
       .map(
-        step => `
+        (step) => `
     group('${step}', function() {
       const response = http.get(\`\${data.baseUrl}/${step}\`, {
         headers: { 'Authorization': \`Bearer \${data.authToken}\` }
@@ -157,13 +157,8 @@ export function ${scenario.name}(data) {
     `;
   }
 
-  public async runTests(
-    config: TestConfig = this.getDefaultConfig()
-  ): Promise<void> {
-    const transaction = this.apm.startTransaction(
-      'run-performance-tests',
-      'testing'
-    );
+  public async runTests(config: TestConfig = this.getDefaultConfig()): Promise<void> {
+    const transaction = this.apm.startTransaction('run-performance-tests', 'testing');
 
     try {
       const script = this.generateK6Script(config);
@@ -185,7 +180,7 @@ export function ${scenario.name}(data) {
     }
   }
 
-  private async saveScript(script: string): Promise<void> {
+  private async saveScript(_script: string): Promise<void> {
     const span = this.apm.startSpan('save-k6-script');
 
     try {
@@ -219,8 +214,8 @@ export function ${scenario.name}(data) {
   }
 
   public async compareResults(
-    baseline: string,
-    current: string
+    _baseline: string,
+    _current: string
   ): Promise<Record<string, number>> {
     const span = this.apm.startSpan('compare-test-results');
 

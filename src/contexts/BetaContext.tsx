@@ -1,35 +1,30 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-} from 'react';
-import { useATProto } from './ATProtoContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
 import { betaConfig } from '../config/beta';
+
+import { useATProto } from './ATProtoContext';
 
 interface BetaContextType {
   isBetaUser: boolean;
-  canAccessBeta: boolean;
-  submitFeedback: (feedback: FeedbackData) => Promise<void>;
-  reportBug: (bug: BugReport) => Promise<void>;
+  betaUserCount: number;
+  submitFeedback: (feedback: BetaFeedback) => Promise<void>;
+  reportIssue: (issue: BetaIssue) => Promise<void>;
   requestFeature: (feature: FeatureRequest) => Promise<void>;
-  featureEnabled: (featureName: string) => boolean;
 }
 
-interface FeedbackData {
-  type: 'general' | 'ux' | 'performance' | 'other';
+interface BetaFeedback {
+  type: 'bug' | 'feature' | 'general';
   content: string;
   rating?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 }
 
-interface BugReport {
+interface BetaIssue {
   title: string;
   description: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   steps?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 }
 
 interface FeatureRequest {
@@ -37,146 +32,137 @@ interface FeatureRequest {
   description: string;
   priority: 'low' | 'medium' | 'high';
   useCase?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 }
 
-const _BetaContext = createContext<BetaContextType | null>(null);
+const BetaContext = createContext<BetaContextType | null>(null);
 
-export const _useBeta = () => {
-  const _context = useContext(BetaContext);
+export const useBeta = () => {
+  const context = useContext(BetaContext);
   if (!context) {
     throw new Error('useBeta must be used within a BetaProvider');
   }
   return context;
 };
 
-export const BetaProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const { session } = useATProto();
+interface BetaProviderProps {
+  children: React.ReactNode;
+}
+
+export const BetaProvider: React.FC<BetaProviderProps> = ({ children }) => {
+  const { agent } = useATProto();
   const [isBetaUser, setIsBetaUser] = useState(false);
   const [betaUserCount, setBetaUserCount] = useState(0);
 
   useEffect(() => {
-    const _checkBetaStatus = async () => {
-      if (session?.did) {
-        try {
-          const _response = await fetch('/api/beta/status', {
-            headers: {
-              Authorization: `Bearer ${session.accessJwt}`,
-            },
-          });
-          const _data = await response.json();
-          setIsBetaUser(data.isBetaUser);
-          setBetaUserCount(data.betaUserCount);
-        } catch (error) {
-          console.error('Failed to check beta status:', error);
-          setIsBetaUser(false);
-        }
+    const checkBetaStatus = async () => {
+      try {
+        const response = await fetch('/api/beta/status', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        const data = await response.json();
+        setIsBetaUser(data.isBetaUser);
+        setBetaUserCount(data.betaUserCount);
+      } catch (error) {
+        console.error('Failed to check beta status:', error);
       }
     };
 
     checkBetaStatus();
-  }, [session]);
+  }, []);
 
-  const _canAccessBeta = isBetaUser && betaUserCount < betaConfig.maxBetaUsers;
+  const submitFeedback = async (feedback: BetaFeedback) => {
+    if (!agent?.session?.did || !betaConfig.feedbackEnabled) {
+      throw new Error('Feedback submission is not available');
+    }
 
-  const _submitFeedback = useCallback(
-    async (feedback: FeedbackData) => {
-      if (!session?.did || !betaConfig.feedbackEnabled) {
-        throw new Error('Feedback submission is not available');
-      }
-
-      const _response = await fetch('/api/beta/feedback', {
+    try {
+      const response = await fetch('/api/beta/feedback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.accessJwt}`,
+          Authorization: `Bearer ${agent.session.accessJwt}`,
         },
         body: JSON.stringify({
           ...feedback,
           timestamp: new Date().toISOString(),
-          userId: session.did,
+          userId: agent.session.did,
         }),
       });
-
       if (!response.ok) {
         throw new Error('Failed to submit feedback');
       }
-    },
-    [session]
-  );
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+      throw error;
+    }
+  };
 
-  const _reportBug = useCallback(
-    async (bug: BugReport) => {
-      if (!session?.did || !betaConfig.feedbackEnabled) {
-        throw new Error('Bug reporting is not available');
-      }
+  const reportIssue = async (issue: BetaIssue) => {
+    if (!agent?.session?.did || !betaConfig.feedbackEnabled) {
+      throw new Error('Issue reporting is not available');
+    }
 
-      const _response = await fetch('/api/beta/bugs', {
+    try {
+      const response = await fetch('/api/beta/issues', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.accessJwt}`,
+          Authorization: `Bearer ${agent.session.accessJwt}`,
         },
         body: JSON.stringify({
-          ...bug,
+          ...issue,
           timestamp: new Date().toISOString(),
-          userId: session.did,
+          userId: agent.session.did,
           userAgent: navigator.userAgent,
-          version: process.env.REACT_APP_VERSION,
         }),
       });
-
       if (!response.ok) {
-        throw new Error('Failed to report bug');
+        throw new Error('Failed to report issue');
       }
-    },
-    [session]
-  );
+    } catch (error) {
+      console.error('Failed to report issue:', error);
+      throw error;
+    }
+  };
 
-  const _requestFeature = useCallback(
-    async (feature: FeatureRequest) => {
-      if (!session?.did || !betaConfig.feedbackEnabled) {
-        throw new Error('Feature requests are not available');
-      }
+  const requestFeature = async (feature: FeatureRequest) => {
+    if (!agent?.session?.did || !betaConfig.feedbackEnabled) {
+      throw new Error('Feature requests are not available');
+    }
 
-      const _response = await fetch('/api/beta/features', {
+    try {
+      const response = await fetch('/api/beta/features', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.accessJwt}`,
+          Authorization: `Bearer ${agent.session.accessJwt}`,
         },
         body: JSON.stringify({
           ...feature,
           timestamp: new Date().toISOString(),
-          userId: session.did,
+          userId: agent.session.did,
         }),
       });
-
       if (!response.ok) {
-        throw new Error('Failed to submit feature request');
+        throw new Error('Failed to request feature');
       }
-    },
-    [session]
-  );
+    } catch (error) {
+      console.error('Failed to request feature:', error);
+      throw error;
+    }
+  };
 
-  const _featureEnabled = useCallback((featureName: string) => {
-    return betaConfig.featureFlags[featureName] ?? false;
-  }, []);
+  const value: BetaContextType = {
+    isBetaUser,
+    betaUserCount,
+    submitFeedback,
+    reportIssue,
+    requestFeature,
+  };
 
-  return (
-    <BetaContext.Provider
-      value={{
-        isBetaUser,
-        canAccessBeta,
-        submitFeedback,
-        reportBug,
-        requestFeature,
-        featureEnabled,
-      }}
-    >
-      {children}
-    </BetaContext.Provider>
-  );
+  return <BetaContext.Provider value={value}>{children}</BetaContext.Provider>;
 };

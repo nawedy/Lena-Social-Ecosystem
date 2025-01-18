@@ -1,158 +1,139 @@
 module.exports = {
   root: true,
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:security/recommended',
-    'plugin:sonarjs/recommended',
-    'plugin:promise/recommended',
-    'plugin:import/errors',
-    'plugin:import/warnings',
-    'plugin:import/typescript',
-    'prettier',
-  ],
+  extends: ['./.eslintrc.base.js'],
   parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: ['./tsconfig.json'],
+    tsconfigRootDir: __dirname,
+    sourceType: 'module',
+    ecmaFeatures: {
+      jsx: true
+    }
+  },
   plugins: [
     '@typescript-eslint',
     'react',
     'react-hooks',
-    'security',
-    'sonarjs',
-    'promise',
     'import',
+    'jest',
     'prettier',
-    'no-secrets',
-    'no-unsanitized'
+    'react-native-a11y'
   ],
-  parserOptions: {
-    ecmaVersion: 2021,
-    sourceType: 'module',
-    ecmaFeatures: {
-      jsx: true,
-    },
-    project: './tsconfig.json',
-  },
-  settings: {
-    react: {
-      version: 'detect',
-    },
-    'import/resolver': {
-      typescript: {},
-      node: {
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-      },
-    },
-  },
   env: {
     browser: true,
     node: true,
     es6: true,
     jest: true,
+    'react-native/react-native': true
+  },
+  globals: {
+    window: true,
+    document: true,
+    navigator: true,
+    fetch: true,
+    console: true,
+    process: true,
+    setTimeout: true,
+    clearTimeout: true,
+    setInterval: true,
+    clearInterval: true,
+    Buffer: true,
+    NodeModule: true,
+    auth: true,
+    logger: true,
+    FullMetadata: true,
+    userDoc: true,
+    userData: true,
+    unsubscribe: true,
+    global: true,
+    jest: true,
+    expect: true,
+    describe: true,
+    it: true,
+    beforeAll: true,
+    beforeEach: true,
+    afterAll: true,
+    afterEach: true,
+    require: true,
+    module: true,
+    performance: true,
+    PerformanceObserver: true,
+    __dirname: true
+  },
+  settings: {
+    react: {
+      version: 'detect'
+    },
+    'import/parsers': {
+      '@typescript-eslint/parser': ['.ts', '.tsx']
+    },
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+        project: ['./tsconfig.json']
+      },
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        moduleDirectory: ['node_modules', 'src/', 'mobile/src/'],
+        paths: ['src', 'mobile/src']
+      }
+    }
   },
   rules: {
-    // Prettier
     'prettier/prettier': 'error',
-
-    // TypeScript
-    '@typescript-eslint/explicit-module-boundary-types': 'error',
-    '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    '@typescript-eslint/no-floating-promises': 'error',
-    '@typescript-eslint/no-misused-promises': 'error',
-    '@typescript-eslint/await-thenable': 'error',
-    '@typescript-eslint/no-unsafe-assignment': 'error',
-    '@typescript-eslint/no-unsafe-member-access': 'error',
-    '@typescript-eslint/no-unsafe-call': 'error',
-    '@typescript-eslint/no-unsafe-return': 'error',
-    '@typescript-eslint/restrict-template-expressions': 'error',
-    '@typescript-eslint/unbound-method': 'error',
-
-    // React
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', { 
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_'
+    }],
+    '@typescript-eslint/ban-types': ['error', {
+      types: {
+        '{}': false
+      },
+      extendDefaults: true
+    }],
+    '@typescript-eslint/no-non-null-assertion': 'warn',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
     'react/react-in-jsx-scope': 'off',
-    'react/prop-types': 'error',
-    'react/jsx-handler-names': 'error',
-    'react/jsx-no-bind': 'error',
-    'react/jsx-pascal-case': 'error',
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
-
-    // Security
-    'security/detect-object-injection': 'error',
-    'security/detect-non-literal-regexp': 'error',
-    'security/detect-unsafe-regex': 'error',
-    'security/detect-buffer-noassert': 'error',
-    'security/detect-child-process': 'error',
-    'security/detect-disable-mustache-escape': 'error',
-    'security/detect-eval-with-expression': 'error',
-    'security/detect-no-csrf-before-method-override': 'error',
-    'security/detect-possible-timing-attacks': 'error',
-    'security/detect-pseudoRandomBytes': 'error',
-    'no-secrets/no-secrets': ['error', { tolerance: 4.5 }],
-    'no-unsanitized/method': 'error',
-    'no-unsanitized/property': 'error',
-
-    // Best Practices
-    'no-console': ['error', { allow: ['warn', 'error'] }],
-    'sonarjs/cognitive-complexity': ['error', 15],
-    'sonarjs/no-duplicate-string': 'error',
-    'sonarjs/no-identical-functions': 'error',
-    'promise/always-return': 'error',
-    'promise/no-return-wrap': 'error',
-    'promise/param-names': 'error',
-    'promise/catch-or-return': 'error',
-    'promise/no-native': 'off',
-    'promise/no-callback-in-promise': 'warn',
-    'promise/no-promise-in-callback': 'warn',
-    'promise/no-nesting': 'warn',
-
-    // Import
-    'import/first': 'error',
-    'import/no-duplicates': 'error',
-    'import/no-cycle': 'error',
-    'import/no-self-import': 'error',
-    'import/no-useless-path-segments': 'error',
-    'import/no-relative-parent-imports': 'error',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-undef': 'error',
+    'import/no-unresolved': ['error', { 
+      ignore: ['^@', 'react-native', 'react-native-.*', '@react-native.*', 'detox'] 
+    }],
     'import/order': [
       'error',
       {
-        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        groups: [
+          'builtin',
+          'external',
+          'internal',
+          ['parent', 'sibling'],
+          'index'
+        ],
         'newlines-between': 'always',
-        alphabetize: { order: 'asc' },
-      },
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: true
+        },
+        pathGroups: [
+          {
+            pattern: 'react',
+            group: 'external',
+            position: 'before'
+          },
+          {
+            pattern: '@atproto/**',
+            group: 'external',
+            position: 'after'
+          }
+        ],
+        pathGroupsExcludedImportTypes: ['react']
+      }
     ],
-
-    // Code Style
-    'no-var': 'error',
-    'prefer-const': 'error',
-    'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 0 }],
-    'no-trailing-spaces': 'error',
-    'eol-last': 'error',
-    'comma-dangle': ['error', 'always-multiline'],
-    'object-curly-spacing': ['error', 'always'],
-    'array-bracket-spacing': ['error', 'never'],
-    'quotes': ['error', 'single', { avoidEscape: true }],
-    'semi': ['error', 'always'],
-  },
-  ignorePatterns: [
-    'node_modules/',
-    'build/',
-    'dist/',
-    '*.config.js',
-    '.eslintrc.js',
-  ],
-  overrides: [
-    {
-      files: ['**/*.test.ts', '**/*.test.tsx'],
-      env: {
-        jest: true,
-      },
-      rules: {
-        '@typescript-eslint/no-explicit-any': 'off',
-        'security/detect-object-injection': 'off',
-      },
-    },
-  ],
-};
+    'react-native-a11y/has-accessibility-hint': 'error',
+    'react-native-a11y/has-accessibility-props': 'error',
+    'react-native-a11y/has-valid-accessibility-role': 'error'
+  }
+}

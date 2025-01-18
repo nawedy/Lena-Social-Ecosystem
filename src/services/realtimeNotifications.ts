@@ -1,8 +1,10 @@
-import { PubSub } from '@google-cloud/pubsub';
 import { Datastore } from '@google-cloud/datastore';
+import { PubSub } from '@google-cloud/pubsub';
+
 import { config } from '../config';
-import { performanceMonitoring } from './performanceMonitoring';
+
 import { completeAnalytics } from './completeAnalytics';
+import { performanceMonitoring } from './performanceMonitoring';
 
 interface Notification {
   id: string;
@@ -78,8 +80,7 @@ export class RealtimeNotificationsService {
 
   public static getInstance(): RealtimeNotificationsService {
     if (!RealtimeNotificationsService.instance) {
-      RealtimeNotificationsService.instance =
-        new RealtimeNotificationsService();
+      RealtimeNotificationsService.instance = new RealtimeNotificationsService();
     }
     return RealtimeNotificationsService.instance;
   }
@@ -90,10 +91,7 @@ export class RealtimeNotificationsService {
   }
 
   // WebSocket Connection Management
-  async handleWebSocketConnection(
-    userId: string,
-    ws: WebSocket
-  ): Promise<void> {
+  async handleWebSocketConnection(userId: string, ws: WebSocket): Promise<void> {
     let userConnections = this.activeConnections.get(userId);
     if (!userConnections) {
       userConnections = new Set();
@@ -160,7 +158,7 @@ export class RealtimeNotificationsService {
       const userSubscriptions = this.subscriptionsByUser.get(params.userId);
       if (userSubscriptions) {
         const subscription = Array.from(userSubscriptions).find(
-          s => s.endpoint === params.endpoint
+          (s) => s.endpoint === params.endpoint
         );
         if (subscription) {
           userSubscriptions.delete(subscription);
@@ -191,9 +189,7 @@ export class RealtimeNotificationsService {
   }
 
   // Notification Management
-  async send(
-    notification: Omit<Notification, 'id' | 'createdAt' | 'status'>
-  ): Promise<void> {
+  async send(notification: Omit<Notification, 'id' | 'createdAt' | 'status'>): Promise<void> {
     try {
       const completeNotification: Notification = {
         ...notification,
@@ -203,10 +199,7 @@ export class RealtimeNotificationsService {
       };
 
       await this.persistNotification(completeNotification);
-      await this.publishNotificationEvent(
-        'notification_created',
-        completeNotification
-      );
+      await this.publishNotificationEvent('notification_created', completeNotification);
 
       // Track notification
       await completeAnalytics.trackEvent({
@@ -326,26 +319,16 @@ export class RealtimeNotificationsService {
     });
   }
 
-  private async persistSubscription(
-    subscription: NotificationSubscription
-  ): Promise<void> {
-    const key = this.datastore.key([
-      'NotificationSubscription',
-      subscription.endpoint,
-    ]);
+  private async persistSubscription(subscription: NotificationSubscription): Promise<void> {
+    const key = this.datastore.key(['NotificationSubscription', subscription.endpoint]);
     await this.datastore.save({
       key,
       data: subscription,
     });
   }
 
-  private async deleteSubscription(
-    subscription: NotificationSubscription
-  ): Promise<void> {
-    const key = this.datastore.key([
-      'NotificationSubscription',
-      subscription.endpoint,
-    ]);
+  private async deleteSubscription(subscription: NotificationSubscription): Promise<void> {
+    const key = this.datastore.key(['NotificationSubscription', subscription.endpoint]);
     await this.datastore.delete(key);
   }
 
@@ -357,9 +340,7 @@ export class RealtimeNotificationsService {
     });
   }
 
-  private async getPendingNotifications(
-    userId: string
-  ): Promise<Notification[]> {
+  private async getPendingNotifications(userId: string): Promise<Notification[]> {
     const query = this.datastore
       .createQuery('Notification')
       .filter('userId', '=', userId)
@@ -389,7 +370,7 @@ export class RealtimeNotificationsService {
       .topic('notification-events')
       .subscription('notification-processor');
 
-    subscription.on('message', async message => {
+    subscription.on('message', async (message) => {
       try {
         const event = JSON.parse(message.data.toString());
 
@@ -397,19 +378,15 @@ export class RealtimeNotificationsService {
           const notification: Notification = event;
 
           // Send to WebSocket connections
-          const userConnections = this.activeConnections.get(
-            notification.userId
-          );
+          const userConnections = this.activeConnections.get(notification.userId);
           if (userConnections) {
-            userConnections.forEach(ws => {
+            userConnections.forEach((ws) => {
               ws.send(JSON.stringify(notification));
             });
           }
 
           // Send push notifications
-          const userSubscriptions = this.subscriptionsByUser.get(
-            notification.userId
-          );
+          const userSubscriptions = this.subscriptionsByUser.get(notification.userId);
           if (userSubscriptions) {
             for (const subscription of userSubscriptions) {
               try {

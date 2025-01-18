@@ -1,5 +1,15 @@
+import { Request, Response, NextFunction } from 'express';
 import { createClient } from 'redis';
+
 import { config } from '../config';
+
+interface CacheOptions {
+  duration: number;
+  tags?: string[];
+  compression?: boolean;
+}
+
+type CacheableData = string | number | boolean | object | null;
 
 class CacheService {
   private client: ReturnType<typeof createClient>;
@@ -11,7 +21,7 @@ class CacheService {
       password: config.redis.password,
     });
 
-    this.client.on('error', err => console.error('Redis Cache Error:', err));
+    this.client.on('error', (err) => console.error('Redis Cache Error:', err));
     this.client.connect().catch(console.error);
   }
 
@@ -39,8 +49,8 @@ class CacheService {
   }
 
   // Cache middleware for Express
-  public cacheMiddleware(duration: number) {
-    return async (req: any, res: any, next: any) => {
+  public cacheMiddleware(duration: number): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+    return async (req: Request, res: Response, next: NextFunction) => {
       if (req.method !== 'GET') {
         return next();
       }
@@ -57,7 +67,7 @@ class CacheService {
         const originalSend = res.send;
 
         // Override send
-        res.send = async function (body: any) {
+        res.send = async function (body: CacheableData) {
           try {
             // Cache the response
             await CacheService.instance.client.setEx(
@@ -82,14 +92,11 @@ class CacheService {
   }
 
   // Cache specific data with custom key
-  public async cache<T>(
+  public async cache(
     key: string,
-    data: T,
+    data: CacheableData,
     duration: number,
-    options?: {
-      tags?: string[];
-      compression?: boolean;
-    }
+    options?: CacheOptions
   ): Promise<void> {
     try {
       const value = JSON.stringify(data);
@@ -99,9 +106,7 @@ class CacheService {
 
       // If tags are provided, store the key in tag sets
       if (options?.tags) {
-        await Promise.all(
-          options.tags.map(tag => this.client.sAdd(`cache:tag:${tag}`, key))
-        );
+        await Promise.all(options.tags.map((tag) => this.client.sAdd(`cache:tag:${tag}`, key)));
       }
     } catch (error) {
       console.error('Cache storage error:', error);
@@ -110,7 +115,7 @@ class CacheService {
   }
 
   // Retrieve cached data
-  public async get<T>(key: string): Promise<T | null> {
+  public async get<T extends CacheableData>(key: string): Promise<T | null> {
     try {
       const data = await this.getFromMultiLevel(key);
       return data ? JSON.parse(data) : null;
@@ -138,10 +143,7 @@ class CacheService {
 
       if (keys.length > 0) {
         // Delete all keys and the tag set
-        await Promise.all([
-          this.client.del(keys),
-          this.client.del(`cache:tag:${tag}`),
-        ]);
+        await Promise.all([this.client.del(keys), this.client.del(`cache:tag:${tag}`)]);
       }
     } catch (error) {
       console.error('Cache tag invalidation error:', error);
@@ -162,7 +164,7 @@ class CacheService {
   // Cache warming for frequently accessed data
   public async warmCache(
     key: string,
-    dataFetcher: () => Promise<any>,
+    dataFetcher: () => Promise<CacheableData>,
     duration: number
   ): Promise<void> {
     try {
@@ -175,10 +177,10 @@ class CacheService {
   }
 
   // Batch cache operations
-  public async batchGet(keys: string[]): Promise<(any | null)[]> {
+  public async batchGet<T extends CacheableData>(keys: string[]): Promise<(T | null)[]> {
     try {
       const results = await this.client.mGet(keys);
-      return results.map(result => (result ? JSON.parse(result) : null));
+      return results.map((result) => (result ? JSON.parse(result) : null));
     } catch (error) {
       console.error('Batch cache retrieval error:', error);
       throw error;

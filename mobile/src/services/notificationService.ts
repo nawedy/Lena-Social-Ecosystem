@@ -1,10 +1,11 @@
-import messaging from '@react-native-firebase/messaging';
-import PushNotification from 'react-native-push-notification';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { store } from '../store';
-import { API_URL } from '../config';
+import messaging from '@react-native-firebase/messaging';
+import { Platform } from 'react-native';
+import PushNotification from 'react-native-push-notification';
+
 import { logger } from '../../../src/utils/logger';
+import { API_URL } from '../config';
+import { store } from '../store';
 
 interface NotificationPayload {
   title: string;

@@ -1,6 +1,6 @@
-import { Counter, Gauge, Registry } from 'prom-client';
 import express from 'express';
 import basicAuth from 'express-basic-auth';
+import { Counter, Gauge, Registry } from 'prom-client';
 
 // Create a new registry
 const register = new Registry();

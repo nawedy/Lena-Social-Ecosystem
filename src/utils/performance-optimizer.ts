@@ -1,9 +1,10 @@
-import { APMService } from './apm';
-import { MetricsService } from '../services/metrics';
 import { DatabaseService } from '../services/database';
-import { RedisService } from '../services/redis';
-import { LoggerService } from '../services/logger';
 import { KubernetesService } from '../services/kubernetes';
+import { LoggerService } from '../services/logger';
+import { MetricsService } from '../services/metrics';
+import { RedisService } from '../services/redis';
+
+import { APMService } from './apm';
 
 interface ResourceMetrics {
   cpu: {
@@ -57,25 +58,17 @@ export class PerformanceOptimizer {
   }
 
   public async analyzePerformance(): Promise<OptimizationRecommendation[]> {
-    const transaction = this.apm.startTransaction(
-      'analyze-performance',
-      'optimization'
-    );
+    const transaction = this.apm.startTransaction('analyze-performance', 'optimization');
 
     try {
-      const [
-        resourceMetrics,
-        slowQueries,
-        cacheStats,
-        networkLatency,
-        errorRates,
-      ] = await Promise.all([
-        this.getResourceMetrics(),
-        this.analyzeSlowQueries(),
-        this.analyzeCacheEfficiency(),
-        this.measureNetworkLatency(),
-        this.analyzeErrorRates(),
-      ]);
+      const [resourceMetrics, slowQueries, cacheStats, networkLatency, errorRates] =
+        await Promise.all([
+          this.getResourceMetrics(),
+          this.analyzeSlowQueries(),
+          this.analyzeCacheEfficiency(),
+          this.measureNetworkLatency(),
+          this.analyzeErrorRates(),
+        ]);
 
       const recommendations: OptimizationRecommendation[] = [];
 
@@ -129,9 +122,7 @@ export class PerformanceOptimizer {
     }
   }
 
-  private analyzeResourceUtilization(
-    metrics: ResourceMetrics
-  ): OptimizationRecommendation[] {
+  private analyzeResourceUtilization(metrics: ResourceMetrics): OptimizationRecommendation[] {
     const recommendations: OptimizationRecommendation[] = [];
 
     // CPU Analysis
@@ -142,8 +133,7 @@ export class PerformanceOptimizer {
         priority: 'high',
         description: 'High CPU utilization detected',
         impact: 'May cause increased response times and system instability',
-        action:
-          'Consider scaling up CPU resources or optimizing CPU-intensive operations',
+        action: 'Consider scaling up CPU resources or optimizing CPU-intensive operations',
       });
     } else if (cpuUtilization < 20) {
       recommendations.push({
@@ -156,8 +146,7 @@ export class PerformanceOptimizer {
     }
 
     // Memory Analysis
-    const memoryUtilization =
-      (metrics.memory.usage / metrics.memory.limit) * 100;
+    const memoryUtilization = (metrics.memory.usage / metrics.memory.limit) * 100;
     if (memoryUtilization > 85) {
       recommendations.push({
         type: 'memory',
@@ -201,9 +190,7 @@ export class PerformanceOptimizer {
     }
   }
 
-  private analyzeDatabasePerformance(
-    slowQueries: any[]
-  ): OptimizationRecommendation[] {
+  private analyzeDatabasePerformance(slowQueries: any[]): OptimizationRecommendation[] {
     const recommendations: OptimizationRecommendation[] = [];
 
     for (const query of slowQueries) {
@@ -240,9 +227,7 @@ export class PerformanceOptimizer {
     }
   }
 
-  private analyzeCachePerformance(
-    cacheStats: any
-  ): OptimizationRecommendation[] {
+  private analyzeCachePerformance(cacheStats: any): OptimizationRecommendation[] {
     const recommendations: OptimizationRecommendation[] = [];
 
     if (cacheStats.hitRate < 0.8) {
@@ -283,9 +268,7 @@ export class PerformanceOptimizer {
     }
   }
 
-  private analyzeNetworkPerformance(
-    latency: any
-  ): OptimizationRecommendation[] {
+  private analyzeNetworkPerformance(latency: any): OptimizationRecommendation[] {
     const recommendations: OptimizationRecommendation[] = [];
 
     if (latency.p95 > 500) {
@@ -340,18 +323,11 @@ export class PerformanceOptimizer {
       low: 1,
     };
 
-    return recommendations.sort(
-      (a, b) => priorityMap[b.priority] - priorityMap[a.priority]
-    );
+    return recommendations.sort((a, b) => priorityMap[b.priority] - priorityMap[a.priority]);
   }
 
-  public async applyOptimizations(
-    recommendations: OptimizationRecommendation[]
-  ): Promise<void> {
-    const transaction = this.apm.startTransaction(
-      'apply-optimizations',
-      'optimization'
-    );
+  public async applyOptimizations(recommendations: OptimizationRecommendation[]): Promise<void> {
+    const transaction = this.apm.startTransaction('apply-optimizations', 'optimization');
 
     try {
       for (const recommendation of recommendations) {
@@ -434,10 +410,7 @@ export class PerformanceOptimizer {
   }
 
   public async generateOptimizationReport(): Promise<string> {
-    const transaction = this.apm.startTransaction(
-      'generate-optimization-report',
-      'reporting'
-    );
+    const transaction = this.apm.startTransaction('generate-optimization-report', 'reporting');
 
     try {
       const recommendations = await this.analyzePerformance();
@@ -466,7 +439,7 @@ export class PerformanceOptimizer {
 ## Recommendations
 ${recommendations
   .map(
-    r => `
+    (r) => `
 ### ${r.type.toUpperCase()} (${r.priority})
 ${r.description}
 Impact: ${r.impact}

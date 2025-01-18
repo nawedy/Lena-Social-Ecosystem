@@ -19,4 +19,4 @@ export default function(api) {
       ['@babel/plugin-transform-class-properties', { loose: true }]
     ]
   };
-};
+}

@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -10,8 +11,8 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+
 import { admin } from '../../services/admin';
-import { format } from 'date-fns';
 
 interface ModItem {
   id: string;
@@ -59,7 +60,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
         action === 'mute' ? parseInt(duration) : undefined
       );
       onClose();
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Error', 'Failed to take action');
     } finally {
       setIsSubmitting(false);

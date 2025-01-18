@@ -1,8 +1,10 @@
-import { Datastore } from '@google-cloud/datastore';
 import { BigQuery } from '@google-cloud/bigquery';
+import { Datastore } from '@google-cloud/datastore';
+
 import { config } from '../config';
-import { performanceMonitoring } from './performanceMonitoring';
+
 import { completeAnalytics } from './completeAnalytics';
+import { performanceMonitoring } from './performanceMonitoring';
 
 interface Experiment {
   id: string;
@@ -132,7 +134,7 @@ export class ABTestingService {
       data: {
         experimentId,
         name: experiment.name,
-        variants: experiment.variants.map(v => v.id),
+        variants: experiment.variants.map((v) => v.id),
       },
       metadata: {
         service: 'ab-testing',
@@ -179,10 +181,7 @@ export class ABTestingService {
     }
 
     // Check if user is already assigned
-    const existingAssignment = this.getAssignment(
-      params.userId,
-      params.experimentId
-    );
+    const existingAssignment = this.getAssignment(params.userId, params.experimentId);
     if (existingAssignment) {
       return existingAssignment.variantId;
     }
@@ -204,10 +203,7 @@ export class ABTestingService {
     };
 
     await this.persistAssignment(assignment);
-    this.assignments.set(
-      this.getAssignmentKey(params.userId, params.experimentId),
-      assignment
-    );
+    this.assignments.set(this.getAssignmentKey(params.userId, params.experimentId), assignment);
 
     // Track assignment
     await completeAnalytics.trackEvent({
@@ -303,9 +299,7 @@ export class ABTestingService {
   }
 
   // Analysis
-  async getExperimentResults(
-    experimentId: string
-  ): Promise<Experiment['results']> {
+  async getExperimentResults(experimentId: string): Promise<Experiment['results']> {
     const experiment = this.experiments.get(experimentId);
     if (!experiment) {
       throw new Error('Experiment not found');
@@ -321,24 +315,18 @@ export class ABTestingService {
   // Private Methods
   private async validateExperiment(experiment: Experiment): Promise<void> {
     // Validate variant weights sum to 1
-    const weightSum = experiment.variants.reduce(
-      (sum, variant) => sum + variant.weight,
-      0
-    );
+    const weightSum = experiment.variants.reduce((sum, variant) => sum + variant.weight, 0);
     if (Math.abs(weightSum - 1) > 0.001) {
       throw new Error('Variant weights must sum to 1');
     }
 
     // Validate dates
-    if (
-      experiment.endDate &&
-      new Date(experiment.endDate) <= new Date(experiment.startDate)
-    ) {
+    if (experiment.endDate && new Date(experiment.endDate) <= new Date(experiment.startDate)) {
       throw new Error('End date must be after start date');
     }
 
     // Validate metrics
-    if (!experiment.metrics.some(m => m.priority === 'primary')) {
+    if (!experiment.metrics.some((m) => m.priority === 'primary')) {
       throw new Error('At least one primary metric is required');
     }
   }
@@ -351,9 +339,7 @@ export class ABTestingService {
     });
   }
 
-  private async persistAssignment(
-    assignment: ExperimentAssignment
-  ): Promise<void> {
+  private async persistAssignment(assignment: ExperimentAssignment): Promise<void> {
     const key = this.datastore.key([
       'ExperimentAssignment',
       this.getAssignmentKey(assignment.userId, assignment.experimentId),
@@ -373,10 +359,7 @@ export class ABTestingService {
     });
   }
 
-  private getAssignment(
-    userId: string,
-    experimentId: string
-  ): ExperimentAssignment | undefined {
+  private getAssignment(userId: string, experimentId: string): ExperimentAssignment | undefined {
     return this.assignments.get(this.getAssignmentKey(userId, experimentId));
   }
 
@@ -385,8 +368,8 @@ export class ABTestingService {
   }
 
   private matchesTargetAudience(
-    userId: string,
-    targetAudience: Experiment['targetAudience']
+    _userId: string,
+    _targetAudience: Experiment['targetAudience']
   ): boolean {
     // Implementation would depend on user data structure and available attributes
     return true; // Placeholder
@@ -447,17 +430,15 @@ export class ABTestingService {
 
       // Find winner if confidence threshold is met
       const significantVariants = results.variants.filter(
-        v => v.metrics.conversion_rate.confidence > this.CONFIDENCE_THRESHOLD
+        (v) => v.metrics.conversion_rate.confidence > this.CONFIDENCE_THRESHOLD
       );
 
       if (significantVariants.length > 0) {
         results.winner = significantVariants.reduce((a, b) =>
-          a.metrics.conversion_rate.value > b.metrics.conversion_rate.value
-            ? a
-            : b
+          a.metrics.conversion_rate.value > b.metrics.conversion_rate.value ? a : b
         ).id;
         results.confidence = Math.max(
-          ...significantVariants.map(v => v.metrics.conversion_rate.confidence)
+          ...significantVariants.map((v) => v.metrics.conversion_rate.confidence)
         );
       }
 
@@ -489,7 +470,7 @@ export class ABTestingService {
   private startPeriodicAnalysis(): void {
     setInterval(async () => {
       const runningExperiments = Array.from(this.experiments.values()).filter(
-        e => e.status === 'running'
+        (e) => e.status === 'running'
       );
 
       for (const experiment of runningExperiments) {

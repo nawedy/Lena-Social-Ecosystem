@@ -94,7 +94,7 @@ export class MFAService {
         rkey: 'mfa',
       });
       return (response.data.value as unknown).mfaEnabled === true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

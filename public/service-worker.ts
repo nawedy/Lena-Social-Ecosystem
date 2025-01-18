@@ -1,5 +1,8 @@
 /// <reference lib="webworker" />
 
+import { BackgroundSyncPlugin } from 'workbox-background-sync';
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
+import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import {
@@ -7,9 +10,7 @@ import {
   CacheFirst,
   NetworkFirst,
 } from 'workbox-strategies';
-import { ExpirationPlugin } from 'workbox-expiration';
-import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { BackgroundSyncPlugin } from 'workbox-background-sync';
+
 import { warmCache } from '../src/services/cacheWarming';
 
 declare const self: ServiceWorkerGlobalScope;

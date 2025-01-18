@@ -70,9 +70,7 @@ export class ATProtocolShipping {
   }
 
   // Carrier Management
-  public async registerCarrier(
-    params: Omit<ShippingCarrier, 'id'>
-  ): Promise<ShippingCarrier> {
+  public async registerCarrier(params: Omit<ShippingCarrier, 'id'>): Promise<ShippingCarrier> {
     const record = {
       $type: 'app.bsky.commerce.shippingCarrier',
       ...params,
@@ -111,13 +109,12 @@ export class ATProtocolShipping {
     };
     value?: number;
   }): Promise<ShippingRate[]> {
-    const response =
-      await this.agent.api.app.bsky.commerce.calculateShippingRates({
-        origin: params.origin,
-        destination: params.destination,
-        package: params.package,
-        value: params.value,
-      });
+    const response = await this.agent.api.app.bsky.commerce.calculateShippingRates({
+      origin: params.origin,
+      destination: params.destination,
+      package: params.package,
+      value: params.value,
+    });
 
     return response.data;
   }
@@ -187,10 +184,7 @@ export class ATProtocolShipping {
     });
 
     // The actual label generation would happen through the carrier's API
-    const labelData = await this.generateCarrierLabel(
-      params.rate.carrierId,
-      record
-    );
+    const labelData = await this.generateCarrierLabel(params.rate.carrierId, record);
 
     return {
       uri: response.uri,
@@ -252,8 +246,8 @@ export class ATProtocolShipping {
 
   // Private Methods
   private async generateCarrierLabel(
-    carrierId: string,
-    labelRequest: any
+    _carrierId: string,
+    _labelRequest: any
   ): Promise<{
     trackingNumber: string;
     labelUrl: string;
@@ -290,12 +284,11 @@ export class ATProtocolShipping {
     estimatedDuties?: number;
     estimatedTaxes?: number;
   }> {
-    const response =
-      await this.agent.api.app.bsky.commerce.validateInternationalShipment({
-        from: params.from,
-        to: params.to,
-        items: params.items,
-      });
+    const response = await this.agent.api.app.bsky.commerce.validateInternationalShipment({
+      from: params.from,
+      to: params.to,
+      items: params.items,
+    });
 
     return response.data;
   }
@@ -324,9 +317,7 @@ export class ATProtocolShipping {
     });
 
     // Generate the actual return label
-    const returnLabel = await this.generateReturnLabel(
-      params.originalShipmentUri
-    );
+    const returnLabel = await this.generateReturnLabel(params.originalShipmentUri);
 
     return {
       uri: response.uri,
@@ -336,7 +327,7 @@ export class ATProtocolShipping {
   }
 
   private async generateReturnLabel(
-    originalShipmentUri: string
+    _originalShipmentUri: string
   ): Promise<Omit<ShipmentLabel, 'uri' | 'cid'>> {
     // This would integrate with the actual carrier's API
     // For now, we'll return mock data

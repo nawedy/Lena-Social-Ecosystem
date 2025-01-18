@@ -11,8 +11,9 @@ import {
   TouchableOpacity,
   AccessibilityProps,
 } from 'react-native';
-import { useTheme } from '../../theme';
 import Icon from 'react-native-vector-icons/Ionicons';
+
+import { useTheme } from '../../theme';
 
 interface InputProps extends TextInputProps, AccessibilityProps {
   label?: string;

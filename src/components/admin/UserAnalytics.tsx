@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,14 +11,12 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  _Share,
 } from 'react-native';
-import { _LineChart, _PieChart as PieChart } from 'react-native-chart-kit';
-import { format } from 'date-fns';
+import { PieChart } from 'react-native-chart-kit';
+
 import { admin } from '../../services/admin';
 import { atproto } from '../../services/atproto';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+
 
 interface UserStats {
   profile: any;
@@ -33,9 +34,9 @@ export function UserAnalytics() {
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const _handleSearch = async () => {
+  const handleSearch = async () => {
     if (!searchQuery) {
-      Alert.window.alert('Error', 'Please enter a handle or DID');
+      Alert.alert('Error', 'Please enter a handle or DID');
       return;
     }
 
@@ -43,37 +44,38 @@ export function UserAnalytics() {
     try {
       let did = searchQuery;
       if (!searchQuery.startsWith('did:')) {
-        const _resolved =
-          await atproto.agent.com.atproto.identity.resolveHandle({
+        const resolved = await atproto.agent.com.atproto.identity.resolveHandle(
+          {
             handle: searchQuery,
-          });
+          }
+        );
         did = resolved.data.did;
       }
 
-      const _stats = await admin.getUserAnalytics(did);
+      const stats = await admin.getUserAnalytics(did);
       setUserStats(stats);
     } catch (error) {
       console.error('Error fetching user analytics:', error);
-      Alert.window.alert('Error', 'Failed to fetch user analytics');
+      Alert.alert('Error', 'Failed to fetch user analytics');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const _exportAnalytics = async () => {
+  const exportAnalytics = async () => {
     if (!userStats) return;
 
     setIsExporting(true);
     try {
-      const _data = {
+      const data = {
         profile: userStats.profile,
         activity: userStats.activity,
         feedback: userStats.feedback,
         exportDate: new Date().toISOString(),
       };
 
-      const _fileName = `${userStats.profile.handle}_analytics.json`;
-      const _filePath = `${FileSystem.documentDirectory}${fileName}`;
+      const fileName = `${userStats.profile.handle}_analytics.json`;
+      const filePath = `${FileSystem.documentDirectory}${fileName}`;
 
       await FileSystem.writeAsStringAsync(
         filePath,
@@ -85,16 +87,16 @@ export function UserAnalytics() {
       }
     } catch (error) {
       console.error('Error exporting analytics:', error);
-      Alert.window.alert('Error', 'Failed to export analytics');
+      Alert.alert('Error', 'Failed to export analytics');
     } finally {
       setIsExporting(false);
     }
   };
 
-  const _renderActivityChart = () => {
+  const renderActivityChart = () => {
     if (!userStats?.activity.length) return null;
 
-    const _eventCounts = userStats.activity.reduce(
+    const eventCounts = userStats.activity.reduce(
       (acc, event) => {
         acc[event.event_type] = event.count;
         return acc;
@@ -102,7 +104,7 @@ export function UserAnalytics() {
       {} as Record<string, number>
     );
 
-    const _chartData = Object.entries(eventCounts).map(
+    const chartData = Object.entries(eventCounts).map(
       ([label, value], index) => ({
         name: label,
         count: value,
@@ -134,7 +136,7 @@ export function UserAnalytics() {
     );
   };
 
-  const _renderFeedbackHistory = () => {
+  const renderFeedbackHistory = () => {
     if (!userStats?.feedback.length) return null;
 
     return (
@@ -223,7 +225,7 @@ export function UserAnalytics() {
   );
 }
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

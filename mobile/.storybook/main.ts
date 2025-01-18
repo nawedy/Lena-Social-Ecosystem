@@ -8,10 +8,7 @@ const config: StorybookConfig = {
     '@storybook/addon-ondevice-notes',
     '@storybook/addon-ondevice-backgrounds',
   ],
-  framework: {
-    name: '@storybook/react-native',
-    options: {},
-  },
+  framework: '@storybook/react-native',
   features: {
     storyStoreV7: true,
   },

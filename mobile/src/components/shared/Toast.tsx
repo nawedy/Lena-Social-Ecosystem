@@ -9,9 +9,11 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
-import { useTheme } from '../../theme';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Ionicons';
+
+import { useTheme } from '../../theme';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

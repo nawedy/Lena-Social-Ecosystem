@@ -1,3 +1,5 @@
+import { useNavigation } from '@react-navigation/native';
+import { formatDistanceToNow } from 'date-fns';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -11,11 +13,11 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Video from 'react-native-video';
-import { useTheme } from '../theme';
-import { Card } from './shared/Card';
-import { formatDistanceToNow } from 'date-fns';
-import { useNavigation } from '@react-navigation/native';
 import { SharedElement } from 'react-navigation-shared-element';
+
+import { useTheme } from '../theme';
+
+import { Card } from './shared/Card';
 
 interface PostProps {
   id: string;

@@ -1,9 +1,11 @@
 import { BigQuery } from '@google-cloud/bigquery';
-import { Storage } from '@google-cloud/storage';
 import { PubSub } from '@google-cloud/pubsub';
+import { Storage } from '@google-cloud/storage';
+
 import { config } from '../config';
-import { performanceMonitoring } from './performanceMonitoring';
+
 import { completeAnalytics } from './completeAnalytics';
+import { performanceMonitoring } from './performanceMonitoring';
 
 interface SearchQuery {
   query: string;
@@ -190,10 +192,7 @@ export class AdvancedSearchService {
     return index;
   }
 
-  async updateIndex(
-    indexId: string,
-    updates: Partial<SearchIndex>
-  ): Promise<SearchIndex> {
+  async updateIndex(indexId: string, updates: Partial<SearchIndex>): Promise<SearchIndex> {
     const index = this.indices.get(indexId);
     if (!index) {
       throw new Error('Index not found');
@@ -251,7 +250,7 @@ export class AdvancedSearchService {
     }
 
     const validDocuments = await Promise.all(
-      params.documents.map(async doc => {
+      params.documents.map(async (doc) => {
         try {
           await this.validateDocument(doc, index);
           return doc;
@@ -266,9 +265,7 @@ export class AdvancedSearchService {
       })
     );
 
-    const documents = validDocuments.filter(
-      (doc): doc is Record<string, any> => doc !== null
-    );
+    const documents = validDocuments.filter((doc): doc is Record<string, any> => doc !== null);
     await this.insertDocuments(documents, index);
 
     // Publish bulk indexing event
@@ -308,9 +305,7 @@ export class AdvancedSearchService {
   }
 
   private buildSearchQuery(index: SearchIndex, query: SearchQuery): string {
-    const searchableFields = index.fields
-      .filter(f => f.searchable)
-      .map(f => f.name);
+    const _searchableFields = index.fields.filter((f) => f.searchable).map((f) => f.name);
 
     let sql = `
       SELECT
@@ -340,9 +335,7 @@ export class AdvancedSearchService {
 
     // Add sorting
     if (query.sort) {
-      const sortClauses = query.sort.map(
-        sort => `${sort.field} ${sort.direction.toUpperCase()}`
-      );
+      const sortClauses = query.sort.map((sort) => `${sort.field} ${sort.direction.toUpperCase()}`);
       sql += ` ORDER BY ${sortClauses.join(', ')}`;
     } else {
       sql += ' ORDER BY score DESC';
@@ -354,10 +347,7 @@ export class AdvancedSearchService {
     return sql;
   }
 
-  private buildFilterCondition(
-    filter: SearchQuery['filters'][0],
-    index: number
-  ): string {
+  private buildFilterCondition(filter: SearchQuery['filters'][0], index: number): string {
     const paramName = `filter_${index}`;
     switch (filter.operator) {
       case 'equals':
@@ -375,24 +365,18 @@ export class AdvancedSearchService {
     }
   }
 
-  private addHighlights(
-    results: SearchResult[],
-    query: string
-  ): SearchResult[] {
-    return results.map(result => ({
+  private addHighlights(results: SearchResult[], query: string): SearchResult[] {
+    return results.map((result) => ({
       ...result,
       highlights: this.generateHighlights(result.content, query),
     }));
   }
 
-  private generateHighlights(
-    content: string,
-    query: string
-  ): SearchResult['highlights'] {
+  private generateHighlights(content: string, query: string): SearchResult['highlights'] {
     const words = query.toLowerCase().split(/\s+/);
     const positions: Array<[number, number]> = [];
 
-    words.forEach(word => {
+    words.forEach((word) => {
       let pos = content.toLowerCase().indexOf(word);
       while (pos !== -1) {
         positions.push([pos, pos + word.length]);
@@ -412,9 +396,7 @@ export class AdvancedSearchService {
     ];
   }
 
-  private mergePositions(
-    positions: Array<[number, number]>
-  ): Array<[number, number]> {
+  private mergePositions(positions: Array<[number, number]>): Array<[number, number]> {
     if (positions.length === 0) return [];
 
     const sorted = positions.sort((a, b) => a[0] - b[0]);
@@ -434,25 +416,18 @@ export class AdvancedSearchService {
     return merged;
   }
 
-  private generateSnippet(
-    content: string,
-    position: [number, number],
-    contextLength: number = 50
-  ): string {
+  private generateSnippet(content: string, position: [number, number], contextLength = 50): string {
     const start = Math.max(0, position[0] - contextLength);
     const end = Math.min(content.length, position[1] + contextLength);
     let snippet = content.slice(start, end);
 
-    if (start > 0) snippet = '...' + snippet;
-    if (end < content.length) snippet = snippet + '...';
+    if (start > 0) snippet = `...${snippet}`;
+    if (end < content.length) snippet = `${snippet}...`;
 
     return snippet;
   }
 
-  private async countResults(
-    index: SearchIndex,
-    query: SearchQuery
-  ): Promise<number> {
+  private async countResults(index: SearchIndex, _query: SearchQuery): Promise<number> {
     const countQuery = `
       SELECT COUNT(*) as count
       FROM \`${config.gcp.projectId}.search.${index.name}\`
@@ -464,7 +439,7 @@ export class AdvancedSearchService {
   }
 
   private async validateIndex(index: SearchIndex): Promise<void> {
-    if (!index.fields.some(f => f.searchable)) {
+    if (!index.fields.some((f) => f.searchable)) {
       throw new Error('Index must have at least one searchable field');
     }
 
@@ -473,10 +448,7 @@ export class AdvancedSearchService {
     }
   }
 
-  private async validateDocument(
-    document: Record<string, any>,
-    index: SearchIndex
-  ): Promise<void> {
+  private async validateDocument(document: Record<string, any>, index: SearchIndex): Promise<void> {
     for (const field of index.fields) {
       if (!document.hasOwnProperty(field.name)) {
         throw new Error(`Document missing required field: ${field.name}`);
@@ -495,7 +467,7 @@ export class AdvancedSearchService {
     const [files] = await bucket.getFiles({ prefix: 'search/indices/' });
 
     await Promise.all(
-      files.map(async file => {
+      files.map(async (file) => {
         const content = await file.download();
         const index: SearchIndex = JSON.parse(content[0].toString());
         this.indices.set(index.id, index);
@@ -515,10 +487,7 @@ export class AdvancedSearchService {
     await table.delete();
   }
 
-  private async insertDocument(
-    document: Record<string, any>,
-    index: SearchIndex
-  ): Promise<void> {
+  private async insertDocument(document: Record<string, any>, index: SearchIndex): Promise<void> {
     const dataset = this.bigquery.dataset('search');
     const table = dataset.table(index.name);
     await table.insert([document]);
@@ -533,10 +502,7 @@ export class AdvancedSearchService {
     await table.insert(documents);
   }
 
-  private async publishEvent(
-    eventType: string,
-    data: Record<string, any>
-  ): Promise<void> {
+  private async publishEvent(eventType: string, data: Record<string, any>): Promise<void> {
     const topic = this.pubsub.topic('search-events');
     const messageData = {
       eventType,
@@ -572,9 +538,9 @@ export class AdvancedSearchService {
     const topic = this.pubsub.topic('search-events');
     const subscription = topic.subscription('search-processor');
 
-    subscription.on('message', async message => {
+    subscription.on('message', async (message) => {
       try {
-        const event = JSON.parse(message.data.toString());
+        const _event = JSON.parse(message.data.toString());
         // Handle different event types
         message.ack();
       } catch (error) {

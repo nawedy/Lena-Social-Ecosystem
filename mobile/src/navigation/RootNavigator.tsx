@@ -1,17 +1,17 @@
-import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { HomeScreen } from '../screens/Home';
+import { TabBar } from '../components/TabBar';
+import { AuthScreen } from '../screens/Auth';
+import { ChatScreen } from '../screens/Chat';
+import { ComposeScreen } from '../screens/Compose';
 import { ExploreScreen } from '../screens/Explore';
+import { HomeScreen } from '../screens/Home';
 import { NotificationsScreen } from '../screens/Notifications';
 import { ProfileScreen } from '../screens/Profile';
-import { AuthScreen } from '../screens/Auth';
-import { ComposeScreen } from '../screens/Compose';
 import { SettingsScreen } from '../screens/Settings';
-import { ChatScreen } from '../screens/Chat';
-import { TabBar } from '../components/TabBar';
 import { selectIsAuthenticated } from '../store/slices/auth';
 
 const Stack = createNativeStackNavigator();

@@ -9,7 +9,7 @@ export interface ContentTemplate {
   type: 'text' | 'image' | 'video';
   prompt: string;
   style?: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
   tags: string[];
   usageCount: number;
   rating: number;
@@ -46,15 +46,10 @@ export class ContentTemplateService {
 
   async getTemplate(id: string): Promise<ContentTemplate | null> {
     const doc = await this.db.collection('contentTemplates').doc(id).get();
-    return doc.exists
-      ? ({ id: doc.id, ...doc.data() } as ContentTemplate)
-      : null;
+    return doc.exists ? ({ id: doc.id, ...doc.data() } as ContentTemplate) : null;
   }
 
-  async updateTemplate(
-    id: string,
-    updates: Partial<ContentTemplate>
-  ): Promise<void> {
+  async updateTemplate(id: string, updates: Partial<ContentTemplate>): Promise<void> {
     await this.db
       .collection('contentTemplates')
       .doc(id)
@@ -102,18 +97,11 @@ export class ContentTemplateService {
     }
 
     if (options.tags && options.tags.length > 0) {
-      query = query.where(
-        'tags',
-        'array-contains-any',
-        options.tags
-      ) as unknown;
+      query = query.where('tags', 'array-contains-any', options.tags) as unknown;
     }
 
     if (options.orderBy) {
-      query = query.orderBy(
-        options.orderBy,
-        options.orderDirection || 'desc'
-      ) as unknown;
+      query = query.orderBy(options.orderBy, options.orderDirection || 'desc') as unknown;
     }
 
     if (options.limit) {
@@ -121,7 +109,7 @@ export class ContentTemplateService {
     }
 
     const snapshot = await query.get();
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as ContentTemplate[];
@@ -149,9 +137,7 @@ export class ContentTemplateService {
 
     const currentRating = data.rating || 0;
     const currentRatingsCount = data.ratingsCount || 0;
-    const newRating =
-      (currentRating * currentRatingsCount + rating) /
-      (currentRatingsCount + 1);
+    const newRating = (currentRating * currentRatingsCount + rating) / (currentRatingsCount + 1);
 
     await ref.update({
       rating: newRating,
@@ -167,14 +153,14 @@ export class ContentTemplateService {
       .where('isPublic', '==', true)
       .get();
 
-    const templates = snapshot.docs.map(doc => ({
+    const templates = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as ContentTemplate[];
 
     const searchTerms = query.toLowerCase().split(' ');
 
-    return templates.filter(template => {
+    return templates.filter((template) => {
       const searchableText = `
         ${template.name.toLowerCase()}
         ${template.description.toLowerCase()}
@@ -182,7 +168,7 @@ export class ContentTemplateService {
         ${template.category.toLowerCase()}
       `;
 
-      return searchTerms.every(term => searchableText.includes(term));
+      return searchTerms.every((term) => searchableText.includes(term));
     });
   }
 
@@ -200,16 +186,13 @@ export class ContentTemplateService {
     }
 
     const snapshot = await query.limit(limit).get();
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as ContentTemplate[];
   }
 
-  async getRecommendedTemplates(
-    userId: string,
-    limit = 10
-  ): Promise<ContentTemplate[]> {
+  async getRecommendedTemplates(userId: string, limit = 10): Promise<ContentTemplate[]> {
     // Get user's recent template usage
     const userHistory = await this.db
       .collection('users')
@@ -220,12 +203,11 @@ export class ContentTemplateService {
       .get();
 
     const userPreferences = new Set<string>();
-    userHistory.docs.forEach(doc => {
+    userHistory.docs.forEach((doc) => {
       const data = doc.data();
       if (data.category) userPreferences.add(data.category);
       if (data.type) userPreferences.add(data.type);
-      if (data.tags)
-        data.tags.forEach((tag: string) => userPreferences.add(tag));
+      if (data.tags) data.tags.forEach((tag: string) => userPreferences.add(tag));
     });
 
     // Get templates matching user preferences
@@ -236,17 +218,17 @@ export class ContentTemplateService {
       .limit(limit * 2)
       .get();
 
-    const templates = snapshot.docs.map(doc => ({
+    const templates = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as ContentTemplate[];
 
     // Score templates based on user preferences
-    const scoredTemplates = templates.map(template => {
+    const scoredTemplates = templates.map((template) => {
       let score = 0;
       if (userPreferences.has(template.category)) score += 2;
       if (userPreferences.has(template.type)) score += 2;
-      template.tags.forEach(tag => {
+      template.tags.forEach((tag) => {
         if (userPreferences.has(tag)) score += 1;
       });
       return { template, score };
@@ -266,7 +248,7 @@ export class ContentTemplateService {
       .get();
 
     const categories = new Set<string>();
-    snapshot.docs.forEach(doc => {
+    snapshot.docs.forEach((doc) => {
       const data = doc.data();
       if (data.category) {
         categories.add(data.category);
@@ -283,7 +265,7 @@ export class ContentTemplateService {
       .get();
 
     const tags = new Set<string>();
-    snapshot.docs.forEach(doc => {
+    snapshot.docs.forEach((doc) => {
       const data = doc.data();
       if (data.tags) {
         data.tags.forEach((tag: string) => tags.add(tag));

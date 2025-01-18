@@ -1,7 +1,7 @@
-import { APMService } from '../utils/apm';
-import { RedisService } from '../services/redis';
 import { DatabaseService } from '../services/database';
 import { MetricsService } from '../services/metrics';
+import { RedisService } from '../services/redis';
+import { APMService } from '../utils/apm';
 
 interface BusinessMetric {
   name: string;
@@ -26,12 +26,7 @@ export class BusinessMetrics {
   private db: DatabaseService;
   private metrics: MetricsService;
 
-  constructor(
-    apm: APMService,
-    redis: RedisService,
-    db: DatabaseService,
-    metrics: MetricsService
-  ) {
+  constructor(apm: APMService, redis: RedisService, db: DatabaseService, metrics: MetricsService) {
     this.apm = apm;
     this.redis = redis;
     this.db = db;
@@ -39,10 +34,7 @@ export class BusinessMetrics {
   }
 
   public async trackUserEngagement(): Promise<void> {
-    const transaction = this.apm.startTransaction(
-      'track-user-engagement',
-      'metrics'
-    );
+    const transaction = this.apm.startTransaction('track-user-engagement', 'metrics');
 
     try {
       // Daily Active Users
@@ -56,10 +48,7 @@ export class BusinessMetrics {
       // Content Creation
       const contentMetrics = await this.getContentMetrics();
       await this.recordMetric('content_created_daily', contentMetrics.created);
-      await this.recordMetric(
-        'content_engagement_rate',
-        contentMetrics.engagementRate
-      );
+      await this.recordMetric('content_engagement_rate', contentMetrics.engagementRate);
 
       // User Retention
       const retention = await this.getUserRetention();
@@ -73,10 +62,7 @@ export class BusinessMetrics {
   }
 
   public async trackBusinessPerformance(): Promise<void> {
-    const transaction = this.apm.startTransaction(
-      'track-business-performance',
-      'metrics'
-    );
+    const transaction = this.apm.startTransaction('track-business-performance', 'metrics');
 
     try {
       // Revenue Metrics
@@ -93,10 +79,7 @@ export class BusinessMetrics {
       // Conversion Metrics
       const conversion = await this.getConversionMetrics();
       await this.recordMetric('signup_conversion_rate', conversion.signupRate);
-      await this.recordMetric(
-        'premium_conversion_rate',
-        conversion.premiumRate
-      );
+      await this.recordMetric('premium_conversion_rate', conversion.premiumRate);
     } catch (error) {
       this.apm.captureError(error);
     } finally {
@@ -317,12 +300,7 @@ export class BusinessMetrics {
     };
 
     // Store in Redis for real-time access
-    await this.redis.set(
-      `metric:${name}:latest`,
-      JSON.stringify(metric),
-      'EX',
-      3600
-    );
+    await this.redis.set(`metric:${name}:latest`, JSON.stringify(metric), 'EX', 3600);
 
     // Store in database for historical analysis
     await this.db.query(
@@ -349,16 +327,13 @@ export class BusinessMetrics {
       query.timeRange.start,
       query.timeRange.end,
       query.dimensions ? JSON.stringify(query.dimensions) : null,
-    ].filter(p => p !== null);
+    ].filter((p) => p !== null);
 
     const result = await this.db.query(sql, params);
     return result.rows;
   }
 
-  public async getMetricStats(
-    name: string,
-    timeRange: { start: Date; end: Date }
-  ): Promise<any> {
+  public async getMetricStats(name: string, timeRange: { start: Date; end: Date }): Promise<any> {
     const stats = await this.db.query(
       `
       SELECT 

@@ -1,5 +1,6 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { BskyAgent } from '@atproto/api';
+import { openDB, DBSchema, IDBPDatabase } from 'idb';
+
 import { atproto } from './atproto';
 
 interface OfflineDBSchema extends DBSchema {
@@ -105,10 +106,7 @@ export class OfflineSyncService {
   }
 
   // Offline Post Creation
-  async createOfflinePost(
-    text: string,
-    media?: { type: string; blob: Blob }[]
-  ): Promise<string> {
+  async createOfflinePost(text: string, media?: { type: string; blob: Blob }[]): Promise<string> {
     try {
       const uri = `offline:${crypto.randomUUID()}`;
       const post = {
@@ -213,12 +211,12 @@ export class OfflineSyncService {
 
       // Sync posts
       const unsyncedPosts = await this.db.getAllFromIndex('posts', 'by-date');
-      for (const post of unsyncedPosts.filter(p => !p.synced)) {
+      for (const post of unsyncedPosts.filter((p) => !p.synced)) {
         try {
           let mediaUploads;
           if (post.media?.length) {
             mediaUploads = await Promise.all(
-              post.media.map(m =>
+              post.media.map((m) =>
                 this.agent.uploadBlob(m.blob, {
                   encoding: m.type === 'image' ? 'image/jpeg' : 'video/mp4',
                 })
@@ -231,7 +229,7 @@ export class OfflineSyncService {
             embed: mediaUploads
               ? {
                   $type: 'app.bsky.embed.images',
-                  images: mediaUploads.map((upload, i) => ({
+                  images: mediaUploads.map((upload, _i) => ({
                     alt: post.text,
                     image: upload.data.blob,
                   })),
@@ -250,23 +248,20 @@ export class OfflineSyncService {
       }
 
       // Sync messages
-      const unsyncedMessages = await this.db.getAllFromIndex(
-        'messages',
-        'by-date'
-      );
-      for (const message of unsyncedMessages.filter(m => !m.synced)) {
+      const unsyncedMessages = await this.db.getAllFromIndex('messages', 'by-date');
+      for (const message of unsyncedMessages.filter((m) => !m.synced)) {
         try {
           let attachmentUploads;
           if (message.attachments?.length) {
             attachmentUploads = await Promise.all(
-              message.attachments.map(a =>
+              message.attachments.map((a) =>
                 this.agent.uploadBlob(a.blob, {
                   encoding:
                     a.type === 'image'
                       ? 'image/jpeg'
                       : a.type === 'video'
-                        ? 'video/mp4'
-                        : 'application/octet-stream',
+                      ? 'video/mp4'
+                      : 'application/octet-stream',
                 })
               )
             );
@@ -279,7 +274,7 @@ export class OfflineSyncService {
               text: message.text,
               recipient: message.recipient,
               attachments: attachmentUploads?.map((upload, i) => ({
-                type: message.attachments![i].type,
+                type: message.attachments?.[i].type,
                 blob: upload.data.blob,
               })),
               createdAt: message.createdAt,
@@ -340,16 +335,13 @@ export class OfflineSyncService {
     };
   }
 
-  async clearOldData(daysToKeep: number = 7): Promise<void> {
+  async clearOldData(daysToKeep = 7): Promise<void> {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - daysToKeep);
     const cutoffStr = cutoff.toISOString();
 
     try {
-      const tx = this.db.transaction(
-        ['posts', 'messages', 'feed', 'media'],
-        'readwrite'
-      );
+      const tx = this.db.transaction(['posts', 'messages', 'feed', 'media'], 'readwrite');
       await Promise.all([
         this.deleteOldItems(tx.objectStore('posts'), 'by-date', cutoffStr),
         this.deleteOldItems(tx.objectStore('messages'), 'by-date', cutoffStr),
@@ -363,14 +355,8 @@ export class OfflineSyncService {
     }
   }
 
-  private async deleteOldItems(
-    store: any,
-    indexName: string,
-    cutoff: string
-  ): Promise<void> {
-    let cursor = await store
-      .index(indexName)
-      .openCursor(IDBKeyRange.upperBound(cutoff));
+  private async deleteOldItems(store: any, indexName: string, cutoff: string): Promise<void> {
+    let cursor = await store.index(indexName).openCursor(IDBKeyRange.upperBound(cutoff));
     while (cursor) {
       await cursor.delete();
       cursor = await cursor.continue();

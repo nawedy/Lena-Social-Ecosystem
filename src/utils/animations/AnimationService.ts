@@ -26,44 +26,28 @@ interface SpringConfig extends AnimationConfig {
 }
 
 class AnimationService {
-  private static animatedValues = new Map<
-    string,
-    Animated.Value | Animated.ValueXY
-  >();
-  private static reanimatedValues = new Map<
-    string,
-    Reanimated.SharedValue<number>
-  >();
+  private static animatedValues = new Map<string, Animated.Value | Animated.ValueXY>();
+  private static reanimatedValues = new Map<string, Reanimated.SharedValue<number>>();
 
-  static createValue(key: string, initialValue: number = 0): Animated.Value {
+  static createValue(key: string, initialValue = 0): Animated.Value {
     const value = new Animated.Value(initialValue);
     this.animatedValues.set(key, value);
     return value;
   }
 
-  static createValueXY(
-    key: string,
-    initialX: number = 0,
-    initialY: number = 0
-  ): Animated.ValueXY {
+  static createValueXY(key: string, initialX = 0, initialY = 0): Animated.ValueXY {
     const value = new Animated.ValueXY({ x: initialX, y: initialY });
     this.animatedValues.set(key, value);
     return value;
   }
 
-  static createReanimatedValue(
-    key: string,
-    initialValue: number = 0
-  ): Reanimated.SharedValue<number> {
+  static createReanimatedValue(key: string, initialValue = 0): Reanimated.SharedValue<number> {
     const value = Reanimated.useSharedValue(initialValue);
     this.reanimatedValues.set(key, value);
     return value;
   }
 
-  static fadeIn(
-    value: Animated.Value,
-    config: AnimationConfig = {}
-  ): Animated.CompositeAnimation {
+  static fadeIn(value: Animated.Value, config: AnimationConfig = {}): Animated.CompositeAnimation {
     return Animated.timing(value, {
       toValue: 1,
       duration: config.duration || 300,
@@ -72,10 +56,7 @@ class AnimationService {
     });
   }
 
-  static fadeOut(
-    value: Animated.Value,
-    config: AnimationConfig = {}
-  ): Animated.CompositeAnimation {
+  static fadeOut(value: Animated.Value, config: AnimationConfig = {}): Animated.CompositeAnimation {
     return Animated.timing(value, {
       toValue: 0,
       duration: config.duration || 300,
@@ -110,15 +91,11 @@ class AnimationService {
     });
   }
 
-  static parallel(
-    animations: Animated.CompositeAnimation[]
-  ): Animated.CompositeAnimation {
+  static parallel(animations: Animated.CompositeAnimation[]): Animated.CompositeAnimation {
     return Animated.parallel(animations);
   }
 
-  static sequence(
-    animations: Animated.CompositeAnimation[]
-  ): Animated.CompositeAnimation {
+  static sequence(animations: Animated.CompositeAnimation[]): Animated.CompositeAnimation {
     return Animated.sequence(animations);
   }
 
@@ -149,9 +126,9 @@ class AnimationService {
   }
 
   static loop(
-    value: Animated.Value,
+    _value: Animated.Value,
     animation: Animated.CompositeAnimation,
-    numberOfTimes: number = -1
+    numberOfTimes = -1
   ): Animated.CompositeAnimation {
     return Animated.loop(animation, { iterations: numberOfTimes });
   }
@@ -168,7 +145,7 @@ class AnimationService {
   }
 
   static delay(duration: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, duration));
+    return new Promise((resolve) => setTimeout(resolve, duration));
   }
 
   static async delayAnimation(
@@ -199,7 +176,7 @@ class AnimationService {
     values: Animated.Value[],
     config: SpringConfig = {}
   ): Animated.CompositeAnimation {
-    const animations = values.map(value =>
+    const animations = values.map((value) =>
       Animated.spring(value, {
         toValue: 1,
         useNativeDriver: config.useNativeDriver ?? true,
@@ -219,7 +196,7 @@ class AnimationService {
   static decay(
     value: Animated.Value,
     velocity: number,
-    useNativeDriver: boolean = true
+    useNativeDriver = true
   ): Animated.CompositeAnimation {
     return Animated.decay(value, {
       velocity,
@@ -227,11 +204,7 @@ class AnimationService {
     });
   }
 
-  static reset(
-    value: Animated.Value,
-    toValue: number,
-    config: AnimationConfig = {}
-  ): void {
+  static reset(value: Animated.Value, toValue: number, _config: AnimationConfig = {}): void {
     value.setValue(toValue);
   }
 }

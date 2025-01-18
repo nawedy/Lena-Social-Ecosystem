@@ -110,9 +110,7 @@ export class SocialFeaturesService {
       collection: 'app.bsky.graph.groupMember',
     });
 
-    const membership = records.data.records.find(
-      record => record.value.group === groupUri
-    );
+    const membership = records.data.records.find((record) => record.value.group === groupUri);
 
     if (membership) {
       await this.agent.api.com.atproto.repo.deleteRecord({
@@ -123,17 +121,11 @@ export class SocialFeaturesService {
     }
   }
 
-  public async postToGroup(
-    groupUri: string,
-    text: string,
-    media?: Blob[]
-  ): Promise<void> {
+  public async postToGroup(groupUri: string, text: string, media?: Blob[]): Promise<void> {
     const rt = new RichText({ text });
     await rt.detectFacets(this.agent);
 
-    const mediaBlobs = await Promise.all(
-      (media || []).map(blob => this.agent.uploadBlob(blob))
-    );
+    const mediaBlobs = await Promise.all((media || []).map((blob) => this.agent.uploadBlob(blob)));
 
     const record = {
       text: rt.text,
@@ -143,7 +135,7 @@ export class SocialFeaturesService {
         mediaBlobs.length > 0
           ? {
               $type: 'app.bsky.embed.images',
-              images: mediaBlobs.map(blob => ({
+              images: mediaBlobs.map((blob) => ({
                 image: blob.data.blob,
                 alt: 'Group post image',
               })),
@@ -170,9 +162,7 @@ export class SocialFeaturesService {
     maxAttendees?: number;
     isPrivate: boolean;
   }): Promise<Event> {
-    const coverBlob = params.cover
-      ? await this.agent.uploadBlob(params.cover)
-      : null;
+    const coverBlob = params.cover ? await this.agent.uploadBlob(params.cover) : null;
 
     const record = {
       $type: 'app.bsky.graph.event',
@@ -229,9 +219,7 @@ export class SocialFeaturesService {
       collection: 'app.bsky.graph.eventAttendee',
     });
 
-    const attendance = records.data.records.find(
-      record => record.value.event === eventUri
-    );
+    const attendance = records.data.records.find((record) => record.value.event === eventUri);
 
     if (attendance) {
       await this.agent.api.com.atproto.repo.deleteRecord({
@@ -243,10 +231,7 @@ export class SocialFeaturesService {
   }
 
   // Get group feed
-  public async getGroupFeed(
-    groupUri: string,
-    params?: { limit?: number; cursor?: string }
-  ) {
+  public async getGroupFeed(groupUri: string, params?: { limit?: number; cursor?: string }) {
     return this.agent.api.app.bsky.feed.getGroupFeed({
       group: groupUri,
       ...params,
@@ -263,10 +248,7 @@ export class SocialFeaturesService {
   }
 
   // Search groups
-  public async searchGroups(
-    query: string,
-    params?: { limit?: number; cursor?: string }
-  ) {
+  public async searchGroups(query: string, params?: { limit?: number; cursor?: string }) {
     return this.agent.api.app.bsky.graph.searchGroups({
       q: query,
       ...params,

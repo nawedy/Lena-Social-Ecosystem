@@ -1,6 +1,8 @@
-import { atproto } from './atproto';
-import { query, transaction } from '../db';
 import { AppBskyFeedDefs, AppBskyActorDefs } from '@atproto/api';
+
+import { query, transaction } from '../db';
+
+import { atproto } from './atproto';
 
 export class ATProtoBetaService {
   private static instance: ATProtoBetaService;
@@ -60,14 +62,11 @@ export class ATProtoBetaService {
             feedId,
             postCount: posts.length,
             timestamp: new Date().toISOString(),
-            postTypes: posts.reduce(
-              (acc, post) => {
-                const type = post.post.embed?.$type || 'text';
-                acc[type] = (acc[type] || 0) + 1;
-                return acc;
-              },
-              {} as Record<string, number>
-            ),
+            postTypes: posts.reduce((acc, post) => {
+              const type = post.post.embed?.$type || 'text';
+              acc[type] = (acc[type] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>),
           },
         ]
       );
@@ -78,7 +77,7 @@ export class ATProtoBetaService {
 
   async validateBetaProfile(profile: AppBskyActorDefs.ProfileViewDetailed) {
     const requiredFields = ['displayName', 'description', 'avatar'];
-    const completedFields = requiredFields.filter(field => !!profile[field]);
+    const completedFields = requiredFields.filter((field) => !!profile[field]);
     const isComplete = completedFields.length === requiredFields.length;
 
     try {
@@ -95,9 +94,7 @@ export class ATProtoBetaService {
           isComplete,
           JSON.stringify({
             completedFields,
-            missingFields: requiredFields.filter(
-              f => !completedFields.includes(f)
-            ),
+            missingFields: requiredFields.filter((f) => !completedFields.includes(f)),
             lastChecked: new Date().toISOString(),
           }),
           profile.did,
@@ -140,7 +137,7 @@ export class ATProtoBetaService {
     try {
       const profile = await atproto.getProfile(userId);
 
-      await transaction(async client => {
+      await transaction(async (client) => {
         await client.query(
           `UPDATE beta_users 
           SET at_handle = $1,

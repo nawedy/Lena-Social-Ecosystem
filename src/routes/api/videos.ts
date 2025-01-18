@@ -1,8 +1,6 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { upload } from '../../middleware/upload';
-import { requireAuth } from '../../middleware/requireAuth';
-import { validateRequest } from '../../middleware/validateRequest';
+
 import {
   uploadVideo,
   getVideoById,
@@ -13,6 +11,9 @@ import {
   deleteComment,
   getComments,
 } from '../../controllers/videos';
+import { requireAuth } from '../../middleware/requireAuth';
+import { upload } from '../../middleware/upload';
+import { validateRequest } from '../../middleware/validateRequest';
 
 const router = express.Router();
 
@@ -27,10 +28,7 @@ const videoValidation = [
 
 // Comment validation
 const commentValidation = [
-  body('content')
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage('Comment cannot be empty'),
+  body('content').trim().isLength({ min: 1 }).withMessage('Comment cannot be empty'),
 ];
 
 // Video routes
@@ -47,13 +45,7 @@ router.get('/:id', getVideoById);
 router.post('/:id/like', requireAuth, likeVideo);
 router.delete('/:id/like', requireAuth, unlikeVideo);
 router.get('/:id/comments', getComments);
-router.post(
-  '/:id/comments',
-  requireAuth,
-  commentValidation,
-  validateRequest,
-  addComment
-);
+router.post('/:id/comments', requireAuth, commentValidation, validateRequest, addComment);
 router.delete('/:id/comments/:commentId', requireAuth, deleteComment);
 
 export default router;

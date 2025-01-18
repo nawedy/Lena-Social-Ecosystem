@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-} from 'react-native-chart-kit';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { LineChart, BarChart, PieChart, ProgressChart } from 'react-native-chart-kit';
+
 import { AnalyticsService } from '../../services/AnalyticsService';
 
 interface MigrationStats {
@@ -78,9 +67,7 @@ export function MigrationAnalytics() {
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          {t('analytics.migration.successRate')}
-        </Text>
+        <Text style={styles.sectionTitle}>{t('analytics.migration.successRate')}</Text>
         <ProgressChart
           data={data}
           width={Dimensions.get('window').width - 32}
@@ -96,26 +83,16 @@ export function MigrationAnalytics() {
         />
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Text style={styles.statLabel}>
-              {t('analytics.migration.total')}
-            </Text>
+            <Text style={styles.statLabel}>{t('analytics.migration.total')}</Text>
             <Text style={styles.statValue}>{stats.totalMigrations}</Text>
           </View>
           <View style={styles.stat}>
-            <Text style={styles.statLabel}>
-              {t('analytics.migration.successful')}
-            </Text>
-            <Text style={[styles.statValue, styles.successText]}>
-              {stats.successfulMigrations}
-            </Text>
+            <Text style={styles.statLabel}>{t('analytics.migration.successful')}</Text>
+            <Text style={[styles.statValue, styles.successText]}>{stats.successfulMigrations}</Text>
           </View>
           <View style={styles.stat}>
-            <Text style={styles.statLabel}>
-              {t('analytics.migration.failed')}
-            </Text>
-            <Text style={[styles.statValue, styles.errorText]}>
-              {stats.failedMigrations}
-            </Text>
+            <Text style={styles.statLabel}>{t('analytics.migration.failed')}</Text>
+            <Text style={[styles.statValue, styles.errorText]}>{stats.failedMigrations}</Text>
           </View>
         </View>
       </View>
@@ -126,30 +103,25 @@ export function MigrationAnalytics() {
     if (trends.length === 0) return null;
 
     const _data = {
-      labels: trends.map(t => t.date),
+      labels: trends.map((t) => t.date),
       datasets: [
         {
-          data: trends.map(t => t.migrations),
+          data: trends.map((t) => t.migrations),
           color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
           strokeWidth: 2,
         },
         {
-          data: trends.map(t => t.success),
+          data: trends.map((t) => t.success),
           color: (opacity = 1) => `rgba(40, 167, 69, ${opacity})`,
           strokeWidth: 2,
         },
       ],
-      legend: [
-        t('analytics.migration.total'),
-        t('analytics.migration.successful'),
-      ],
+      legend: [t('analytics.migration.total'), t('analytics.migration.successful')],
     };
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          {t('analytics.migration.trends')}
-        </Text>
+        <Text style={styles.sectionTitle}>{t('analytics.migration.trends')}</Text>
         <LineChart
           data={data}
           width={Dimensions.get('window').width - 32}
@@ -172,19 +144,17 @@ export function MigrationAnalytics() {
     if (contentStats.length === 0) return null;
 
     const _data = {
-      labels: contentStats.map(s => s.type),
+      labels: contentStats.map((s) => s.type),
       datasets: [
         {
-          data: contentStats.map(s => s.count),
+          data: contentStats.map((s) => s.count),
         },
       ],
     };
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          {t('analytics.migration.contentStats')}
-        </Text>
+        <Text style={styles.sectionTitle}>{t('analytics.migration.contentStats')}</Text>
         <BarChart
           data={data}
           width={Dimensions.get('window').width - 32}
@@ -199,7 +169,7 @@ export function MigrationAnalytics() {
           style={styles.chart}
         />
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {contentStats.map(stat => (
+          {contentStats.map((stat) => (
             <View key={stat.type} style={styles.contentCard}>
               <Text style={styles.contentType}>{stat.type}</Text>
               <Text style={styles.contentCount}>
@@ -207,12 +177,10 @@ export function MigrationAnalytics() {
               </Text>
               <View style={styles.contentMetrics}>
                 <Text style={styles.contentMetric}>
-                  {(stat.successRate * 100).toFixed(1)}%{' '}
-                  {t('analytics.migration.success')}
+                  {(stat.successRate * 100).toFixed(1)}% {t('analytics.migration.success')}
                 </Text>
                 <Text style={styles.contentMetric}>
-                  {stat.averageEngagement.toFixed(1)}x{' '}
-                  {t('analytics.migration.engagement')}
+                  {stat.averageEngagement.toFixed(1)}x {t('analytics.migration.engagement')}
                 </Text>
               </View>
             </View>
@@ -248,9 +216,7 @@ export function MigrationAnalytics() {
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          {t('analytics.migration.metrics')}
-        </Text>
+        <Text style={styles.sectionTitle}>{t('analytics.migration.metrics')}</Text>
         <PieChart
           data={[data]}
           width={Dimensions.get('window').width - 32}
@@ -258,9 +224,9 @@ export function MigrationAnalytics() {
           chartConfig={{
             color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
           }}
-          accessor="population"
-          backgroundColor="transparent"
-          paddingLeft="15"
+          accessor='population'
+          backgroundColor='transparent'
+          paddingLeft='15'
           style={styles.chart}
         />
       </View>
@@ -272,21 +238,13 @@ export function MigrationAnalytics() {
       <View style={styles.header}>
         <Text style={styles.title}>{t('analytics.migration.title')}</Text>
         <View style={styles.timeframeSelector}>
-          {(['day', 'week', 'month'] as const).map(t => (
+          {(['day', 'week', 'month'] as const).map((t) => (
             <TouchableOpacity
               key={t}
-              style={[
-                styles.timeframeButton,
-                timeframe === t && styles.activeTimeframe,
-              ]}
+              style={[styles.timeframeButton, timeframe === t && styles.activeTimeframe]}
               onPress={() => setTimeframe(t)}
             >
-              <Text
-                style={[
-                  styles.timeframeText,
-                  timeframe === t && styles.activeTimeframeText,
-                ]}
-              >
+              <Text style={[styles.timeframeText, timeframe === t && styles.activeTimeframeText]}>
                 {t(`analytics.timeframe.${t}`)}
               </Text>
             </TouchableOpacity>

@@ -14,20 +14,20 @@ describe('Authentication Flow', () => {
     await expect(element(by.id('login-title'))).toHaveText('Welcome Back');
   });
 
-  it('should show validation errors for empty fields', async () => {
+  it('should show validation errors when submitting empty form', async () => {
     await element(by.id('login-button')).tap();
     await expect(element(by.text('Username is required'))).toBeVisible();
     await expect(element(by.text('Password is required'))).toBeVisible();
   });
 
-  it('should show error for invalid credentials', async () => {
+  it('should show error message for invalid credentials', async () => {
     await element(by.id('username-input')).typeText('invalid@example.com');
     await element(by.id('password-input')).typeText('wrongpassword');
     await element(by.id('login-button')).tap();
     await expect(element(by.text('Invalid credentials'))).toBeVisible();
   });
 
-  it('should navigate to registration screen', async () => {
+  it('should navigate to register screen', async () => {
     await element(by.id('register-link')).tap();
     await expect(element(by.id('register-screen'))).toBeVisible();
     await expect(element(by.id('register-title'))).toHaveText('Create Account');
@@ -43,23 +43,23 @@ describe('Authentication Flow', () => {
     await expect(element(by.id('home-screen'))).toBeVisible();
   });
 
-  it('should login successfully', async () => {
+  it('should login successfully with registered user', async () => {
     await element(by.id('username-input')).typeText('test@example.com');
     await element(by.id('password-input')).typeText('Test123!@#');
     await element(by.id('login-button')).tap();
     await expect(element(by.id('home-screen'))).toBeVisible();
   });
 
-  it('should show and hide password', async () => {
+  it('should toggle password visibility', async () => {
     await element(by.id('password-input')).typeText('Test123!@#');
-    await expect(element(by.id('password-input'))).toHaveToggleEnabled();
+    await expect(element(by.id('password-input'))).toHaveProps({ secureTextEntry: true });
     await element(by.id('show-password-button')).tap();
-    await expect(element(by.id('password-input'))).not.toBeSecureTextEntry();
+    await expect(element(by.id('password-input'))).toHaveProps({ secureTextEntry: false });
     await element(by.id('show-password-button')).tap();
-    await expect(element(by.id('password-input'))).toBeSecureTextEntry();
+    await expect(element(by.id('password-input'))).toHaveProps({ secureTextEntry: true });
   });
 
-  it('should navigate to forgot password screen', async () => {
+  it('should handle forgot password flow', async () => {
     await element(by.id('forgot-password-link')).tap();
     await expect(element(by.id('forgot-password-screen'))).toBeVisible();
     await expect(element(by.id('forgot-password-title'))).toHaveText(
@@ -67,7 +67,7 @@ describe('Authentication Flow', () => {
     );
   });
 
-  it('should handle forgot password flow', async () => {
+  it('should send password reset email', async () => {
     await element(by.id('forgot-password-link')).tap();
     await element(by.id('email-input')).typeText('test@example.com');
     await element(by.id('reset-password-button')).tap();

@@ -64,7 +64,7 @@ export interface Template {
   description: string;
   category: string;
   content: string;
-  variables: TemplateVariable[];
+  variables: FieldDefinition[];
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
@@ -74,11 +74,11 @@ export interface Template {
   tags: string[];
 }
 
-export interface TemplateVariable {
+export interface FieldDefinition {
   name: string;
   type: 'text' | 'number' | 'boolean' | 'date' | 'select';
   required: boolean;
-  defaultValue?: any;
+  defaultValue?: string | number | boolean | Date | null;
   options?: string[];
   description?: string;
 }
@@ -87,8 +87,8 @@ export interface AITestCase {
   id: string;
   name: string;
   description: string;
-  input: Record<string, any>;
-  expectedOutput: Record<string, any>;
+  input: Record<string, string | number | boolean | null>;
+  expectedOutput: Record<string, string | number | boolean | null>;
   timeout: number;
   tags: string[];
   createdAt: Date;
@@ -96,13 +96,13 @@ export interface AITestCase {
 }
 
 export interface TestResult {
-  testCaseId: string;
+  testId: string;
   passed: boolean;
   error?: string;
   duration: number;
-  output?: Record<string, any>;
+  output?: Record<string, string | number | boolean | null>;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 export interface BlockedUser {
@@ -121,7 +121,7 @@ export interface APIUsage {
   responseTime: number;
   statusCode: number;
   errorMessage?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 export interface BetaTest {
@@ -149,4 +149,109 @@ export interface BetaFeedback {
   createdAt: Date;
   updatedAt: Date;
   attachments?: string[];
+}
+
+export interface ModelField {
+  name: string;
+  label: string;
+  type: 'text' | 'number' | 'boolean' | 'date' | 'select';
+  required: boolean;
+  defaultValue?: string | number | boolean | Date;
+  options?: string[];
+  description?: string;
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+    message?: string;
+  };
+}
+
+export interface ModelSchema {
+  name: string;
+  version: string;
+  fields: ModelField[];
+  description?: string;
+  tags?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ModelInstance {
+  id: string;
+  schemaId: string;
+  version: string;
+  data: Record<string, string | number | boolean | Date>;
+  createdAt: Date;
+  updatedAt: Date;
+  metadata?: {
+    createdBy?: string;
+    updatedBy?: string;
+    source?: string;
+    tags?: string[];
+  };
+}
+
+export interface ModelTestCase {
+  name: string;
+  description: string;
+  input: Record<string, string | number | boolean | null>;
+  expectedOutput: Record<string, string | number | boolean | null>;
+  timeout: number;
+  tags: string[];
+  metadata?: {
+    priority?: 'low' | 'medium' | 'high';
+    dependencies?: string[];
+    notes?: string;
+  };
+}
+
+export interface ModelTestResult {
+  testId: string;
+  modelId: string;
+  version: string;
+  status: 'passed' | 'failed' | 'error';
+  error?: string;
+  duration: number;
+  output?: Record<string, string | number | boolean | null>;
+  timestamp: Date;
+  metadata?: Record<string, string | number | boolean | null>;
+}
+
+export interface ModelValidation {
+  modelId: string;
+  version: string;
+  validatedAt: Date;
+  status: 'valid' | 'invalid';
+  errors?: Array<{
+    field: string;
+    message: string;
+    code: string;
+  }>;
+  warnings?: Array<{
+    field: string;
+    message: string;
+    code: string;
+  }>;
+}
+
+export interface ModelDeployment {
+  id: string;
+  modelId: string;
+  version: string;
+  environment: 'development' | 'staging' | 'production';
+  status: 'pending' | 'deployed' | 'failed';
+  deployedAt: Date;
+  statusCode: number;
+  errorMessage?: string;
+  metadata?: Record<string, string | number | boolean | null>;
+}
+
+export interface APIResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  statusCode: number;
+  errorMessage?: string;
+  metadata?: Record<string, string | number | boolean | null>;
 }

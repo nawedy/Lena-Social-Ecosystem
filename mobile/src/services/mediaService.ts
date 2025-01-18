@@ -1,10 +1,11 @@
-import { Platform } from 'react-native';
-import ImageResizer from 'react-native-image-resizer';
-import ImagePicker from 'react-native-image-crop-picker';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
+import { Platform } from 'react-native';
 import Upload from 'react-native-background-upload';
-import { store } from '../store';
+import ImagePicker from 'react-native-image-crop-picker';
+import ImageResizer from 'react-native-image-resizer';
+
 import { API_URL } from '../config';
+import { store } from '../store';
 
 interface MediaOptions {
   width?: number;

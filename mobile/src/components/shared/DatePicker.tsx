@@ -1,3 +1,5 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
+import dayjs from 'dayjs';
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
@@ -11,11 +13,11 @@ import {
   TextStyle,
   Dimensions,
 } from 'react-native';
-import { useTheme } from '../../theme';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import dayjs from 'dayjs';
+import Icon from 'react-native-vector-icons/Ionicons';
+
+import { useTheme } from '../../theme';
+
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 

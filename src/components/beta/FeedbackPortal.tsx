@@ -1,3 +1,6 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { Camera } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -9,11 +12,9 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { BetaTestingService } from '../../services/BetaTestingService';
+
 import { useAuth } from '../../hooks/useAuth';
-import { Camera } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
-import { MaterialIcons } from '@expo/vector-icons';
+import { BetaTestingService } from '../../services/BetaTestingService';
 
 const _feedbackCategories = [
   'Game Mechanics',
@@ -29,12 +30,8 @@ const FeedbackPortal: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
-  const [type, setType] = useState<
-    'bug' | 'feature' | 'improvement' | 'general'
-  >('general');
-  const [severity, setSeverity] = useState<
-    'low' | 'medium' | 'high' | 'critical'
-  >('medium');
+  const [type, setType] = useState<'bug' | 'feature' | 'improvement' | 'general'>('general');
+  const [severity, setSeverity] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
   const [attachments, setAttachments] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [previousFeedback, setPreviousFeedback] = useState([]);
@@ -61,10 +58,7 @@ const FeedbackPortal: React.FC = () => {
 
   const _loadPreviousFeedback = async () => {
     try {
-      const _snapshot = await betaService.db
-        .collection('beta_testers')
-        .doc(user.id)
-        .get();
+      const _snapshot = await betaService.db.collection('beta_testers').doc(user.id).get();
       const _data = snapshot.data();
       if (data?.feedback) {
         setPreviousFeedback(data.feedback);
@@ -86,17 +80,14 @@ const FeedbackPortal: React.FC = () => {
       if (!result.canceled) {
         setAttachments([...attachments, result.assets[0].uri]);
       }
-    } catch (error) {
+    } catch (_error) {
       Alert.window.alert('Error', 'Failed to pick image');
     }
   };
 
   const _submitFeedback = async () => {
     if (!title || !description || !category) {
-      Alert.window.alert(
-        'Missing Information',
-        'Please fill in all required fields'
-      );
+      Alert.window.alert('Missing Information', 'Please fill in all required fields');
       return;
     }
 
@@ -120,11 +111,8 @@ const FeedbackPortal: React.FC = () => {
       );
 
       loadPreviousFeedback();
-    } catch (error) {
-      Alert.window.alert(
-        'Error',
-        'Failed to submit feedback. Please try again.'
-      );
+    } catch (_error) {
+      Alert.window.alert('Error', 'Failed to submit feedback. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -149,7 +137,7 @@ const FeedbackPortal: React.FC = () => {
           style={styles.input}
           value={title}
           onChangeText={setTitle}
-          placeholder="Brief summary of your feedback"
+          placeholder='Brief summary of your feedback'
         />
 
         <Text style={styles.label}>Category *</Text>
@@ -158,13 +146,10 @@ const FeedbackPortal: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           style={styles.categoryContainer}
         >
-          {feedbackCategories.map(cat => (
+          {feedbackCategories.map((cat) => (
             <TouchableOpacity
               key={cat}
-              style={[
-                styles.categoryButton,
-                category === cat && styles.categoryButtonSelected,
-              ]}
+              style={[styles.categoryButton, category === cat && styles.categoryButtonSelected]}
               onPress={() => setCategory(cat)}
             >
               <Text
@@ -181,21 +166,13 @@ const FeedbackPortal: React.FC = () => {
 
         <Text style={styles.label}>Type</Text>
         <View style={styles.typeContainer}>
-          {(['bug', 'feature', 'improvement', 'general'] as const).map(t => (
+          {(['bug', 'feature', 'improvement', 'general'] as const).map((t) => (
             <TouchableOpacity
               key={t}
-              style={[
-                styles.typeButton,
-                type === t && styles.typeButtonSelected,
-              ]}
+              style={[styles.typeButton, type === t && styles.typeButtonSelected]}
               onPress={() => setType(t)}
             >
-              <Text
-                style={[
-                  styles.typeButtonText,
-                  type === t && styles.typeButtonTextSelected,
-                ]}
-              >
+              <Text style={[styles.typeButtonText, type === t && styles.typeButtonTextSelected]}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </Text>
             </TouchableOpacity>
@@ -206,13 +183,10 @@ const FeedbackPortal: React.FC = () => {
           <>
             <Text style={styles.label}>Severity</Text>
             <View style={styles.severityContainer}>
-              {(['low', 'medium', 'high', 'critical'] as const).map(s => (
+              {(['low', 'medium', 'high', 'critical'] as const).map((s) => (
                 <TouchableOpacity
                   key={s}
-                  style={[
-                    styles.severityButton,
-                    severity === s && styles.severityButtonSelected,
-                  ]}
+                  style={[styles.severityButton, severity === s && styles.severityButtonSelected]}
                   onPress={() => setSeverity(s)}
                 >
                   <Text
@@ -234,7 +208,7 @@ const FeedbackPortal: React.FC = () => {
           style={[styles.input, styles.textArea]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Detailed description of your feedback"
+          placeholder='Detailed description of your feedback'
           multiline
           numberOfLines={4}
         />
@@ -246,24 +220,19 @@ const FeedbackPortal: React.FC = () => {
               <Image source={{ uri }} style={styles.attachmentImage} />
               <TouchableOpacity
                 style={styles.removeAttachment}
-                onPress={() =>
-                  setAttachments(attachments.filter((_, i) => i !== index))
-                }
+                onPress={() => setAttachments(attachments.filter((_, i) => i !== index))}
               >
-                <MaterialIcons name="close" size={20} color="white" />
+                <MaterialIcons name='close' size={20} color='white' />
               </TouchableOpacity>
             </View>
           ))}
           <TouchableOpacity style={styles.addAttachment} onPress={pickImage}>
-            <MaterialIcons name="add-photo-alternate" size={24} color="#666" />
+            <MaterialIcons name='add-photo-alternate' size={24} color='#666' />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.submitButton,
-            submitting && styles.submitButtonDisabled,
-          ]}
+          style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
           onPress={submitFeedback}
           disabled={submitting}
         >
@@ -279,13 +248,9 @@ const FeedbackPortal: React.FC = () => {
           {previousFeedback.map((feedback, index) => (
             <View key={index} style={styles.feedbackItem}>
               <Text style={styles.feedbackItemTitle}>{feedback.title}</Text>
-              <Text style={styles.feedbackItemStatus}>
-                Status: {feedback.status}
-              </Text>
+              <Text style={styles.feedbackItemStatus}>Status: {feedback.status}</Text>
               <Text style={styles.feedbackItemDate}>
-                {new Date(
-                  feedback.createdAt.seconds * 1000
-                ).toLocaleDateString()}
+                {new Date(feedback.createdAt.seconds * 1000).toLocaleDateString()}
               </Text>
             </View>
           ))}

@@ -1,7 +1,8 @@
 import * as firebase from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
-import { getStorage, setStorage } from '../../utils/storage';
+
 import { performanceMonitor } from '../../utils/performance';
+import { getStorage, setStorage } from '../../utils/storage';
 
 export class PushNotificationService {
   private static instance: PushNotificationService;
@@ -20,9 +21,7 @@ export class PushNotificationService {
 
   public async initialize(): Promise<void> {
     try {
-      const trace = await performanceMonitor.startTrace(
-        'push_notification_init'
-      );
+      const trace = await performanceMonitor.startTrace('push_notification_init');
 
       // Request permission
       const authStatus = await this.messaging.requestPermission();
@@ -36,7 +35,7 @@ export class PushNotificationService {
         await this.saveFCMToken(fcmToken);
 
         // Listen for token refresh
-        this.messaging.onTokenRefresh(async token => {
+        this.messaging.onTokenRefresh(async (token) => {
           await this.saveFCMToken(token);
         });
 
@@ -59,25 +58,25 @@ export class PushNotificationService {
 
   private setupNotificationHandlers(): void {
     // Handle background messages
-    this.messaging.setBackgroundMessageHandler(async remoteMessage => {
+    this.messaging.setBackgroundMessageHandler(async (remoteMessage) => {
       logger.info('Background message:', remoteMessage);
       await this.handleNotification(remoteMessage);
     });
 
     // Handle foreground messages
-    this.messaging.onMessage(async remoteMessage => {
+    this.messaging.onMessage(async (remoteMessage) => {
       logger.info('Foreground message:', remoteMessage);
       await this.handleNotification(remoteMessage);
     });
 
     // Handle notification open
-    this.messaging.onNotificationOpenedApp(async remoteMessage => {
+    this.messaging.onNotificationOpenedApp(async (remoteMessage) => {
       logger.info('Notification opened app:', remoteMessage);
       await this.handleNotificationOpen(remoteMessage);
     });
 
     // Handle initial notification
-    this.messaging.getInitialNotification().then(async remoteMessage => {
+    this.messaging.getInitialNotification().then(async (remoteMessage) => {
       if (remoteMessage) {
         logger.info('Initial notification:', remoteMessage);
         await this.handleNotificationOpen(remoteMessage);
@@ -128,34 +127,34 @@ export class PushNotificationService {
   }
 
   private async handleMessageNotification(
-    message: firebase.FirebaseMessagingTypes.RemoteMessage
+    _message: firebase.FirebaseMessagingTypes.RemoteMessage
   ): Promise<void> {
     // Handle new message notification
   }
 
   private async handleFollowNotification(
-    message: firebase.FirebaseMessagingTypes.RemoteMessage
+    _message: firebase.FirebaseMessagingTypes.RemoteMessage
   ): Promise<void> {
     // Handle new follower notification
   }
 
   private async handleLikeNotification(
-    message: firebase.FirebaseMessagingTypes.RemoteMessage
+    _message: firebase.FirebaseMessagingTypes.RemoteMessage
   ): Promise<void> {
     // Handle new like notification
   }
 
   private async handleCommentNotification(
-    message: firebase.FirebaseMessagingTypes.RemoteMessage
+    _message: firebase.FirebaseMessagingTypes.RemoteMessage
   ): Promise<void> {
     // Handle new comment notification
   }
 
   public async scheduleLocalNotification(
-    title: string,
-    body: string,
-    data?: any,
-    delay?: number
+    _title: string,
+    _body: string,
+    _data?: Record<string, unknown>,
+    _delay?: number
   ): Promise<void> {
     // Schedule local notification
   }
@@ -172,7 +171,7 @@ export class PushNotificationService {
     return 0;
   }
 
-  public async setBadgeCount(count: number): Promise<void> {
+  public async setBadgeCount(_count: number): Promise<void> {
     if (Platform.OS === 'ios') {
       // Set iOS badge count
     }

@@ -1,45 +1,33 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "commonjs",
-    "lib": ["es2018", "dom"],
-    "jsx": "react-native",
-    "strict": true,
-    "esModuleInterop": true,
+    "target": "es2020",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
     "skipLibCheck": true,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "types": ["node", "jest"],
     "baseUrl": ".",
     "paths": {
-      "*": ["src/*", "mobile/*"]
-    },
-    "allowJs": true,
-    "noImplicitAny": false,
-    "strictNullChecks": false,
-    "allowSyntheticDefaultImports": true,
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ]
+      "@/*": ["src/*"]
+    }
   },
   "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
     "src/**/*",
-    "mobile/**/*",
     "tests/**/*",
-    "mobile/.storybook/**/*",
-    "*.ts",
-    "*.tsx"
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ],
-  "exclude": [
-    "node_modules",
-    "babel.config.js",
-    "metro.config.js",
-    "jest.config.js",
-    "build",
-    "dist",
-    "coverage"
-  ]
+  "exclude": ["node_modules"]
 }

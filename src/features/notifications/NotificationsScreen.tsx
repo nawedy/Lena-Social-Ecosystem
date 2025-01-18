@@ -1,145 +1,109 @@
+import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../hooks/useAuth';
+import { View, FlatList, StyleSheet } from 'react-native';
+
+import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Text } from '../../components/Text';
+import { useNotifications } from '../../hooks/useNotifications';
+
+import { NotificationItem } from './NotificationItem';
+
 
 interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'follow' | 'mention';
-  sourceUserId: string;
-  targetId?: string;
+  type: 'like' | 'repost' | 'follow' | 'mention';
+  actor: {
+    did: string;
+    handle: string;
+    displayName?: string;
+    avatar?: string;
+  };
+  uri?: string;
+  cid?: string;
+  indexedAt: string;
   read: boolean;
-  createdAt: Date;
 }
 
-interface NotificationsScreenProps {
-  navigation: any;
-}
+type RootStackParamList = {
+  Notifications: undefined;
+  Profile: { did: string };
+  Post: { uri: string; cid: string };
+};
 
-export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
-  navigation,
-}) => {
+type NotificationsScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'Notifications'>;
+};
+
+export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { fetchNotifications, markAsRead } = useNotifications();
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const _fetchNotifications = async () => {
-    try {
-      // TODO: Implement notification fetching logic
-      setNotifications([
-        {
-          id: '1',
-          type: 'like',
-          sourceUserId: 'user123',
-          targetId: 'post123',
-          read: false,
-          createdAt: new Date(),
-        },
-        // Add more mock notifications
-      ]);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const _markAsRead = async (notificationId: string) => {
-    try {
-      // TODO: Implement mark as read logic
-      setNotifications(
-        notifications.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
-      );
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const _handleNotificationPress = (notification: Notification) => {
-    markAsRead(notification.id);
-
-    // Navigate based on notification type
-    switch (notification.type) {
-      case 'like':
-      case 'comment':
-        navigation.navigate('Post', { postId: notification.targetId });
-        break;
-      case 'follow':
-        navigation.navigate('Profile', { userId: notification.sourceUserId });
-        break;
-      case 'mention':
-        navigation.navigate('Post', { postId: notification.targetId });
-        break;
-    }
-  };
-
-  const _renderNotification = ({ item }: { item: Notification }) => {
-    const _getNotificationText = (notification: Notification) => {
-      switch (notification.type) {
-        case 'like':
-          return 'liked your post';
-        case 'comment':
-          return 'commented on your post';
-        case 'follow':
-          return 'started following you';
-        case 'mention':
-          return 'mentioned you in a post';
-        default:
-          return '';
+    const loadNotifications = async () => {
+      try {
+        const data = await fetchNotifications();
+        setNotifications(data);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    return (
-      <TouchableOpacity
-        style={[styles.notificationItem, !item.read && styles.unread]}
-        onPress={() => handleNotificationPress(item)}
-      >
-        <LinearGradient
-          colors={item.read ? ['#f8f8f8', '#f8f8f8'] : ['#fff5f5', '#fff0f0']}
-          style={styles.gradient}
-        >
-          <Text style={styles.notificationText}>
-            <Text style={styles.username}>User </Text>
-            {getNotificationText(item)}
-          </Text>
-          <Text style={styles.timestamp}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
-        </LinearGradient>
-      </TouchableOpacity>
-    );
+    loadNotifications();
+  }, [fetchNotifications]);
+
+  const handleNotificationPress = async (notification: Notification) => {
+    try {
+      await markAsRead(notification.id);
+
+      // Update local state to mark notification as read
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notification.id ? { ...n, read: true } : n
+        )
+      );
+
+      // Navigate based on notification type
+      switch (notification.type) {
+        case 'follow':
+          navigation.navigate('Profile', { did: notification.actor.did });
+          break;
+        case 'like':
+        case 'repost':
+        case 'mention':
+          if (notification.uri && notification.cid) {
+            navigation.navigate('Post', {
+              uri: notification.uri,
+              cid: notification.cid,
+            });
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Error handling notification:', error);
+    }
   };
 
   if (loading) {
-    return (
-      <View style={styles.centered}>
-        <Text>Loading notifications...</Text>
-      </View>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
     <View style={styles.container}>
       <FlatList
         data={notifications}
-        renderItem={renderNotification}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <NotificationItem
+            notification={item}
+            onPress={() => handleNotificationPress(item)}
+          />
+        )}
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text>No notifications yet</Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No notifications yet</Text>
           </View>
         }
       />
@@ -147,40 +111,19 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
   );
 };
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  list: {
-    padding: 10,
-  },
-  notificationItem: {
-    marginBottom: 10,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  unread: {
-    backgroundColor: '#fff5f5',
-  },
-  gradient: {
-    padding: 15,
-  },
-  notificationText: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  username: {
-    fontWeight: 'bold',
-  },
-  timestamp: {
-    fontSize: 12,
-    color: '#666',
-  },
-  centered: {
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
 });

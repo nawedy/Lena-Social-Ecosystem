@@ -1,3 +1,4 @@
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -7,10 +8,10 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme';
 import Icon from 'react-native-vector-icons/Ionicons';
+
+import { useTheme } from '../theme';
 
 const { width } = Dimensions.get('window');
 const TAB_WIDTH = width / 5;

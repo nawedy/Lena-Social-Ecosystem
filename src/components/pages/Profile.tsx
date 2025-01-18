@@ -1,17 +1,14 @@
+import { AppBskyActorDefs, AppBskyFeedDefs, RichText, AppBskyFeedPost } from '@atproto/api';
+import { formatDistanceToNow } from 'date-fns';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+
 import { useATProto } from '../../contexts/ATProtoContext';
-import { _FeedViewPost as FeedViewPost } from '../../types/feed';
-import MediaCarousel from '../shared/MediaCarousel';
-import {
-  AppBskyActorDefs,
-  AppBskyFeedDefs,
-  RichText,
-  AppBskyFeedPost,
-} from '@atproto/api';
-import { formatDistanceToNow } from 'date-fns';
 import { SubscriptionService } from '../../services/subscription';
+import { _FeedViewPost as FeedViewPost } from '../../types/feed';
 import { logger } from '../../utils/logger';
+import MediaCarousel from '../shared/MediaCarousel';
+
 
 interface ProfileViewDetailed extends AppBskyActorDefs.ProfileViewDetailed {
   handle: string;
@@ -35,8 +32,7 @@ const Profile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(true);
-  const [subscriptionService, setSubscriptionService] =
-    useState<SubscriptionService | null>(null);
+  const [subscriptionService, setSubscriptionService] = useState<SubscriptionService | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
@@ -53,9 +49,9 @@ const Profile: React.FC = () => {
       subscriptionService.subscribeToProfile(profile.did);
       setIsSubscribed(true);
 
-      const _subscription = subscriptionService.updates.subscribe(update => {
+      const _subscription = subscriptionService.updates.subscribe((update) => {
         if (update.type === 'post' && update.post.author.did === profile.did) {
-          setPosts(prevPosts => [
+          setPosts((prevPosts) => [
             {
               post: {
                 uri: update.uri.toString(),
@@ -107,7 +103,7 @@ const Profile: React.FC = () => {
         cursor,
         limit: 20,
       });
-      setPosts(prev => [...prev, ...response.data.feed]);
+      setPosts((prev) => [...prev, ...response.data.feed]);
       setCursor(response.data.cursor);
       setHasMore(!!response.data.cursor);
     } catch (err) {
@@ -125,7 +121,7 @@ const Profile: React.FC = () => {
     try {
       if (profile.viewer?.following) {
         await unfollow(profile.did);
-        setProfile(prev =>
+        setProfile((prev) =>
           prev
             ? {
                 ...prev,
@@ -136,7 +132,7 @@ const Profile: React.FC = () => {
         );
       } else {
         await follow(profile.did);
-        setProfile(prev =>
+        setProfile((prev) =>
           prev
             ? {
                 ...prev,
@@ -184,14 +180,14 @@ const Profile: React.FC = () => {
     const _rt = new RichText({ text: record.text, facets: record.facets });
 
     return (
-      <div className="whitespace-pre-wrap">
+      <div className='whitespace-pre-wrap'>
         {rt.segments.map((segment, i) => {
           if (segment.isMention()) {
             return (
               <a
                 key={i}
                 href={`/profile/${segment.text}`}
-                className="text-blue-500 hover:underline"
+                className='text-blue-500 hover:underline'
               >
                 {segment.text}
               </a>
@@ -201,10 +197,10 @@ const Profile: React.FC = () => {
             return (
               <a
                 key={i}
-                href={segment.link!.uri}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
+                href={segment.link?.uri}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-blue-500 hover:underline'
               >
                 {segment.text}
               </a>
@@ -214,8 +210,8 @@ const Profile: React.FC = () => {
             return (
               <a
                 key={i}
-                href={`/tag/${segment.tag!.tag}`}
-                className="text-blue-500 hover:underline"
+                href={`/tag/${segment.tag?.tag}`}
+                className='text-blue-500 hover:underline'
               >
                 {segment.text}
               </a>
@@ -229,46 +225,42 @@ const Profile: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className='flex justify-center items-center min-h-screen'>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500' />
       </div>
     );
   }
 
   if (error || !profile) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-500">{error || 'Profile not found'}</p>
+      <div className='text-center py-8'>
+        <p className='text-red-500'>{error || 'Profile not found'}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4">
+    <div className='max-w-4xl mx-auto px-4'>
       {/* Banner */}
-      <div className="h-48 rounded-t-lg overflow-hidden relative">
+      <div className='h-48 rounded-t-lg overflow-hidden relative'>
         {profile.banner ? (
-          <img
-            src={profile.banner}
-            alt="Profile banner"
-            className="w-full h-full object-cover"
-          />
+          <img src={profile.banner} alt='Profile banner' className='w-full h-full object-cover' />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500" />
+          <div className='w-full h-full bg-gradient-to-r from-blue-400 to-purple-500' />
         )}
       </div>
 
       {/* Profile Info */}
-      <div className="relative px-6 pb-6">
-        <div className="flex justify-between items-end">
-          <div className="-mt-16 mb-4">
+      <div className='relative px-6 pb-6'>
+        <div className='flex justify-between items-end'>
+          <div className='-mt-16 mb-4'>
             <img
               src={profile.avatar || '/default-avatar.png'}
               alt={profile.displayName || profile.handle}
-              className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800"
+              className='w-32 h-32 rounded-full border-4 border-white dark:border-gray-800'
             />
           </div>
-          <div className="space-x-3">
+          <div className='space-x-3'>
             <button
               onClick={handleFollowToggle}
               className={`px-6 py-2 rounded-full font-medium ${
@@ -281,98 +273,89 @@ const Profile: React.FC = () => {
             </button>
             <button
               onClick={handleShare}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700"
+              className='px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700'
             >
               Share
             </button>
           </div>
         </div>
 
-        <div className="mt-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className='mt-4'>
+          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
             {profile.displayName || profile.handle}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">@{profile.handle}</p>
+          <p className='text-gray-600 dark:text-gray-400'>@{profile.handle}</p>
           {profile.description && (
-            <div className="mt-4 text-gray-800 dark:text-gray-200">
+            <div className='mt-4 text-gray-800 dark:text-gray-200'>
               <RichText text={profile.description} />
             </div>
           )}
         </div>
 
-        <div className="flex space-x-6 mt-6">
-          <div className="text-center">
-            <div className="font-bold text-gray-900 dark:text-white">
-              {profile.postsCount}
-            </div>
-            <div className="text-gray-600 dark:text-gray-400">Posts</div>
+        <div className='flex space-x-6 mt-6'>
+          <div className='text-center'>
+            <div className='font-bold text-gray-900 dark:text-white'>{profile.postsCount}</div>
+            <div className='text-gray-600 dark:text-gray-400'>Posts</div>
           </div>
           <button
             onClick={() => navigate(`/profile/${handle}/followers`)}
-            className="text-center hover:opacity-75"
+            className='text-center hover:opacity-75'
           >
-            <div className="font-bold text-gray-900 dark:text-white">
-              {profile.followersCount}
-            </div>
-            <div className="text-gray-600 dark:text-gray-400">Followers</div>
+            <div className='font-bold text-gray-900 dark:text-white'>{profile.followersCount}</div>
+            <div className='text-gray-600 dark:text-gray-400'>Followers</div>
           </button>
           <button
             onClick={() => navigate(`/profile/${handle}/following`)}
-            className="text-center hover:opacity-75"
+            className='text-center hover:opacity-75'
           >
-            <div className="font-bold text-gray-900 dark:text-white">
-              {profile.followsCount}
-            </div>
-            <div className="text-gray-600 dark:text-gray-400">Following</div>
+            <div className='font-bold text-gray-900 dark:text-white'>{profile.followsCount}</div>
+            <div className='text-gray-600 dark:text-gray-400'>Following</div>
           </button>
         </div>
 
         {/* New interactive features */}
-        <div className="mt-4 flex space-x-4">
+        <div className='mt-4 flex space-x-4'>
           <button
             onClick={handleShare}
-            className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
+            className='px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600'
           >
             Share Profile
           </button>
           <button
             onClick={handleReport}
-            className="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+            className='px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600'
           >
             Report
           </button>
           <button
             onClick={handleMute}
-            className="px-4 py-2 bg-gray-500 text-white rounded-full hover:bg-gray-600"
+            className='px-4 py-2 bg-gray-500 text-white rounded-full hover:bg-gray-600'
           >
             Mute
           </button>
         </div>
 
         {/* Posts Grid */}
-        <div className="mt-8 space-y-6">
-          {posts.map(post => (
+        <div className='mt-8 space-y-6'>
+          {posts.map((post) => (
             <article
               key={post.post.uri}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow duration-200"
+              className='bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow duration-200'
             >
-              <div className="p-4">
+              <div className='p-4'>
                 {/* Post header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
+                <div className='flex items-center justify-between mb-4'>
+                  <div className='flex items-center space-x-3'>
                     <img
                       src={post.post.author.avatar}
-                      alt={
-                        post.post.author.displayName || post.post.author.handle
-                      }
-                      className="w-10 h-10 rounded-full"
+                      alt={post.post.author.displayName || post.post.author.handle}
+                      className='w-10 h-10 rounded-full'
                     />
                     <div>
-                      <p className="font-semibold">
-                        {post.post.author.displayName ||
-                          post.post.author.handle}
+                      <p className='font-semibold'>
+                        {post.post.author.displayName || post.post.author.handle}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className='text-sm text-gray-500'>
                         {formatDistanceToNow(new Date(post.post.indexedAt), {
                           addSuffix: true,
                         })}
@@ -384,28 +367,25 @@ const Profile: React.FC = () => {
                     onClick={() => {
                       /* Add post menu */
                     }}
-                    className="text-gray-500 hover:text-gray-700"
+                    className='text-gray-500 hover:text-gray-700'
                   >
                     •••
                   </button>
                 </div>
 
                 {/* Post content */}
-                <div className="text-gray-800 dark:text-gray-200 mb-4">
-                  {renderPostText(post)}
-                </div>
+                <div className='text-gray-800 dark:text-gray-200 mb-4'>{renderPostText(post)}</div>
 
                 {/* Media display */}
                 {post.post.embed && (
-                  <div className="mb-4">
+                  <div className='mb-4'>
                     <MediaCarousel
                       items={[
                         {
                           type: 'image',
                           uri: (post.post.embed as any).images?.[0]?.fullsize,
                           alt: (post.post.embed as any).images?.[0]?.alt,
-                          aspectRatio: (post.post.embed as any).images?.[0]
-                            ?.aspectRatio,
+                          aspectRatio: (post.post.embed as any).images?.[0]?.aspectRatio,
                         },
                       ]}
                     />
@@ -413,20 +393,20 @@ const Profile: React.FC = () => {
                 )}
 
                 {/* Enhanced interaction buttons */}
-                <div className="flex items-center justify-between text-gray-500 border-t pt-4">
-                  <button className="flex items-center space-x-2 hover:text-blue-500 transition-colors">
+                <div className='flex items-center justify-between text-gray-500 border-t pt-4'>
+                  <button className='flex items-center space-x-2 hover:text-blue-500 transition-colors'>
                     <span>💭</span>
                     <span>{post.replyCount || 0}</span>
                   </button>
-                  <button className="flex items-center space-x-2 hover:text-green-500 transition-colors">
+                  <button className='flex items-center space-x-2 hover:text-green-500 transition-colors'>
                     <span>🔄</span>
                     <span>{post.repostCount || 0}</span>
                   </button>
-                  <button className="flex items-center space-x-2 hover:text-red-500 transition-colors">
+                  <button className='flex items-center space-x-2 hover:text-red-500 transition-colors'>
                     <span>❤️</span>
                     <span>{post.likeCount || 0}</span>
                   </button>
-                  <button className="flex items-center space-x-2 hover:text-blue-500 transition-colors">
+                  <button className='flex items-center space-x-2 hover:text-blue-500 transition-colors'>
                     <span>📤</span>
                     <span>Share</span>
                   </button>
@@ -438,7 +418,7 @@ const Profile: React.FC = () => {
           {hasMore && (
             <button
               onClick={loadMorePosts}
-              className="w-full py-2 text-blue-500 hover:text-blue-600"
+              className='w-full py-2 text-blue-500 hover:text-blue-600'
             >
               Load more posts
             </button>

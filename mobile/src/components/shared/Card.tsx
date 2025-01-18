@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
+
 import { useTheme } from '../../theme';
 
 interface CardProps {

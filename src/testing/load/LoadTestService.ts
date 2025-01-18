@@ -1,11 +1,12 @@
-import { performanceMonitor } from '../../utils/performance';
-import { PerformanceOptimizer } from '../../utils/performance/PerformanceOptimizer';
-import { logger } from '../../utils/logger';
 import * as k6 from 'k6';
-import { Options } from 'k6/options';
 import { check, sleep } from 'k6';
 import http from 'k6/http';
 import { Counter, Rate, Trend } from 'k6/metrics';
+import { Options } from 'k6/options';
+
+import { logger } from '../../utils/logger';
+import { performanceMonitor } from '../../utils/performance';
+import { PerformanceOptimizer } from '../../utils/performance/PerformanceOptimizer';
 
 interface LoadTestConfig {
   vus?: number;
@@ -55,10 +56,7 @@ export class LoadTestService {
     };
   }
 
-  public createLoadTest(
-    scenarios: LoadTestScenario[],
-    config: LoadTestConfig = {}
-  ): string {
+  public createLoadTest(scenarios: LoadTestScenario[], config: LoadTestConfig = {}): string {
     return `
       import { check, sleep } from 'k6';
       import http from 'k6/http';
@@ -85,18 +83,14 @@ export class LoadTestService {
         scenarios: {
           ${scenarios
             .map(
-              scenario => `
+              (scenario) => `
             ${scenario.name}: {
               executor: '${scenario.executor || 'ramping-vus'}',
               exec: '${scenario.exec || 'default'}',
               startVUs: 0,
               stages: [
-                { duration: '${config.rampUp || '30s'}', target: ${
-                  config.vus || 10
-                } },
-                { duration: '${config.duration || '30s'}', target: ${
-                  config.vus || 10
-                } },
+                { duration: '${config.rampUp || '30s'}', target: ${config.vus || 10} },
+                { duration: '${config.duration || '30s'}', target: ${config.vus || 10} },
                 { duration: '${config.rampDown || '30s'}', target: 0 },
               ],
             }`
@@ -129,7 +123,7 @@ export class LoadTestService {
       // Custom scenarios
       ${scenarios
         .map(
-          scenario => `
+          (scenario) => `
         export function ${scenario.name}() {
           // Implement scenario-specific logic here
           const response = http.get('http://test.k6.io/${scenario.name}');
@@ -155,10 +149,7 @@ export class LoadTestService {
     `;
   }
 
-  public async runLoadTest(
-    testScript: string,
-    options: LoadTestConfig = {}
-  ): Promise<void> {
+  public async runLoadTest(_testScript: string, options: LoadTestConfig = {}): Promise<void> {
     const trace = performanceMonitor.startTrace('load_test');
     try {
       // Save test script to file
@@ -166,7 +157,7 @@ export class LoadTestService {
       // TODO: Save testScript to testFile
 
       // Configure k6 options
-      const k6Options: Options = {
+      const _k6Options: Options = {
         vus: options.vus || 10,
         duration: options.duration || '30s',
         thresholds: options.thresholds || {
@@ -176,7 +167,7 @@ export class LoadTestService {
       };
 
       // Run k6 test
-      const k6Command = `k6 run ${testFile}`;
+      const _k6Command = `k6 run ${testFile}`;
       // TODO: Execute k6Command
 
       trace.putMetric('success', 1);
@@ -211,10 +202,7 @@ export class LoadTestService {
     }
   }
 
-  public createScenario(
-    name: string,
-    config: Partial<LoadTestScenario> = {}
-  ): LoadTestScenario {
+  public createScenario(name: string, config: Partial<LoadTestScenario> = {}): LoadTestScenario {
     return {
       name,
       weight: config.weight || 1,
@@ -224,7 +212,7 @@ export class LoadTestService {
     };
   }
 
-  public async analyzeLogs(testId: string): Promise<any> {
+  public async analyzeLogs(_testId: string): Promise<any> {
     const trace = performanceMonitor.startTrace('analyze_logs');
     try {
       // Analyze test results

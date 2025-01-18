@@ -1,14 +1,15 @@
 import express from 'express';
+
 import authRoutes from './auth';
+import searchRoutes from './search';
+import socialRoutes from './social';
 import userRoutes from './users';
 import videoRoutes from './videos';
-import socialRoutes from './social';
-import searchRoutes from './search';
 
 const router = express.Router();
 
 // Health check endpoint
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
   res.status(200).json({ status: 'healthy' });
 });
 

@@ -6,12 +6,7 @@ declare module 'ioredis' {
     disconnect(): Promise<void>;
 
     get(key: string): Promise<string | null>;
-    set(
-      key: string,
-      value: string,
-      mode?: string,
-      duration?: number
-    ): Promise<'OK'>;
+    set(key: string, value: string, mode?: string, duration?: number): Promise<'OK'>;
     del(key: string): Promise<number>;
 
     hget(key: string, field: string): Promise<string | null>;

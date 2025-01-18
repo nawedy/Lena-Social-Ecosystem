@@ -72,10 +72,7 @@ export class ATAffiliateService {
     }
   }
 
-  async createAffiliateLink(
-    programUri: string,
-    customId: string
-  ): Promise<AffiliateLink> {
+  async createAffiliateLink(programUri: string, customId: string): Promise<AffiliateLink> {
     try {
       const record = {
         $type: `${this.RECORD_NAMESPACE}.link`,
@@ -165,10 +162,10 @@ export class ATAffiliateService {
       // Calculate stats based on period
       const startDate = this.getStartDateForPeriod(period);
       const filteredClicks = clicks.records.filter(
-        record => new Date(record.value.timestamp) >= startDate
+        (record) => new Date(record.value.timestamp) >= startDate
       );
       const filteredConversions = conversions.records.filter(
-        record => new Date(record.value.timestamp) >= startDate
+        (record) => new Date(record.value.timestamp) >= startDate
       );
 
       const earnings = filteredConversions.reduce(
@@ -196,7 +193,7 @@ export class ATAffiliateService {
         limit: 100,
       });
 
-      return response.records.map(record => ({
+      return response.records.map((record) => ({
         uri: record.uri,
         cid: record.cid,
         creator: record.value.creator,
@@ -220,7 +217,7 @@ export class ATAffiliateService {
         limit: 100,
       });
 
-      return response.records.map(record => ({
+      return response.records.map((record) => ({
         uri: record.uri,
         cid: record.cid,
         affiliate: affiliateId,
@@ -234,9 +231,7 @@ export class ATAffiliateService {
     }
   }
 
-  private getStartDateForPeriod(
-    period: 'day' | 'week' | 'month' | 'year'
-  ): Date {
+  private getStartDateForPeriod(period: 'day' | 'week' | 'month' | 'year'): Date {
     const now = new Date();
     switch (period) {
       case 'day':

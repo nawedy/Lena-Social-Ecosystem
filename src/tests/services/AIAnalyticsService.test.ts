@@ -1,3 +1,5 @@
+/// <reference types="jest" />
+
 import { AIAnalyticsService } from '../../services/AIAnalyticsService';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { NotificationService } from '../../services/NotificationService';
@@ -10,12 +12,24 @@ jest.mock('../../services/RBACService');
 describe('AIAnalyticsService', () => {
   let aiAnalytics: AIAnalyticsService;
   let rbac: RBACService;
+  let mockAnalytics: jest.Mocked<AnalyticsService>;
+  let mockRBAC: jest.Mocked<RBACService>;
   const testUserId = 'test_user';
   const testAccounts = ['account1', 'account2'];
 
   beforeEach(async () => {
+    // Reset all mocks
+    jest.clearAllMocks();
+
+    // Initialize service and mocks
     aiAnalytics = AIAnalyticsService.getInstance();
     rbac = RBACService.getInstance();
+    mockAnalytics = AnalyticsService.getInstance() as jest.Mocked<AnalyticsService>;
+    mockRBAC = RBACService.getInstance() as jest.Mocked<RBACService>;
+
+    // Setup default mock implementations
+    mockRBAC.hasPermission.mockResolvedValue(true);
+    mockAnalytics.trackEvent.mockResolvedValue();
 
     // Setup test user with analyst role
     await rbac.assignRole('system', testUserId, Role.ANALYST, {
@@ -30,14 +44,10 @@ describe('AIAnalyticsService', () => {
         end: new Date(),
       };
 
-      const insights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-          threshold: 0.8,
-        }
-      );
+      const insights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+        threshold: 0.8,
+      });
 
       expect(insights).toBeDefined();
       expect(Array.isArray(insights)).toBe(true);
@@ -60,27 +70,17 @@ describe('AIAnalyticsService', () => {
         end: new Date(),
       };
 
-      const highThresholdInsights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-          threshold: 0.9,
-        }
-      );
+      const highThresholdInsights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+        threshold: 0.9,
+      });
 
-      const lowThresholdInsights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-          threshold: 0.5,
-        }
-      );
+      const lowThresholdInsights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+        threshold: 0.5,
+      });
 
-      expect(highThresholdInsights.length).toBeLessThanOrEqual(
-        lowThresholdInsights.length
-      );
+      expect(highThresholdInsights.length).toBeLessThanOrEqual(lowThresholdInsights.length);
     });
 
     it('should generate different types of insights', async () => {
@@ -89,30 +89,20 @@ describe('AIAnalyticsService', () => {
         end: new Date(),
       };
 
-      const insights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-          threshold: 0.5, // Lower threshold to get more insights
-        }
-      );
+      const insights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+        threshold: 0.5, // Lower threshold to get more insights
+      });
 
-      const insightTypes = new Set(insights.map(i => i.type));
+      const insightTypes = new Set(insights.map((i) => i.type));
 
       // Should have multiple types of insights
       expect(insightTypes.size).toBeGreaterThan(1);
 
       // Check for specific insight types
-      const expectedTypes = [
-        'trend',
-        'anomaly',
-        'cluster',
-        'segment',
-        'strategy',
-      ];
-      expectedTypes.forEach(type => {
-        const hasType = insights.some(i => i.type === type);
+      const expectedTypes = ['trend', 'anomaly', 'cluster', 'segment', 'strategy'];
+      expectedTypes.forEach((type) => {
+        const hasType = insights.some((i) => i.type === type);
         expect(hasType).toBe(true);
       });
     });
@@ -125,20 +115,16 @@ describe('AIAnalyticsService', () => {
         end: new Date(),
       };
 
-      const insights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-          metrics: ['views', 'engagement', 'followers'],
-        }
-      );
+      const insights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+        metrics: ['views', 'engagement', 'followers'],
+      });
 
-      const trendInsights = insights.filter(i => i.type === 'trend');
+      const trendInsights = insights.filter((i) => i.type === 'trend');
       expect(trendInsights.length).toBeGreaterThan(0);
 
       // Verify trend insights have required properties
-      trendInsights.forEach(insight => {
+      trendInsights.forEach((insight) => {
         expect(insight.data).toHaveProperty('metric');
         expect(insight.data).toHaveProperty('trend');
         expect(insight.data).toHaveProperty('significance');
@@ -154,18 +140,14 @@ describe('AIAnalyticsService', () => {
         end: new Date(),
       };
 
-      const insights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-          threshold: 0.5,
-        }
-      );
+      const insights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+        threshold: 0.5,
+      });
 
-      const anomalyInsights = insights.filter(i => i.type === 'anomaly');
+      const anomalyInsights = insights.filter((i) => i.type === 'anomaly');
 
-      anomalyInsights.forEach(insight => {
+      anomalyInsights.forEach((insight) => {
         expect(insight.data).toHaveProperty('severity');
         expect(['low', 'medium', 'high']).toContain(insight.data.severity);
       });
@@ -179,17 +161,13 @@ describe('AIAnalyticsService', () => {
         end: new Date(),
       };
 
-      const insights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-        }
-      );
+      const insights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+      });
 
-      const clusterInsights = insights.filter(i => i.type === 'cluster');
+      const clusterInsights = insights.filter((i) => i.type === 'cluster');
 
-      clusterInsights.forEach(insight => {
+      clusterInsights.forEach((insight) => {
         expect(insight.data).toHaveProperty('characteristics');
         expect(insight.data).toHaveProperty('performance');
         expect(insight.data.performance).toHaveProperty('engagement');
@@ -205,17 +183,13 @@ describe('AIAnalyticsService', () => {
         end: new Date(),
       };
 
-      const insights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-        }
-      );
+      const insights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+      });
 
-      const segmentInsights = insights.filter(i => i.type === 'segment');
+      const segmentInsights = insights.filter((i) => i.type === 'segment');
 
-      segmentInsights.forEach(insight => {
+      segmentInsights.forEach((insight) => {
         expect(insight.data).toHaveProperty('demographics');
         expect(insight.data).toHaveProperty('behaviors');
         expect(insight.data).toHaveProperty('preferences');
@@ -231,20 +205,16 @@ describe('AIAnalyticsService', () => {
         end: new Date(),
       };
 
-      const insights = await aiAnalytics.generateInsights(
-        testUserId,
-        testAccounts,
-        {
-          timeframe,
-        }
-      );
+      const insights = await aiAnalytics.generateInsights(testUserId, testAccounts, {
+        timeframe,
+      });
 
-      const strategyInsights = insights.filter(i => i.type === 'strategy');
+      const strategyInsights = insights.filter((i) => i.type === 'strategy');
 
-      strategyInsights.forEach(insight => {
+      strategyInsights.forEach((insight) => {
         expect(insight.recommendations.length).toBeGreaterThan(0);
 
-        insight.recommendations.forEach(recommendation => {
+        insight.recommendations.forEach((recommendation) => {
           expect(recommendation).toHaveProperty('action');
           expect(recommendation).toHaveProperty('impact');
           expect(recommendation).toHaveProperty('effort');
@@ -267,19 +237,14 @@ describe('AIAnalyticsService', () => {
 
       AIAnalyticsService.trackModelPerformance(modelName, latency, success);
 
-      expect(AnalyticsService.trackMetric).toHaveBeenCalledWith(
-        'ai_model_latency',
+      expect(mockAnalytics.trackMetric).toHaveBeenCalledWith('ai_model_latency', latency, {
+        model: modelName,
+      });
+      expect(mockAnalytics.trackEvent).toHaveBeenCalledWith('ai_model_invocation', {
+        model: modelName,
+        success,
         latency,
-        { model: modelName }
-      );
-      expect(AnalyticsService.trackEvent).toHaveBeenCalledWith(
-        'ai_model_invocation',
-        {
-          model: modelName,
-          success,
-          latency,
-        }
-      );
+      });
     });
 
     it('should track AI model errors', () => {
@@ -288,7 +253,7 @@ describe('AIAnalyticsService', () => {
 
       AIAnalyticsService.trackModelError(modelName, error);
 
-      expect(AnalyticsService.trackError).toHaveBeenCalledWith(error, {
+      expect(mockAnalytics.trackError).toHaveBeenCalledWith(error, {
         model: modelName,
         errorType: 'ai_model_error',
       });
@@ -300,13 +265,10 @@ describe('AIAnalyticsService', () => {
 
       AIAnalyticsService.trackFeatureUsage(featureName, userId);
 
-      expect(AnalyticsService.trackEvent).toHaveBeenCalledWith(
-        'ai_feature_usage',
-        {
-          feature: featureName,
-          userId,
-        }
-      );
+      expect(mockAnalytics.trackEvent).toHaveBeenCalledWith('ai_feature_usage', {
+        feature: featureName,
+        userId,
+      });
     });
 
     it('should track model training progress', () => {
@@ -316,7 +278,7 @@ describe('AIAnalyticsService', () => {
 
       AIAnalyticsService.trackTrainingProgress(modelName, progress, epoch);
 
-      expect(AnalyticsService.trackMetric).toHaveBeenCalledWith(
+      expect(mockAnalytics.trackMetric).toHaveBeenCalledWith(
         'model_training_progress',
         progress,
         {
@@ -353,6 +315,64 @@ describe('AIAnalyticsService', () => {
       };
       instance.setConfiguration(config);
       expect(instance.getConfiguration()).toEqual(config);
+    });
+  });
+
+  describe('trackAIEvent', () => {
+    const testEvent = {
+      eventType: 'ai_prediction',
+      modelName: 'test-model',
+      confidence: 0.95,
+      duration: 150,
+      success: true,
+    };
+
+    it('should track AI events successfully', async () => {
+      await aiAnalytics.trackAIEvent(testEvent);
+
+      expect(mockAnalytics.trackEvent).toHaveBeenCalledWith({
+        category: 'AI',
+        action: testEvent.eventType,
+        label: testEvent.modelName,
+        value: testEvent.confidence,
+        metadata: {
+          duration: testEvent.duration,
+          success: testEvent.success,
+        },
+      });
+    });
+
+    it('should handle errors gracefully', async () => {
+      mockAnalytics.trackEvent.mockRejectedValue(new Error('Test error'));
+
+      await expect(aiAnalytics.trackAIEvent(testEvent)).resolves.not.toThrow();
+      expect(mockAnalytics.trackEvent).toHaveBeenCalled();
+    });
+  });
+
+  describe('getAIMetrics', () => {
+    const testMetrics = {
+      totalPredictions: 100,
+      averageConfidence: 0.85,
+      successRate: 0.95,
+    };
+
+    beforeEach(() => {
+      mockAnalytics.getMetrics.mockResolvedValue(testMetrics);
+    });
+
+    it('should return AI metrics when user has permission', async () => {
+      const metrics = await aiAnalytics.getAIMetrics();
+
+      expect(mockRBAC.hasPermission).toHaveBeenCalled();
+      expect(metrics).toEqual(testMetrics);
+    });
+
+    it('should throw error when user lacks permission', async () => {
+      mockRBAC.hasPermission.mockResolvedValue(false);
+
+      await expect(aiAnalytics.getAIMetrics()).rejects.toThrow('Unauthorized');
+      expect(mockAnalytics.getMetrics).not.toHaveBeenCalled();
     });
   });
 });

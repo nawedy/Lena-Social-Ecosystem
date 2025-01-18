@@ -9,7 +9,9 @@ import {
   Platform,
   AccessibilityInfo,
 } from 'react-native';
+
 import { useTheme } from '../../theme';
+
 import { Input } from './Input';
 
 interface FormField {

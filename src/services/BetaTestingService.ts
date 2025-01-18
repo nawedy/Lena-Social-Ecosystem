@@ -1,9 +1,11 @@
 import { getFirestore, Timestamp } from 'firebase/firestore';
-import { sendEmail } from '../utils/email';
+
 import { generateInviteCode } from '../utils/crypto';
+import { sendEmail } from '../utils/email';
+
 import { AnalyticsService } from './AnalyticsService';
-import { SecurityService } from './SecurityService';
 import { NotificationService } from './NotificationService';
+import { SecurityService } from './SecurityService';
 
 interface BetaTester {
   id: string;
@@ -62,10 +64,7 @@ export class BetaTestingService {
     return BetaTestingService.instance;
   }
 
-  async inviteBetaTester(
-    email: string,
-    tiktokUsername?: string
-  ): Promise<string> {
+  async inviteBetaTester(email: string, tiktokUsername?: string): Promise<string> {
     const inviteCode = generateInviteCode();
 
     const betaTester: BetaTester = {
@@ -104,10 +103,7 @@ export class BetaTestingService {
     return inviteCode;
   }
 
-  private async sendInvitationEmail(
-    email: string,
-    inviteCode: string
-  ): Promise<void> {
+  private async sendInvitationEmail(email: string, inviteCode: string): Promise<void> {
     const emailTemplate = {
       subject: 'Welcome to TikTokToe Beta Testing Program!',
       body: `
@@ -209,20 +205,13 @@ export class BetaTestingService {
     return feedbackId;
   }
 
-  async updateMetrics(
-    testerId: string,
-    metrics: Partial<UserMetrics>
-  ): Promise<void> {
+  async updateMetrics(testerId: string, metrics: Partial<UserMetrics>): Promise<void> {
     await this.db
       .collection('beta_testers')
       .doc(testerId)
       .update({
-        'metrics.gamesPlayed': firebase.firestore.FieldValue.increment(
-          metrics.gamesPlayed || 0
-        ),
-        'metrics.gamesWon': firebase.firestore.FieldValue.increment(
-          metrics.gamesWon || 0
-        ),
+        'metrics.gamesPlayed': firebase.firestore.FieldValue.increment(metrics.gamesPlayed || 0),
+        'metrics.gamesWon': firebase.firestore.FieldValue.increment(metrics.gamesWon || 0),
         'metrics.averageGameDuration': metrics.averageGameDuration,
         'metrics.migrationSuccess': metrics.migrationSuccess,
         'metrics.migrationDuration': metrics.migrationDuration,
@@ -238,30 +227,26 @@ export class BetaTestingService {
     topFeatures: Array<{ feature: string; usage: number }>;
   }> {
     const snapshot = await this.db.collection('beta_testers').get();
-    const testers = snapshot.docs.map(doc => doc.data() as BetaTester);
+    const testers = snapshot.docs.map((doc) => doc.data() as BetaTester);
 
     const stats = {
       totalTesters: testers.length,
-      activeTesters: testers.filter(t => t.status === 'active').length,
+      activeTesters: testers.filter((t) => t.status === 'active').length,
       averageMigrationSuccess:
-        testers.filter(t => t.metrics.migrationSuccess).length / testers.length,
+        testers.filter((t) => t.metrics.migrationSuccess).length / testers.length,
       topFeatures: this.calculateTopFeatures(testers),
     };
 
     return stats;
   }
 
-  private calculateTopFeatures(
-    testers: BetaTester[]
-  ): Array<{ feature: string; usage: number }> {
+  private calculateTopFeatures(testers: BetaTester[]): Array<{ feature: string; usage: number }> {
     const featureUsage: Record<string, number> = {};
 
-    testers.forEach(tester => {
-      Object.entries(tester.metrics.featureUsage).forEach(
-        ([feature, count]) => {
-          featureUsage[feature] = (featureUsage[feature] || 0) + count;
-        }
-      );
+    testers.forEach((tester) => {
+      Object.entries(tester.metrics.featureUsage).forEach(([feature, count]) => {
+        featureUsage[feature] = (featureUsage[feature] || 0) + count;
+      });
     });
 
     return Object.entries(featureUsage)

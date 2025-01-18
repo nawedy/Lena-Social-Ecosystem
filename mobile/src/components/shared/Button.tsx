@@ -8,6 +8,7 @@ import {
   TextStyle,
   Animated,
 } from 'react-native';
+
 import { useTheme } from '../../theme';
 
 interface ButtonProps {

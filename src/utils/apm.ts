@@ -1,6 +1,6 @@
 import * as apm from 'elastic-apm-node';
-import { Express, Request, Response, NextFunction } from 'express';
 import { Transaction } from 'elastic-apm-node';
+import { Express, Request, Response, NextFunction } from 'express';
 
 interface APMConfig {
   serviceName: string;
@@ -61,10 +61,7 @@ export class APMService {
 
   public middleware() {
     return (req: Request, res: Response, next: NextFunction) => {
-      const transaction = this.apm.startTransaction(
-        `${req.method} ${req.path}`,
-        'request'
-      );
+      const transaction = this.apm.startTransaction(`${req.method} ${req.path}`, 'request');
 
       if (transaction) {
         // Add custom context
@@ -103,11 +100,7 @@ export class APMService {
     };
   }
 
-  public createSpan<T>(
-    name: string,
-    type: string,
-    fn: (span: any) => Promise<T>
-  ): Promise<T> {
+  public createSpan<T>(name: string, type: string, fn: (span: any) => Promise<T>): Promise<T> {
     const span = this.apm.startSpan(name, type);
     return fn(span).finally(() => {
       if (span) span.end();
@@ -178,7 +171,7 @@ export class APMService {
   public instrumentCache() {
     return {
       beforeOperation: (operation: string, key: string) => {
-        const span = this.apm.startSpan('cache.' + operation);
+        const span = this.apm.startSpan(`cache.${operation}`);
         if (span) {
           span.setLabel('key', key);
         }
@@ -193,7 +186,7 @@ export class APMService {
   public instrumentExternalCall() {
     return {
       beforeCall: (service: string, endpoint: string) => {
-        const span = this.apm.startSpan('external.' + service);
+        const span = this.apm.startSpan(`external.${service}`);
         if (span) {
           span.setLabel('endpoint', endpoint);
         }

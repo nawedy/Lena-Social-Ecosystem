@@ -1,4 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -9,10 +11,9 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
-import { ContentGenerationService } from '../../services/ContentGenerationService';
+
 import { environment } from '../../config/environment';
+import { ContentGenerationService } from '../../services/ContentGenerationService';
 
 interface TemplateTestingUIProps {
   templateId: string;
@@ -39,18 +40,13 @@ interface TestCase {
   result?: TestResult;
 }
 
-export function TemplateTestingUI({
-  templateId,
-  onTestComplete,
-}: TemplateTestingUIProps) {
+export function TemplateTestingUI({ templateId, onTestComplete }: TemplateTestingUIProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [currentInput, setCurrentInput] = useState<Record<string, any>>({});
   const [batchTesting, setBatchTesting] = useState(false);
-  const [testResults, setTestResults] = useState<Record<string, TestResult>>(
-    {}
-  );
+  const [_testResults, setTestResults] = useState<Record<string, TestResult>>({});
   const [selectedTestCase, setSelectedTestCase] = useState<string | null>(null);
 
   const _contentService = ContentGenerationService.getInstance();
@@ -92,8 +88,8 @@ export function TemplateTestingUI({
       };
 
       if (testCase) {
-        setTestCases(prev =>
-          prev.map(tc =>
+        setTestCases((prev) =>
+          prev.map((tc) =>
             tc.id === testCase.id
               ? {
                   ...tc,
@@ -120,8 +116,8 @@ export function TemplateTestingUI({
       };
 
       if (testCase) {
-        setTestCases(prev =>
-          prev.map(tc =>
+        setTestCases((prev) =>
+          prev.map((tc) =>
             tc.id === testCase.id
               ? {
                   ...tc,
@@ -145,10 +141,8 @@ export function TemplateTestingUI({
     const results: Record<string, TestResult> = {};
 
     for (const testCase of testCases) {
-      setTestCases(prev =>
-        prev.map(tc =>
-          tc.id === testCase.id ? { ...tc, status: 'running' } : tc
-        )
+      setTestCases((prev) =>
+        prev.map((tc) => (tc.id === testCase.id ? { ...tc, status: 'running' } : tc))
       );
 
       results[testCase.id] = await handleRunTest(testCase);
@@ -171,21 +165,18 @@ export function TemplateTestingUI({
       status: 'pending',
     };
 
-    setTestCases(prev => [...prev, newTestCase]);
+    setTestCases((prev) => [...prev, newTestCase]);
     setCurrentInput({});
   };
 
   const _handleDeleteTestCase = async (testCaseId: string) => {
-    setTestCases(prev => prev.filter(tc => tc.id !== testCaseId));
+    setTestCases((prev) => prev.filter((tc) => tc.id !== testCaseId));
   };
 
   const _renderTestCase = (testCase: TestCase) => (
     <TouchableOpacity
       key={testCase.id}
-      style={[
-        styles.testCase,
-        selectedTestCase === testCase.id && styles.selectedTestCase,
-      ]}
+      style={[styles.testCase, selectedTestCase === testCase.id && styles.selectedTestCase]}
       onPress={() => setSelectedTestCase(testCase.id)}
     >
       <View style={styles.testCaseHeader}>
@@ -196,66 +187,41 @@ export function TemplateTestingUI({
             onPress={() => handleRunTest(testCase)}
             disabled={loading || batchTesting}
           >
-            <Ionicons
-              name="play"
-              size={20}
-              color={loading || batchTesting ? '#ccc' : '#28a745'}
-            />
+            <Ionicons name='play' size={20} color={loading || batchTesting ? '#ccc' : '#28a745'} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => handleDeleteTestCase(testCase.id)}
             disabled={loading || batchTesting}
           >
-            <Ionicons
-              name="trash"
-              size={20}
-              color={loading || batchTesting ? '#ccc' : '#dc3545'}
-            />
+            <Ionicons name='trash' size={20} color={loading || batchTesting ? '#ccc' : '#dc3545'} />
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.testCaseContent}>
         <Text style={styles.inputLabel}>{t('testing.input')}:</Text>
-        <Text style={styles.inputText}>
-          {JSON.stringify(testCase.input, null, 2)}
-        </Text>
+        <Text style={styles.inputText}>{JSON.stringify(testCase.input, null, 2)}</Text>
 
         {testCase.result && (
           <>
             <Text style={styles.outputLabel}>{t('testing.output')}:</Text>
-            <Text
-              style={[
-                styles.outputText,
-                !testCase.result.success && styles.errorText,
-              ]}
-            >
+            <Text style={[styles.outputText, !testCase.result.success && styles.errorText]}>
               {testCase.result.error || testCase.result.output}
             </Text>
 
             <View style={styles.metrics}>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>
-                  {t('testing.executionTime')}
-                </Text>
-                <Text style={styles.metricValue}>
-                  {testCase.result.metrics.executionTime}ms
-                </Text>
+                <Text style={styles.metricLabel}>{t('testing.executionTime')}</Text>
+                <Text style={styles.metricValue}>{testCase.result.metrics.executionTime}ms</Text>
               </View>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>
-                  {t('testing.tokenCount')}
-                </Text>
-                <Text style={styles.metricValue}>
-                  {testCase.result.metrics.tokenCount}
-                </Text>
+                <Text style={styles.metricLabel}>{t('testing.tokenCount')}</Text>
+                <Text style={styles.metricValue}>{testCase.result.metrics.tokenCount}</Text>
               </View>
               <View style={styles.metricItem}>
                 <Text style={styles.metricLabel}>{t('testing.cost')}</Text>
-                <Text style={styles.metricValue}>
-                  ${testCase.result.metrics.cost.toFixed(4)}
-                </Text>
+                <Text style={styles.metricValue}>${testCase.result.metrics.cost.toFixed(4)}</Text>
               </View>
             </View>
           </>
@@ -276,10 +242,10 @@ export function TemplateTestingUI({
           disabled={batchTesting || loading}
         >
           {batchTesting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color='#fff' />
           ) : (
             <>
-              <Ionicons name="play-circle" size={20} color="#fff" />
+              <Ionicons name='play-circle' size={20} color='#fff' />
               <Text style={styles.buttonText}>{t('testing.runAll')}</Text>
             </>
           )}
@@ -293,10 +259,10 @@ export function TemplateTestingUI({
           multiline
           placeholder={t('testing.inputPlaceholder')}
           value={JSON.stringify(currentInput, null, 2)}
-          onChangeText={text => {
+          onChangeText={(text) => {
             try {
               setCurrentInput(JSON.parse(text));
-            } catch (e) {
+            } catch (_e) {
               // Invalid JSON, ignore
             }
           }}
@@ -320,9 +286,7 @@ export function TemplateTestingUI({
       </View>
 
       <Text style={styles.sectionTitle}>{t('testing.savedTests')}</Text>
-      <ScrollView style={styles.testCaseList}>
-        {testCases.map(renderTestCase)}
-      </ScrollView>
+      <ScrollView style={styles.testCaseList}>{testCases.map(renderTestCase)}</ScrollView>
     </View>
   );
 }

@@ -1,10 +1,10 @@
 import { BskyAgent } from '@atproto/api';
-import { atproto } from './atproto';
 import { LanguageServiceClient } from '@google-cloud/language';
-import { ImageAnnotatorClient } from '@google-cloud/vision';
-import { VideoIntelligenceServiceClient } from '@google-cloud/video-intelligence';
 import { Storage } from '@google-cloud/storage';
-import { securityService } from './security';
+import { VideoIntelligenceServiceClient } from '@google-cloud/video-intelligence';
+import { ImageAnnotatorClient } from '@google-cloud/vision';
+
+import { atproto } from './atproto';
 
 interface ContentAnalysisResult {
   id: string;
@@ -46,7 +46,19 @@ interface ModerationType {
   action: 'allow' | 'flag' | 'block';
 }
 
-export class MLContentModerationService {
+interface SafeSearchAnnotation {
+  adult?: string;
+  spoof?: string;
+  medical?: string;
+  violence?: string;
+  racy?: string;
+}
+
+interface ExplicitAnnotation {
+  frames?: Array<Record<string, string>>;
+}
+
+class MLContentModerationService {
   private agent: BskyAgent;
   private languageClient: LanguageServiceClient;
   private visionClient: ImageAnnotatorClient;
@@ -84,15 +96,12 @@ export class MLContentModerationService {
     return MLContentModerationService.instance;
   }
 
-  async analyzeText(
-    text: string,
-    contentUri: string
-  ): Promise<ContentAnalysisResult> {
+  async analyzeText(text: string, contentUri: string): Promise<ContentAnalysisResult> {
     try {
-      const [syntaxResult] = await this.languageClient.analyzeSyntax({
+      const [_syntaxResult] = await this.languageClient.analyzeSyntax({
         document: { content: text, type: 'PLAIN_TEXT' },
       });
-      const [sentimentResult] = await this.languageClient.analyzeSentiment({
+      const [_sentimentResult] = await this.languageClient.analyzeSentiment({
         document: { content: text, type: 'PLAIN_TEXT' },
       });
       const [entityResult] = await this.languageClient.analyzeEntitySentiment({
@@ -102,7 +111,7 @@ export class MLContentModerationService {
       // Analyze for toxicity and other attributes
       const scores = await this.analyzeToxicity(text);
 
-      const entities = entityResult.entities?.map(entity => ({
+      const entities = entityResult.entities?.map((entity) => ({
         name: entity.name || '',
         type: entity.type || '',
         salience: entity.salience || 0,
@@ -131,18 +140,15 @@ export class MLContentModerationService {
     }
   }
 
-  async analyzeImage(
-    imageUrl: string,
-    contentUri: string
-  ): Promise<ContentAnalysisResult> {
+  async analyzeImage(imageUrl: string, contentUri: string): Promise<ContentAnalysisResult> {
     try {
-      const [result] = await this.visionClient.safeSearchDetection(imageUrl);
+      const [_result] = await this.visionClient.safeSearchDetection(imageUrl);
       const [labelResult] = await this.visionClient.labelDetection(imageUrl);
 
       const safeSearch = result.safeSearchAnnotation || {};
       const scores = this.normalizeVisionScores(safeSearch);
 
-      const labels = (labelResult.labelAnnotations || []).map(label => ({
+      const labels = (labelResult.labelAnnotations || []).map((label) => ({
         name: label.description || '',
         confidence: label.score || 0,
         category: label.topicality ? 'high-topicality' : 'standard',
@@ -169,26 +175,19 @@ export class MLContentModerationService {
     }
   }
 
-  async analyzeVideo(
-    videoUrl: string,
-    contentUri: string
-  ): Promise<ContentAnalysisResult> {
+  async analyzeVideo(videoUrl: string, contentUri: string): Promise<ContentAnalysisResult> {
     try {
       const [operation] = await this.videoClient.annotateVideo({
         inputUri: videoUrl,
-        features: [
-          'EXPLICIT_CONTENT_DETECTION',
-          'LABEL_DETECTION',
-          'OBJECT_TRACKING',
-        ],
+        features: ['EXPLICIT_CONTENT_DETECTION', 'LABEL_DETECTION', 'OBJECT_TRACKING'],
       });
 
-      const [result] = await operation.promise();
+      const [_result] = await operation.promise();
 
       const explicitAnnotation = result.explicitAnnotation || {};
       const scores = this.normalizeVideoScores(explicitAnnotation);
 
-      const labels = (result.labelAnnotations || []).map(label => ({
+      const labels = (result.labelAnnotations || []).map((label) => ({
         name: label.entity?.description || '',
         confidence: label.frames?.[0]?.confidence || 0,
         category: label.categoryEntities?.[0]?.description || 'standard',
@@ -215,9 +214,7 @@ export class MLContentModerationService {
     }
   }
 
-  private async analyzeToxicity(
-    text: string
-  ): Promise<ContentAnalysisResult['scores']> {
+  private async analyzeToxicity(text: string): Promise<ContentAnalysisResult['scores']> {
     try {
       // Using Cloud Natural Language API for sentiment and content analysis
       const [result] = await this.languageClient.analyzeSentiment({
@@ -245,19 +242,13 @@ export class MLContentModerationService {
     }
   }
 
-  private convertSentimentToToxicity(
-    sentiment: number,
-    magnitude: number
-  ): number {
+  private convertSentimentToToxicity(sentiment: number, magnitude: number): number {
     // Convert negative sentiment to toxicity score
     // Sentiment ranges from -1 to 1, we want toxicity from 0 to 1
     return Math.max(0, (-sentiment + 1) / 2) * Math.min(1, magnitude);
   }
 
-  private calculateSevereToxicity(
-    sentiment: number,
-    magnitude: number
-  ): number {
+  private calculateSevereToxicity(sentiment: number, magnitude: number): number {
     // Severe toxicity is a more stringent version of toxicity
     const toxicity = this.convertSentimentToToxicity(sentiment, magnitude);
     return Math.pow(toxicity, 1.5); // Exponential scaling for severe toxicity
@@ -325,9 +316,7 @@ export class MLContentModerationService {
     return Math.min(1, hateMatches / 2);
   }
 
-  private normalizeVisionScores(
-    safeSearch: any
-  ): ContentAnalysisResult['scores'] {
+  private normalizeVisionScores(safeSearch: SafeSearchAnnotation): ContentAnalysisResult['scores'] {
     const likelihoodMap: { [key: string]: number } = {
       VERY_UNLIKELY: 0,
       UNLIKELY: 0.25,
@@ -345,13 +334,11 @@ export class MLContentModerationService {
     };
   }
 
-  private normalizeVideoScores(
-    explicitAnnotation: any
-  ): ContentAnalysisResult['scores'] {
+  private normalizeVideoScores(explicitAnnotation: ExplicitAnnotation): ContentAnalysisResult['scores'] {
     const frames = explicitAnnotation.frames || [];
     if (frames.length === 0) return {};
 
-    const averageScores = frames.reduce((acc: any, frame: any) => {
+    const averageScores = frames.reduce((acc: Record<string, number>, frame: Record<string, string>) => {
       Object.entries(frame).forEach(([key, value]) => {
         if (typeof value === 'string') {
           acc[key] = (acc[key] || 0) + this.normalizeVideoLikelihood(value);
@@ -360,7 +347,7 @@ export class MLContentModerationService {
       return acc;
     }, {});
 
-    Object.keys(averageScores).forEach(key => {
+    Object.keys(averageScores).forEach((key) => {
       averageScores[key] /= frames.length;
     });
 
@@ -406,9 +393,7 @@ export class MLContentModerationService {
     };
   }
 
-  private async storeAnalysisResult(
-    result: ContentAnalysisResult
-  ): Promise<void> {
+  private async storeAnalysisResult(result: ContentAnalysisResult): Promise<void> {
     try {
       // Store in Cloud Storage for audit trail
       const bucket = this.storage.bucket(process.env.GCP_STORAGE_BUCKET || '');

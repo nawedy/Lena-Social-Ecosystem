@@ -13,7 +13,7 @@ interface UserProperties {
 
 class AnalyticsService {
   private static instance: AnalyticsService;
-  private initialized: boolean = false;
+  private initialized = false;
 
   private constructor() {
     this.initialize();
@@ -98,7 +98,7 @@ class AnalyticsService {
     }
   }
 
-  async logError(error: Error, fatal: boolean = false) {
+  async logError(error: Error, fatal = false) {
     try {
       await crashlytics().recordError(error);
       await analytics().logEvent('app_error', {

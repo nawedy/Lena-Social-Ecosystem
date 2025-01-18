@@ -1,4 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -7,11 +10,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
 import { LineChart } from 'react-native-chart-kit';
+
 import { APIUsageService } from '../../services/APIUsageService';
-import { format } from 'date-fns';
+
 
 interface UsageData {
   provider: string;
@@ -40,11 +42,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
       let allUsage: UsageData[] = [];
 
       for (const provider of providers) {
-        const _stats = await apiUsageService.getUsageStats(
-          userId,
-          provider,
-          period
-        );
+        const _stats = await apiUsageService.getUsageStats(userId, provider, period);
 
         Object.entries(stats).forEach(([operation, data]) => {
           allUsage.push({
@@ -56,9 +54,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
       }
 
       if (selectedProvider !== 'all') {
-        allUsage = allUsage.filter(
-          usage => usage.provider === selectedProvider
-        );
+        allUsage = allUsage.filter((usage) => usage.provider === selectedProvider);
       }
 
       setUsageData(allUsage);
@@ -71,10 +67,10 @@ export function APIUsageStats({ userId }: { userId: string }) {
 
   const _renderUsageChart = () => {
     const _chartData = {
-      labels: usageData.map(data => data.operation.substring(0, 8)),
+      labels: usageData.map((data) => data.operation.substring(0, 8)),
       datasets: [
         {
-          data: usageData.map(data => data.tokens),
+          data: usageData.map((data) => data.tokens),
           color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
           strokeWidth: 2,
         },
@@ -118,7 +114,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
 
     return (
       <View style={styles.providerSelector}>
-        {providers.map(provider => (
+        {providers.map((provider) => (
           <TouchableOpacity
             key={provider}
             style={[
@@ -130,8 +126,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
             <Text
               style={[
                 styles.providerButtonText,
-                selectedProvider === provider &&
-                  styles.providerButtonTextSelected,
+                selectedProvider === provider && styles.providerButtonTextSelected,
               ]}
             >
               {provider === 'all' ? t('all') : provider}
@@ -145,33 +140,21 @@ export function APIUsageStats({ userId }: { userId: string }) {
   const _renderPeriodSelector = () => (
     <View style={styles.periodSelector}>
       <TouchableOpacity
-        style={[
-          styles.periodButton,
-          period === 'daily' && styles.periodButtonSelected,
-        ]}
+        style={[styles.periodButton, period === 'daily' && styles.periodButtonSelected]}
         onPress={() => setPeriod('daily')}
       >
         <Text
-          style={[
-            styles.periodButtonText,
-            period === 'daily' && styles.periodButtonTextSelected,
-          ]}
+          style={[styles.periodButtonText, period === 'daily' && styles.periodButtonTextSelected]}
         >
           {t('daily')}
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
-        style={[
-          styles.periodButton,
-          period === 'monthly' && styles.periodButtonSelected,
-        ]}
+        style={[styles.periodButton, period === 'monthly' && styles.periodButtonSelected]}
         onPress={() => setPeriod('monthly')}
       >
         <Text
-          style={[
-            styles.periodButtonText,
-            period === 'monthly' && styles.periodButtonTextSelected,
-          ]}
+          style={[styles.periodButtonText, period === 'monthly' && styles.periodButtonTextSelected]}
         >
           {t('monthly')}
         </Text>
@@ -182,7 +165,7 @@ export function APIUsageStats({ userId }: { userId: string }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size='large' color='#007AFF' />
       </View>
     );
   }

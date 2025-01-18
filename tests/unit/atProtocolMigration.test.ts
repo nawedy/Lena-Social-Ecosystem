@@ -1,20 +1,18 @@
 import { BskyAgent } from '@atproto/api';
-import { ATProtocolMigration } from '../../src/services/atProtocolMigration';
-import { TikTokMigrationService } from '../../src/services/TikTokMigrationService';
+
+import { ATProtocolMigrationService } from '../../src/services/atProtocolMigration';
 
 jest.mock('@atproto/api');
-jest.mock('../../src/services/TikTokMigrationService');
 
-describe('ATProtocolMigration', () => {
+describe('ATProtocolMigrationService', () => {
   let agent: jest.Mocked<BskyAgent>;
-  let migration: ATProtocolMigration;
+  let migration: ATProtocolMigrationService;
 
   beforeEach(() => {
     agent = new BskyAgent({
       service: 'https://example.com',
     }) as jest.Mocked<BskyAgent>;
-    agent.session = { did: 'did:example:123' };
-    migration = new ATProtocolMigration(agent);
+    migration = new ATProtocolMigrationService(agent);
   });
 
   describe('startMigration', () => {

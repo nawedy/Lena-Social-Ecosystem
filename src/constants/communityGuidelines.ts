@@ -14,13 +14,11 @@ export const CommunityGuidelines = {
   principles: [
     {
       title: 'Safety First',
-      description:
-        'We prioritize the safety and well-being of our community members.',
+      description: 'We prioritize the safety and well-being of our community members.',
     },
     {
       title: 'Respect for All',
-      description:
-        'We embrace diversity and require mutual respect among all users.',
+      description: 'We embrace diversity and require mutual respect among all users.',
     },
     {
       title: 'Authenticity',
@@ -28,16 +26,14 @@ export const CommunityGuidelines = {
     },
     {
       title: 'Creativity',
-      description:
-        'We celebrate creative expression while maintaining community standards.',
+      description: 'We celebrate creative expression while maintaining community standards.',
     },
   ],
 
   rules: {
     harassment: {
       title: 'No Harassment or Bullying',
-      description:
-        'We do not tolerate any form of harassment, bullying, or intimidation.',
+      description: 'We do not tolerate any form of harassment, bullying, or intimidation.',
       examples: [
         'Personal attacks or insults',
         'Targeted harassment campaigns',
@@ -50,8 +46,7 @@ export const CommunityGuidelines = {
 
     hateSpeech: {
       title: 'No Hate Speech or Discrimination',
-      description:
-        'Content promoting hate or discrimination is strictly prohibited.',
+      description: 'Content promoting hate or discrimination is strictly prohibited.',
       examples: [
         'Attacks based on protected characteristics',
         'Discriminatory slurs or symbols',
@@ -75,8 +70,7 @@ export const CommunityGuidelines = {
 
     adultContent: {
       title: 'No Adult or Explicit Content',
-      description:
-        'TikTokToe is a family-friendly platform. Adult content is prohibited.',
+      description: 'TikTokToe is a family-friendly platform. Adult content is prohibited.',
       examples: [
         'Nudity or sexual content',
         'Sexually suggestive material',
@@ -123,14 +117,12 @@ export const CommunityGuidelines = {
       },
       {
         type: 'temporary-suspension',
-        description:
-          'Repeated violations may result in temporary account suspension.',
+        description: 'Repeated violations may result in temporary account suspension.',
         durations: ['24 hours', '7 days', '30 days'],
       },
       {
         type: 'permanent-ban',
-        description:
-          'Severe or repeated violations may result in permanent account termination.',
+        description: 'Severe or repeated violations may result in permanent account termination.',
       },
     ],
 

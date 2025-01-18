@@ -1,13 +1,13 @@
-import { Platform, InteractionManager } from 'react-native';
 import analytics from '@react-native-firebase/analytics';
 import perf from '@react-native-firebase/perf';
+import { Platform, InteractionManager } from 'react-native';
 
 export class PerformanceMetrics {
   private static instance: PerformanceMetrics;
-  private interactionCount: number = 0;
-  private lastInteractionTime: number = 0;
-  private frameDrops: number = 0;
-  private jsHeapSize: number = 0;
+  private interactionCount = 0;
+  private lastInteractionTime = 0;
+  private frameDrops = 0;
+  private jsHeapSize = 0;
 
   private constructor() {
     this.setupFrameDropMonitoring();

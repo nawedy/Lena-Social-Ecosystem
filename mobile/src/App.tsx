@@ -1,19 +1,20 @@
+import messaging from '@react-native-firebase/messaging';
+import { NavigationContainer } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StatusBar, LogBox, Platform } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import PushNotification from 'react-native-push-notification';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from 'react-native-splash-screen';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import messaging from '@react-native-firebase/messaging';
-import PushNotification from 'react-native-push-notification';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+
 import { logger } from '../../src/utils/logger';
 
-import { store, persistor } from './store';
 import { RootNavigator } from './navigation';
-import { ThemeProvider } from './theme';
 import { initializeServices } from './services';
+import { store, persistor } from './store';
+import { ThemeProvider } from './theme';
 
 LogBox.ignoreLogs([
   'ViewPropTypes will be removed',

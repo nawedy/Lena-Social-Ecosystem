@@ -1,8 +1,9 @@
-import React from 'react';
-import type { Preview } from '@storybook/react-native';
 import { withBackgrounds } from '@storybook/addon-ondevice-backgrounds';
-import { ThemeProvider } from '../src/theme';
+import type { Preview } from '@storybook/react-native';
+import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { ThemeProvider } from '../src/theme';
 
 const preview: Preview = {
   decorators: [

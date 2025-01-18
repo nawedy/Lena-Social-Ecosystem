@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
 import { APM } from '@elastic/apm-rum';
-import * as Sentry from '@sentry/node';
+import { Counter, Histogram } from '@opentelemetry/api-metrics';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { MeterProvider } from '@opentelemetry/metrics';
-import { Counter, Histogram } from '@opentelemetry/api-metrics';
+import * as Sentry from '@sentry/node';
+import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 interface MonitoringConfig {
@@ -66,12 +66,9 @@ export class MonitoringService {
       description: 'Total number of HTTP requests',
     });
 
-    this.responseTimeHistogram = meter.createHistogram(
-      'http_response_time_seconds',
-      {
-        description: 'HTTP response time in seconds',
-      }
-    );
+    this.responseTimeHistogram = meter.createHistogram('http_response_time_seconds', {
+      description: 'HTTP response time in seconds',
+    });
   }
 
   public static getInstance(config?: MonitoringConfig): MonitoringService {
@@ -93,10 +90,7 @@ export class MonitoringService {
       req.headers['x-trace-id'] = traceId;
 
       // Start APM transaction
-      const transaction = this.apm.startTransaction(
-        `${req.method} ${req.path}`,
-        'request'
-      );
+      const transaction = this.apm.startTransaction(`${req.method} ${req.path}`, 'request');
 
       // Increment request counter
       this.requestCounter.add(1, {
@@ -141,7 +135,7 @@ export class MonitoringService {
   }
 
   public errorTracking() {
-    return (err: Error, req: Request, res: Response, next: NextFunction) => {
+    return (err: Error, req: Request, _res: Response, next: NextFunction) => {
       // Capture error in Sentry
       Sentry.captureException(err, {
         extra: {
@@ -178,7 +172,7 @@ export class MonitoringService {
   }
 
   public healthCheck() {
-    return (req: Request, res: Response) => {
+    return (_req: Request, res: Response) => {
       const healthStatus = {
         status: 'ok',
         timestamp: new Date().toISOString(),

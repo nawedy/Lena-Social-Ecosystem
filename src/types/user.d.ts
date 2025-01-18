@@ -67,14 +67,7 @@ export interface UserFilter {
 export interface UserActivity {
   id: string;
   userId: string;
-  type:
-    | 'login'
-    | 'logout'
-    | 'post'
-    | 'like'
-    | 'comment'
-    | 'follow'
-    | 'unfollow';
+  type: 'login' | 'logout' | 'post' | 'like' | 'comment' | 'follow' | 'unfollow';
   timestamp: Date;
   metadata?: {
     ip?: string;

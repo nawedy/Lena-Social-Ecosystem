@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Button } from '../components/shared/Button';
 import { DatePicker } from '../components/shared/DatePicker';
 import { Dropdown } from '../components/shared/Dropdown';
-import { Button } from '../components/shared/Button';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const dropdownItems = [
   { label: 'Option 1', value: '1' },

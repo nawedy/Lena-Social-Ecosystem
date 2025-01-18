@@ -1,7 +1,9 @@
-import { monitoring_v3, google } from '@google-cloud/monitoring';
-import { Datastore } from '@google-cloud/datastore';
 import { BigQuery } from '@google-cloud/bigquery';
+import { Datastore } from '@google-cloud/datastore';
+import { monitoring_v3, google } from '@google-cloud/monitoring';
+
 import { config } from '../config';
+
 import { atproto } from './atproto';
 
 interface MetricData {
@@ -65,12 +67,7 @@ export class AdvancedAnalyticsService {
     this.dashboardConfigs.set('user-engagement', {
       id: 'user-engagement',
       name: 'User Engagement Analytics',
-      metrics: [
-        'active-users',
-        'session-duration',
-        'feature-usage',
-        'user-retention',
-      ],
+      metrics: ['active-users', 'session-duration', 'feature-usage', 'user-retention'],
       refreshInterval: 300, // 5 minutes
       layout: {
         rows: 2,

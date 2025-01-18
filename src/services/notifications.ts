@@ -32,9 +32,7 @@ export class NotificationService {
     }
 
     try {
-      const registration = await navigator.serviceWorker.register(
-        this.serviceWorkerPath
-      );
+      const registration = await navigator.serviceWorker.register(this.serviceWorkerPath);
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: this.vapidPublicKey,
@@ -49,9 +47,7 @@ export class NotificationService {
   }
 
   // Update push subscription on server
-  private async updatePushSubscription(
-    subscription: PushSubscription
-  ): Promise<void> {
+  private async updatePushSubscription(subscription: PushSubscription): Promise<void> {
     // Implementation would depend on your backend service
     await fetch('/api/push-subscriptions', {
       method: 'POST',
@@ -66,9 +62,7 @@ export class NotificationService {
   }
 
   // Update notification preferences
-  public async updateNotificationPreferences(
-    preferences: NotificationPreferences
-  ): Promise<void> {
+  public async updateNotificationPreferences(preferences: NotificationPreferences): Promise<void> {
     // Store preferences in AT Protocol using app.bsky.actor.preferences
     const record = {
       notifications: preferences,
@@ -93,7 +87,7 @@ export class NotificationService {
       });
 
       return response.data.value.notifications;
-    } catch (error) {
+    } catch (_error) {
       // Return default preferences if none are set
       return {
         mentions: true,
@@ -108,11 +102,8 @@ export class NotificationService {
   }
 
   // Format notification for different channels
-  private formatNotification(
-    notification: AppBskyNotificationListNotifications.Notification
-  ) {
-    const author =
-      notification.author.displayName || notification.author.handle;
+  private formatNotification(notification: AppBskyNotificationListNotifications.Notification) {
+    const author = notification.author.displayName || notification.author.handle;
     let message = '';
 
     switch (notification.reason) {
@@ -218,8 +209,8 @@ export class NotificationService {
     // Send notification through each enabled channel
     await Promise.all(
       preferences.channels
-        .filter(channel => channel.enabled)
-        .map(channel => this.sendNotification(notification, channel))
+        .filter((channel) => channel.enabled)
+        .map((channel) => this.sendNotification(notification, channel))
     );
   }
 }

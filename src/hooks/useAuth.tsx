@@ -1,14 +1,9 @@
-import {
-  useState,
-  useEffect,
-  useContext,
-  createContext,
-  ReactNode,
-} from 'react';
-import { User } from '../types/user';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { useState, useEffect, useContext, createContext, ReactNode } from 'react';
+
 import { db } from '../config/firebase';
+import { User } from '../types/user';
 
 interface AuthContextType {
   user: User | null;
@@ -32,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const _auth = getAuth();
 
   useEffect(() => {
-    const _unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
+    const _unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
           // Get additional user data from Firestore
@@ -93,10 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const _signUp = async (email: string, password: string, username: string) => {
     try {
       setLoading(true);
-      const { user: firebaseUser } = await auth.createUserWithEmailAndPassword(
-        email,
-        password
-      );
+      const { user: firebaseUser } = await auth.createUserWithEmailAndPassword(email, password);
 
       if (firebaseUser) {
         // Create user document in Firestore
@@ -155,9 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updatedAt: new Date(),
         });
 
-        setUser(prev =>
-          prev ? { ...prev, ...data, updatedAt: new Date() } : null
-        );
+        setUser((prev) => (prev ? { ...prev, ...data, updatedAt: new Date() } : null));
       }
     } catch (err) {
       setError(err as Error);

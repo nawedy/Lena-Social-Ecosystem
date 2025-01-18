@@ -1,7 +1,9 @@
-import { chromium, Browser, Page } from 'playwright';
 import { BskyAgent } from '@atproto/api';
-import { atproto } from '../../src/services/atproto';
+import { chromium, Browser, Page } from 'playwright';
+
+
 import { config } from '../../src/config';
+import { atproto } from '../../src/services/atproto';
 
 let browser: Browser;
 let page: Page;

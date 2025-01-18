@@ -101,7 +101,7 @@ export class ATProtocolAffiliate {
     await rt.detectFacets(this.agent);
 
     const mediaBlobs = params.media
-      ? await Promise.all(params.media.map(blob => this.agent.uploadBlob(blob)))
+      ? await Promise.all(params.media.map((blob) => this.agent.uploadBlob(blob)))
       : [];
 
     const record = {
@@ -109,7 +109,7 @@ export class ATProtocolAffiliate {
       product: params.productUri,
       text: rt.text,
       facets: rt.facets,
-      media: mediaBlobs.map(blob => ({
+      media: mediaBlobs.map((blob) => ({
         image: blob.data.blob,
         alt: 'Product share media',
       })),
@@ -219,11 +219,10 @@ export class ATProtocolAffiliate {
       }>;
     };
   }> {
-    const response =
-      await this.agent.api.app.bsky.commerce.getAffiliateAnalytics({
-        affiliate: this.agent.session?.did ?? '',
-        timeframe,
-      });
+    const response = await this.agent.api.app.bsky.commerce.getAffiliateAnalytics({
+      affiliate: this.agent.session?.did ?? '',
+      timeframe,
+    });
 
     return response.data;
   }
@@ -243,24 +242,19 @@ export class ATProtocolAffiliate {
       paid: number;
     };
   }> {
-    const response =
-      await this.agent.api.app.bsky.commerce.getAffiliateEarnings({
-        affiliate: this.agent.session?.did ?? '',
-        ...params,
-      });
+    const response = await this.agent.api.app.bsky.commerce.getAffiliateEarnings({
+      affiliate: this.agent.session?.did ?? '',
+      ...params,
+    });
 
     return response.data;
   }
 
   // Tracking
-  public async trackSharePerformance(
-    shareUri: string
-  ): Promise<ProductShare['performance']> {
-    const response = await this.agent.api.app.bsky.commerce.getSharePerformance(
-      {
-        share: shareUri,
-      }
-    );
+  public async trackSharePerformance(shareUri: string): Promise<ProductShare['performance']> {
+    const response = await this.agent.api.app.bsky.commerce.getSharePerformance({
+      share: shareUri,
+    });
 
     return response.data;
   }

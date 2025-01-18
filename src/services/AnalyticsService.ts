@@ -1,6 +1,6 @@
+import { ErrorReporting } from '@google-cloud/error-reporting';
 import { Logging } from '@google-cloud/logging';
 import { Monitoring } from '@google-cloud/monitoring';
-import { ErrorReporting } from '@google-cloud/error-reporting';
 import { Trace } from '@google-cloud/trace-agent';
 
 export interface AnalyticsEvent {
@@ -12,7 +12,7 @@ export interface AnalyticsEvent {
 
 export class AnalyticsService {
   private static instance: AnalyticsService;
-  private initialized: boolean = false;
+  private initialized = false;
   private logging: Logging;
   private monitoring: Monitoring;
   private errorReporting: ErrorReporting;
@@ -54,10 +54,7 @@ export class AnalyticsService {
     return this.initialized;
   }
 
-  async trackEvent(
-    eventName: string,
-    metadata: Record<string, any> = {}
-  ): Promise<void> {
+  async trackEvent(eventName: string, metadata: Record<string, any> = {}): Promise<void> {
     const log = this.logging.log('tiktoktoe-events');
     await log.write({
       severity: 'INFO',
@@ -105,10 +102,7 @@ export class AnalyticsService {
     });
   }
 
-  async trackError(
-    error: Error,
-    metadata: Record<string, any> = {}
-  ): Promise<void> {
+  async trackError(error: Error, metadata: Record<string, any> = {}): Promise<void> {
     // Report to Error Reporting
     this.errorReporting.report(error);
 

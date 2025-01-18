@@ -1,3 +1,5 @@
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -9,17 +11,23 @@ import {
   _KeyboardAvoidingView,
   RefreshControl,
   _useWindowDimensions,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
 import { useATProto } from '../../contexts/ATProtoContext';
+import { ATProtoProvider } from '../../contexts/ATProtoContext';
+import { AuthProvider } from '../../contexts/AuthContext';
+import { BetaProvider } from '../../contexts/BetaContext';
+import { beta } from '../../services/beta';
+import { ThemeProvider } from '../../theme';
+import { colors } from '../../theme/colors';
+import type { _BetaStats } from '../../types/beta';
+
+import { BetaProfile } from './BetaProfile';
 import { FeedbackForm } from './FeedbackForm';
 import { InviteScreen } from './InviteScreen';
-import { BetaProfile } from './BetaProfile';
-import { beta } from '../../services/beta';
-import type { _BetaStats } from '../../types/beta';
 
 const _Tab = createBottomTabNavigator();
 
@@ -52,7 +60,7 @@ export function BetaApp() {
   const _loadBetaStats = async () => {
     try {
       const _stats = await beta.getBetaStats();
-      setStats(stats);
+      setStats(_stats);
     } catch (error) {
       console.error('Error loading beta stats:', error);
     } finally {
@@ -63,9 +71,7 @@ export function BetaApp() {
   const _HomeScreen = () => (
     <ScrollView
       style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={loadBetaStats} />
-      }
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadBetaStats} />}
     >
       <View style={styles.header}>
         <Text style={styles.title}>Beta Testing Hub</Text>
@@ -76,9 +82,7 @@ export function BetaApp() {
               <Text style={styles.statLabel}>Active Testers</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>
-                {stats.users.accepted_invitations}
-              </Text>
+              <Text style={styles.statValue}>{stats.users.accepted_invitations}</Text>
               <Text style={styles.statLabel}>Invites Accepted</Text>
             </View>
             <View style={styles.statCard}>
@@ -95,14 +99,14 @@ export function BetaApp() {
             style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
             onPress={() => navigation.navigate('Invite')}
           >
-            <Icon name="account-plus" size={24} color="#fff" />
+            <Icon name='account-plus' size={24} color='#fff' />
             <Text style={styles.buttonText}>Invite Friends</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: '#2196F3' }]}
             onPress={() => navigation.navigate('Feedback')}
           >
-            <Icon name="message-draw" size={24} color="#fff" />
+            <Icon name='message-draw' size={24} color='#fff' />
             <Text style={styles.buttonText}>Submit Feedback</Text>
           </TouchableOpacity>
         </View>
@@ -111,7 +115,7 @@ export function BetaApp() {
       {stats && (
         <View style={styles.feedbackSummary}>
           <Text style={styles.sectionTitle}>Feedback Summary</Text>
-          {stats.feedback.map(item => (
+          {stats.feedback.map((item) => (
             <View key={item.type} style={styles.feedbackItem}>
               <View style={styles.feedbackType}>
                 <Icon
@@ -119,11 +123,11 @@ export function BetaApp() {
                     item.type === 'bug'
                       ? 'bug'
                       : item.type === 'feature'
-                        ? 'lightbulb'
-                        : 'message-text'
+                      ? 'lightbulb'
+                      : 'message-text'
                   }
                   size={24}
-                  color="#666"
+                  color='#666'
                 />
                 <Text style={styles.feedbackTypeText}>
                   {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
@@ -132,9 +136,7 @@ export function BetaApp() {
               <View style={styles.feedbackStats}>
                 <Text style={styles.feedbackCount}>{item.count}</Text>
                 {item.avg_rating && (
-                  <Text style={styles.feedbackRating}>
-                    ⭐️ {item.avg_rating.toFixed(1)}
-                  </Text>
+                  <Text style={styles.feedbackRating}>⭐️ {item.avg_rating.toFixed(1)}</Text>
                 )}
               </View>
             </View>
@@ -146,53 +148,51 @@ export function BetaApp() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar
+        barStyle={Platform.OS === 'ios' ? 'dark-content' : 'light-content'}
+        backgroundColor={colors.background}
+      />
       <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
-
-              switch (route.name) {
-                case 'Home':
-                  iconName = focused ? 'home' : 'home-outline';
-                  break;
-                case 'Invite':
-                  iconName = focused ? 'account-plus' : 'account-plus-outline';
-                  break;
-                case 'Feedback':
-                  iconName = focused ? 'message-draw' : 'message-draw-outline';
-                  break;
-                case 'Profile':
-                  iconName = focused ? 'account' : 'account-outline';
-                  break;
-                default:
-                  iconName = 'circle';
-              }
-
-              return <Icon name={iconName} size={size} color={color} />;
-            },
-            tabBarActiveTintColor: '#007AFF',
-            tabBarInactiveTintColor: 'gray',
-          })}
-        >
-          <Tab.Screen name="Home" component={HomeScreen} />
-          <Tab.Screen name="Invite" component={InviteScreen} />
-          <Tab.Screen name="Feedback" component={FeedbackForm} />
-          <Tab.Screen name="Profile" component={BetaProfile} />
-        </Tab.Navigator>
+        <ATProtoProvider agent={session}>
+          <AuthProvider>
+            <BetaProvider>
+              <ThemeProvider>
+                <View style={styles.content}>
+                  <Tab.Navigator
+                    screenOptions={{
+                      tabBarActiveTintColor: colors.primary,
+                      tabBarInactiveTintColor: colors.text,
+                      tabBarStyle: styles.tabBar,
+                      headerShown: false,
+                      tabBarShowLabel: Platform.OS === 'ios',
+                    }}
+                  >
+                    <Tab.Screen name='Home' component={_HomeScreen} />
+                    <Tab.Screen name='Invite' component={InviteScreen} />
+                    <Tab.Screen name='Feedback' component={FeedbackForm} />
+                    <Tab.Screen name='Profile' component={BetaProfile} />
+                  </Tab.Navigator>
+                </View>
+              </ThemeProvider>
+            </BetaProvider>
+          </AuthProvider>
+        </ATProtoProvider>
       </NavigationContainer>
     </SafeAreaView>
   );
 }
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  content: {
+    flex: 1,
   },
   header: {
     padding: 20,
@@ -297,5 +297,23 @@ const _styles = StyleSheet.create({
   feedbackRating: {
     fontSize: 14,
     color: '#666',
+  },
+  tabBar: {
+    backgroundColor: colors.background,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+    height: Platform.OS === 'ios' ? 85 : 60,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
 });

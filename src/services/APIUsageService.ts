@@ -1,6 +1,6 @@
 import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore, increment } from 'firebase/firestore';
 import * as SecureStore from 'expo-secure-store';
+import { getFirestore, increment } from 'firebase/firestore';
 
 interface UsageQuota {
   daily: number;
@@ -48,11 +48,7 @@ export class APIUsageService {
     const batch = this.db.batch();
 
     // Update daily usage
-    const dailyRef = this.db
-      .collection('usage')
-      .doc(userId)
-      .collection('daily')
-      .doc(today);
+    const dailyRef = this.db.collection('usage').doc(userId).collection('daily').doc(today);
 
     batch.set(
       dailyRef,
@@ -68,11 +64,7 @@ export class APIUsageService {
     );
 
     // Update monthly usage
-    const monthlyRef = this.db
-      .collection('usage')
-      .doc(userId)
-      .collection('monthly')
-      .doc(month);
+    const monthlyRef = this.db.collection('usage').doc(userId).collection('monthly').doc(month);
 
     batch.set(
       monthlyRef,
@@ -95,29 +87,14 @@ export class APIUsageService {
     const month = today.substring(0, 7);
 
     const [dailyUsage, monthlyUsage] = await Promise.all([
-      this.db
-        .collection('usage')
-        .doc(userId)
-        .collection('daily')
-        .doc(today)
-        .get(),
-      this.db
-        .collection('usage')
-        .doc(userId)
-        .collection('monthly')
-        .doc(month)
-        .get(),
+      this.db.collection('usage').doc(userId).collection('daily').doc(today).get(),
+      this.db.collection('usage').doc(userId).collection('monthly').doc(month).get(),
     ]);
 
     const dailyTotal = this.calculateTotalUsage(dailyUsage.data()?.[provider]);
-    const monthlyTotal = this.calculateTotalUsage(
-      monthlyUsage.data()?.[provider]
-    );
+    const monthlyTotal = this.calculateTotalUsage(monthlyUsage.data()?.[provider]);
 
-    return (
-      dailyTotal < this.quotas[provider].daily &&
-      monthlyTotal < this.quotas[provider].monthly
-    );
+    return dailyTotal < this.quotas[provider].daily && monthlyTotal < this.quotas[provider].monthly;
   }
 
   async getUsageStats(
@@ -144,30 +121,18 @@ export class APIUsageService {
     value: number
   ): Promise<void> {
     this.quotas[provider][quotaType] = value;
-    await SecureStore.setItemAsync(
-      `quota_${provider}_${quotaType}`,
-      value.toString()
-    );
+    await SecureStore.setItemAsync(`quota_${provider}_${quotaType}`, value.toString());
   }
 
   async getQuota(provider: string): Promise<UsageQuota> {
     return this.quotas[provider];
   }
 
-  private calculateTotalUsage(
-    usageData: Record<string, UsageStats> = {}
-  ): number {
-    return Object.values(usageData || {}).reduce(
-      (total, stats) => total + stats.tokens,
-      0
-    );
+  private calculateTotalUsage(usageData: Record<string, UsageStats> = {}): number {
+    return Object.values(usageData || {}).reduce((total, stats) => total + stats.tokens, 0);
   }
 
-  async generateUsageReport(
-    userId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<any> {
+  async generateUsageReport(userId: string, startDate: Date, endDate: Date): Promise<any> {
     const report = {
       summary: {
         totalCost: 0,
@@ -194,7 +159,7 @@ export class APIUsageService {
 
     const snapshot = await usageQuery.get();
 
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc) => {
       const data = doc.data();
       Object.entries(data).forEach(([provider, operations]) => {
         if (!report.providers[provider]) {
@@ -206,34 +171,32 @@ export class APIUsageService {
           };
         }
 
-        Object.entries(operations as Record<string, UsageStats>).forEach(
-          ([operation, stats]) => {
-            report.summary.totalCost += stats.cost;
-            report.summary.totalTokens += stats.tokens;
-            report.summary.operationCount += stats.count;
+        Object.entries(operations as Record<string, UsageStats>).forEach(([operation, stats]) => {
+          report.summary.totalCost += stats.cost;
+          report.summary.totalTokens += stats.tokens;
+          report.summary.operationCount += stats.count;
 
-            report.providers[provider].cost += stats.cost;
-            report.providers[provider].tokens += stats.tokens;
-            report.providers[provider].operations += stats.count;
+          report.providers[provider].cost += stats.cost;
+          report.providers[provider].tokens += stats.tokens;
+          report.providers[provider].operations += stats.count;
 
-            if (!report.providers[provider].breakdown[operation]) {
-              report.providers[provider].breakdown[operation] = {
-                count: 0,
-                tokens: 0,
-                cost: 0,
-                lastUsed: stats.lastUsed,
-              };
-            }
-
-            const breakdown = report.providers[provider].breakdown[operation];
-            breakdown.count += stats.count;
-            breakdown.tokens += stats.tokens;
-            breakdown.cost += stats.cost;
-            breakdown.lastUsed = new Date(
-              Math.max(breakdown.lastUsed.getTime(), stats.lastUsed.getTime())
-            );
+          if (!report.providers[provider].breakdown[operation]) {
+            report.providers[provider].breakdown[operation] = {
+              count: 0,
+              tokens: 0,
+              cost: 0,
+              lastUsed: stats.lastUsed,
+            };
           }
-        );
+
+          const breakdown = report.providers[provider].breakdown[operation];
+          breakdown.count += stats.count;
+          breakdown.tokens += stats.tokens;
+          breakdown.cost += stats.cost;
+          breakdown.lastUsed = new Date(
+            Math.max(breakdown.lastUsed.getTime(), stats.lastUsed.getTime())
+          );
+        });
       });
     });
 

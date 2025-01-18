@@ -1,8 +1,10 @@
-import { Storage } from '@google-cloud/storage';
 import { PubSub } from '@google-cloud/pubsub';
+import { Storage } from '@google-cloud/storage';
+
 import { config } from '../config';
-import { performanceMonitoring } from './performanceMonitoring';
+
 import { completeAnalytics } from './completeAnalytics';
+import { performanceMonitoring } from './performanceMonitoring';
 
 interface MediaConfig {
   maxFileSize: number;
@@ -257,11 +259,10 @@ export class MediaHandlerService {
       for (const format of this.config.imageOptimization.formats) {
         const processed = image
           .clone()
-          .resize(
-            this.config.imageOptimization.maxWidth,
-            this.config.imageOptimization.maxHeight,
-            { fit: 'inside', withoutEnlargement: true }
-          )
+          .resize(this.config.imageOptimization.maxWidth, this.config.imageOptimization.maxHeight, {
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
           [format]({ quality: this.config.imageOptimization.quality });
 
         const outputPath = `media/processed/${mediaId}/${mediaId}.${format}`;
@@ -322,9 +323,7 @@ export class MediaHandlerService {
             .on('error', reject);
         });
 
-        await thumbnailFile.save(
-          await require('fs').promises.readFile(`/tmp/${thumbnailPath}`)
-        );
+        await thumbnailFile.save(await require('fs').promises.readFile(`/tmp/${thumbnailPath}`));
 
         const [url] = await thumbnailFile.getSignedUrl({
           version: 'v4',
@@ -350,9 +349,7 @@ export class MediaHandlerService {
             .on('error', reject);
         });
 
-        await outputFile.save(
-          await require('fs').promises.readFile(`/tmp/${mediaId}.${format}`)
-        );
+        await outputFile.save(await require('fs').promises.readFile(`/tmp/${mediaId}.${format}`));
 
         const [url] = await outputFile.getSignedUrl({
           version: 'v4',
@@ -409,9 +406,7 @@ export class MediaHandlerService {
             .on('error', reject);
         });
 
-        await outputFile.save(
-          await require('fs').promises.readFile(`/tmp/${mediaId}.${format}`)
-        );
+        await outputFile.save(await require('fs').promises.readFile(`/tmp/${mediaId}.${format}`));
 
         const [url] = await outputFile.getSignedUrl({
           version: 'v4',
@@ -445,10 +440,7 @@ export class MediaHandlerService {
     }
   }
 
-  private async updateMediaInfo(
-    mediaId: string,
-    updates: Partial<ProcessedMedia>
-  ): Promise<void> {
+  private async updateMediaInfo(mediaId: string, updates: Partial<ProcessedMedia>): Promise<void> {
     const bucket = this.storage.bucket(config.gcp.storageBucket);
     const infoPath = `media/processed/${mediaId}/info.json`;
     const infoFile = bucket.file(infoPath);
@@ -487,10 +479,7 @@ export class MediaHandlerService {
     }
   }
 
-  private async publishMediaEvent(
-    eventType: string,
-    data: Record<string, any>
-  ): Promise<void> {
+  private async publishMediaEvent(eventType: string, data: Record<string, any>): Promise<void> {
     const topic = this.pubsub.topic('media-events');
     const messageData = {
       eventType,
@@ -502,11 +491,9 @@ export class MediaHandlerService {
   }
 
   private setupMediaProcessing(): void {
-    const subscription = this.pubsub
-      .topic('media-events')
-      .subscription('media-processor');
+    const subscription = this.pubsub.topic('media-events').subscription('media-processor');
 
-    subscription.on('message', async message => {
+    subscription.on('message', async (message) => {
       try {
         const event = JSON.parse(message.data.toString());
 
@@ -515,13 +502,9 @@ export class MediaHandlerService {
           const file = bucket.file(event.originalPath);
           const [content] = await file.download();
 
-          const mediaFile = new File(
-            [content],
-            event.originalPath.split('/').pop(),
-            {
-              type: event.type,
-            }
-          );
+          const mediaFile = new File([content], event.originalPath.split('/').pop(), {
+            type: event.type,
+          });
 
           if (event.type.startsWith('image/')) {
             await this.processImage(mediaFile, event.mediaId);

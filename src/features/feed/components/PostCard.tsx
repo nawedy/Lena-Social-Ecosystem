@@ -1,98 +1,73 @@
-import React, { useState, useCallback } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { formatDistanceToNow } from 'date-fns';
-import { ApiService } from '../../../services/api';
-import { useATProto } from '../../../contexts/ATProtoContext';
 import FastImage from 'react-native-fast-image';
 
+import { useATProto } from '../../../contexts/ATProtoContext';
+import { Post } from '../../../types/atproto';
+
 interface PostCardProps {
-  post: {
-    uri: string;
-    cid: string;
-    author: {
-      handle: string;
-      displayName?: string;
-      avatar?: string;
-    };
-    text: string;
-    media?: {
-      type: 'image' | 'video';
-      url: string;
-      alt?: string;
-    }[];
-    createdAt: string;
-    likes: number;
-    reposts: number;
-  };
+  post: Post;
+  onLike?: () => Promise<void>;
+  onRepost?: () => Promise<void>;
   onError?: (error: Error) => void;
 }
 
-export function PostCard({ post, onError }: PostCardProps) {
+export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onError }) => {
   const { agent } = useATProto();
   const [isLiking, setIsLiking] = useState(false);
   const [isReposting, setIsReposting] = useState(false);
-  const [localLikes, setLocalLikes] = useState(post.likes);
-  const [localReposts, setLocalReposts] = useState(post.reposts);
-  const [mediaLoading, setMediaLoading] = useState<Record<number, boolean>>({});
+  const [localLikes, setLocalLikes] = useState(post.likeCount);
+  const [localReposts, setLocalReposts] = useState(post.repostCount);
+  const [mediaLoading, setMediaLoading] = useState<Record<string, boolean>>({});
 
-  const _handleError = useCallback(
-    (error: Error, action: string) => {
-      const _message = `Failed to ${action}: ${error.message}`;
-      onError?.(error);
-      Alert.window.alert('Error', message);
-    },
-    [onError]
-  );
+  const handleError = (error: Error, action: string) => {
+    const errorMessage = `Failed to ${action}: ${error.message}`;
+    onError?.(error);
+    Alert.alert('Error', errorMessage);
+  };
 
-  const _handleLike = async () => {
+  const handleLike = async () => {
     if (isLiking || !agent) return;
 
     setIsLiking(true);
     try {
-      await agent.like(post.uri, post.cid);
-      setLocalLikes(prev => prev + 1);
+      if (onLike) {
+        await onLike();
+      } else {
+        await agent.like(post.uri, post.cid);
+      }
+      setLocalLikes((prev) => prev + 1);
     } catch (error) {
-      handleError(
-        error instanceof Error ? error : new Error('Unknown error'),
-        'like post'
-      );
+      handleError(error instanceof Error ? error : new Error('Unknown error'), 'like post');
     } finally {
       setIsLiking(false);
     }
   };
 
-  const _handleRepost = async () => {
+  const handleRepost = async () => {
     if (isReposting || !agent) return;
 
     setIsReposting(true);
     try {
-      await agent.repost(post.uri, post.cid);
-      setLocalReposts(prev => prev + 1);
+      if (onRepost) {
+        await onRepost();
+      } else {
+        await agent.repost(post.uri, post.cid);
+      }
+      setLocalReposts((prev) => prev + 1);
     } catch (error) {
-      handleError(
-        error instanceof Error ? error : new Error('Unknown error'),
-        'repost'
-      );
+      handleError(error instanceof Error ? error : new Error('Unknown error'), 'repost');
     } finally {
       setIsReposting(false);
     }
-  };
-
-  const _handleMediaLoad = (index: number) => {
-    setMediaLoading(prev => ({ ...prev, [index]: false }));
-  };
-
-  const _handleMediaLoadStart = (index: number) => {
-    setMediaLoading(prev => ({ ...prev, [index]: true }));
   };
 
   return (
@@ -108,9 +83,7 @@ export function PostCard({ post, onError }: PostCardProps) {
           <View style={[styles.avatar, styles.placeholderAvatar]} />
         )}
         <View style={styles.authorInfo}>
-          <Text style={styles.displayName}>
-            {post.author.displayName || post.author.handle}
-          </Text>
+          <Text style={styles.displayName}>{post.author.displayName || post.author.handle}</Text>
           <Text style={styles.handle}>@{post.author.handle}</Text>
         </View>
         <Text style={styles.timestamp}>
@@ -122,21 +95,17 @@ export function PostCard({ post, onError }: PostCardProps) {
 
       {post.media && post.media.length > 0 && (
         <View style={styles.mediaContainer}>
-          {post.media.map((media, index) => (
-            <View key={index} style={styles.mediaWrapper}>
+          {post.media.map((media) => (
+            <View key={media.url} style={styles.mediaWrapper}>
               <FastImage
                 source={{ uri: media.url }}
                 style={styles.media}
                 resizeMode={FastImage.resizeMode.cover}
-                onLoadStart={() => handleMediaLoadStart(index)}
-                onLoad={() => handleMediaLoad(index)}
+                onLoadStart={() => setMediaLoading((prev) => ({ ...prev, [media.url]: true }))}
+                onLoad={() => setMediaLoading((prev) => ({ ...prev, [media.url]: false }))}
               />
-              {mediaLoading[index] && (
-                <ActivityIndicator
-                  style={styles.mediaLoader}
-                  size="large"
-                  color="#0000ff"
-                />
+              {mediaLoading[media.url] && (
+                <ActivityIndicator style={styles.mediaLoader} size='large' color='#0000ff' />
               )}
             </View>
           ))}
@@ -149,22 +118,15 @@ export function PostCard({ post, onError }: PostCardProps) {
           style={[styles.actionButton, isLiking && styles.actionButtonDisabled]}
           disabled={isLiking}
         >
-          {isLiking ? (
-            <ActivityIndicator size="small" color="#999" />
-          ) : (
-            <Text>❤️ {localLikes}</Text>
-          )}
+          {isLiking ? <ActivityIndicator size='small' color='#999' /> : <Text>❤️ {localLikes}</Text>}
         </TouchableOpacity>
         <TouchableOpacity
           onPress={handleRepost}
-          style={[
-            styles.actionButton,
-            isReposting && styles.actionButtonDisabled,
-          ]}
+          style={[styles.actionButton, isReposting && styles.actionButtonDisabled]}
           disabled={isReposting}
         >
           {isReposting ? (
-            <ActivityIndicator size="small" color="#999" />
+            <ActivityIndicator size='small' color='#999' />
           ) : (
             <Text>🔄 {localReposts}</Text>
           )}
@@ -172,9 +134,9 @@ export function PostCard({ post, onError }: PostCardProps) {
       </View>
     </View>
   );
-}
+};
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     padding: 15,
     backgroundColor: '#fff',

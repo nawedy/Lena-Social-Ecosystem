@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -8,13 +9,8 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import {
-  LineChart,
-  BarChart,
-  ContributionGraph,
-  ProgressChart,
-} from 'react-native-chart-kit';
+import { LineChart, BarChart, ContributionGraph, ProgressChart } from 'react-native-chart-kit';
+
 import { AnalyticsService } from '../../services/AnalyticsService';
 
 interface TokenUsageMetrics {
@@ -47,16 +43,10 @@ interface QualityMetrics {
 export function AIInsightsAnalytics() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d' | '90d'>(
-    '7d'
-  );
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d' | '90d'>('7d');
   const [tokenMetrics, setTokenMetrics] = useState<TokenUsageMetrics[]>([]);
-  const [modelMetrics, setModelMetrics] = useState<ModelPerformanceMetrics[]>(
-    []
-  );
-  const [qualityMetrics, setQualityMetrics] = useState<
-    Record<string, QualityMetrics>
-  >({});
+  const [modelMetrics, setModelMetrics] = useState<ModelPerformanceMetrics[]>([]);
+  const [qualityMetrics, setQualityMetrics] = useState<Record<string, QualityMetrics>>({});
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
   useEffect(() => {
@@ -87,16 +77,16 @@ export function AIInsightsAnalytics() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <BarChart
           data={{
-            labels: tokenMetrics.map(m => m.provider),
+            labels: tokenMetrics.map((m) => m.provider),
             datasets: [
               {
-                data: tokenMetrics.map(m => m.totalTokens / 1000), // Convert to K tokens
+                data: tokenMetrics.map((m) => m.totalTokens / 1000), // Convert to K tokens
               },
             ],
           }}
           width={Dimensions.get('window').width * 1.5}
           height={220}
-          yAxisLabel="K "
+          yAxisLabel='K '
           chartConfig={{
             backgroundColor: '#fff',
             backgroundGradientFrom: '#fff',
@@ -115,51 +105,29 @@ export function AIInsightsAnalytics() {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('analytics.modelPerformance')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {modelMetrics.map(metric => (
+        {modelMetrics.map((metric) => (
           <TouchableOpacity
             key={metric.model}
-            style={[
-              styles.modelCard,
-              selectedModel === metric.model && styles.selectedCard,
-            ]}
+            style={[styles.modelCard, selectedModel === metric.model && styles.selectedCard]}
             onPress={() => setSelectedModel(metric.model)}
           >
             <Text style={styles.modelName}>{metric.model}</Text>
             <View style={styles.metricGrid}>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>
-                  {t('analytics.successRate')}
-                </Text>
-                <Text style={styles.metricValue}>
-                  {(metric.successRate * 100).toFixed(1)}%
-                </Text>
+                <Text style={styles.metricLabel}>{t('analytics.successRate')}</Text>
+                <Text style={styles.metricValue}>{(metric.successRate * 100).toFixed(1)}%</Text>
               </View>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>
-                  {t('analytics.avgLatency')}
-                </Text>
-                <Text style={styles.metricValue}>
-                  {metric.averageLatency.toFixed(0)}ms
-                </Text>
+                <Text style={styles.metricLabel}>{t('analytics.avgLatency')}</Text>
+                <Text style={styles.metricValue}>{metric.averageLatency.toFixed(0)}ms</Text>
               </View>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>
-                  {t('analytics.p95Latency')}
-                </Text>
-                <Text style={styles.metricValue}>
-                  {metric.p95Latency.toFixed(0)}ms
-                </Text>
+                <Text style={styles.metricLabel}>{t('analytics.p95Latency')}</Text>
+                <Text style={styles.metricValue}>{metric.p95Latency.toFixed(0)}ms</Text>
               </View>
               <View style={styles.metricItem}>
-                <Text style={styles.metricLabel}>
-                  {t('analytics.errorRate')}
-                </Text>
-                <Text
-                  style={[
-                    styles.metricValue,
-                    { color: getErrorColor(metric.errorRate) },
-                  ]}
-                >
+                <Text style={styles.metricLabel}>{t('analytics.errorRate')}</Text>
+                <Text style={[styles.metricValue, { color: getErrorColor(metric.errorRate) }]}>
                   {(metric.errorRate * 100).toFixed(1)}%
                 </Text>
               </View>
@@ -255,7 +223,7 @@ export function AIInsightsAnalytics() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size='large' color='#007AFF' />
       </View>
     );
   }
@@ -265,20 +233,14 @@ export function AIInsightsAnalytics() {
       <View style={styles.header}>
         <Text style={styles.title}>{t('analytics.aiInsights')}</Text>
         <View style={styles.timeRangeSelector}>
-          {(['24h', '7d', '30d', '90d'] as const).map(range => (
+          {(['24h', '7d', '30d', '90d'] as const).map((range) => (
             <TouchableOpacity
               key={range}
-              style={[
-                styles.timeRangeButton,
-                timeRange === range && styles.activeTimeRange,
-              ]}
+              style={[styles.timeRangeButton, timeRange === range && styles.activeTimeRange]}
               onPress={() => setTimeRange(range)}
             >
               <Text
-                style={[
-                  styles.timeRangeText,
-                  timeRange === range && styles.activeTimeRangeText,
-                ]}
+                style={[styles.timeRangeText, timeRange === range && styles.activeTimeRangeText]}
               >
                 {t(`analytics.timeRange.${range}`)}
               </Text>

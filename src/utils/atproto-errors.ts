@@ -1,11 +1,7 @@
 import { ComAtprotoServerCreateSession } from '@atproto/api';
 
 export class ATProtoError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string,
-    public readonly status: number
-  ) {
+  constructor(message: string, public readonly code: string, public readonly status: number) {
     super(message);
     this.name = 'ATProtoError';
   }
@@ -18,11 +14,7 @@ export class ATProtoError extends Error {
         error.response.status || 500
       );
     }
-    return new ATProtoError(
-      error.message || 'Network error',
-      'NETWORK_ERROR',
-      0
-    );
+    return new ATProtoError(error.message || 'Network error', 'NETWORK_ERROR', 0);
   }
 }
 

@@ -1,13 +1,14 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { requireAuth } from '../../middleware/requireAuth';
-import { validateRequest } from '../../middleware/validateRequest';
+
 import {
   getNotifications,
   markNotificationRead,
   shareVideo,
   reportContent,
 } from '../../controllers/social';
+import { requireAuth } from '../../middleware/requireAuth';
+import { validateRequest } from '../../middleware/validateRequest';
 
 const router = express.Router();
 
@@ -29,19 +30,7 @@ const shareValidation = [
 // Social routes
 router.get('/notifications', requireAuth, getNotifications);
 router.put('/notifications/:id', requireAuth, markNotificationRead);
-router.post(
-  '/share/:videoId',
-  requireAuth,
-  shareValidation,
-  validateRequest,
-  shareVideo
-);
-router.post(
-  '/report',
-  requireAuth,
-  reportValidation,
-  validateRequest,
-  reportContent
-);
+router.post('/share/:videoId', requireAuth, shareValidation, validateRequest, shareVideo);
+router.post('/report', requireAuth, reportValidation, validateRequest, reportContent);
 
 export default router;

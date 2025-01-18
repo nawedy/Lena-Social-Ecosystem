@@ -1,7 +1,8 @@
 import { BskyAgent } from '@atproto/api';
-import { ModerationAction, ModerationReason, ModerationResult } from '../../types/moderation';
-import { logger } from '../../utils/logger';
+
 import { moderationConfig } from '../../config/moderation';
+import { ModerationAction, ModerationReason, ModerationResult, ModeratedContent } from '../../types/moderation';
+import { logger } from '../../utils/logger';
 
 export class ContentModerationService {
   private agent: BskyAgent;
@@ -36,7 +37,7 @@ export class ContentModerationService {
       }
 
       const postView = post.data.thread.post;
-      
+
       // Apply moderation rules
       const result = await this.applyModerationRules(postView);
 
@@ -58,38 +59,44 @@ export class ContentModerationService {
   /**
    * Apply moderation rules to content
    */
-  private async applyModerationRules(content: any): Promise<ModerationResult> {
+  private async applyModerationRules(content: ModeratedContent): Promise<ModerationResult> {
     const violations: ModerationReason[] = [];
     let action: ModerationAction = 'allow';
+    let confidence = 1.0;
 
     try {
       // Check for prohibited content
       if (await this.containsProhibitedContent(content)) {
         violations.push('prohibited_content');
-        action = 'remove';
+        action = 'block';
+        confidence = 0.95;
       }
 
       // Check for spam patterns
       if (await this.isSpam(content)) {
         violations.push('spam');
-        action = 'flag';
+        action = action === 'block' ? 'block' : 'flag';
+        confidence = Math.min(confidence, 0.85);
       }
 
       // Check for harassment
       if (await this.containsHarassment(content)) {
         violations.push('harassment');
-        action = 'remove';
+        action = action === 'block' ? 'block' : 'flag';
+        confidence = Math.min(confidence, 0.90);
       }
 
       // Check rate limits
       if (await this.exceedsRateLimit(content)) {
         violations.push('rate_limit');
-        action = 'throttle';
+        action = 'block';
+        confidence = 1.0;
       }
 
       return {
         action,
-        violations,
+        reasons: violations,
+        confidence,
         timestamp: new Date().toISOString(),
         reviewRequired: violations.length > 0,
       };
@@ -97,7 +104,8 @@ export class ContentModerationService {
       logger.error('Rule application failed', { content, error });
       return {
         action: 'flag',
-        violations: ['system_error'],
+        reasons: ['system_error'],
+        confidence,
         timestamp: new Date().toISOString(),
         reviewRequired: true,
       };
@@ -107,14 +115,12 @@ export class ContentModerationService {
   /**
    * Check if content contains prohibited material
    */
-  private async containsProhibitedContent(content: any): Promise<boolean> {
+  private async containsProhibitedContent(content: ModeratedContent): Promise<boolean> {
     try {
       const text = this.extractText(content);
       const prohibitedPatterns = moderationConfig.prohibitedPatterns || [];
-      
-      return prohibitedPatterns.some(pattern => 
-        new RegExp(pattern, 'i').test(text)
-      );
+
+      return prohibitedPatterns.some((pattern) => new RegExp(pattern, 'i').test(text));
     } catch (error) {
       logger.error('Prohibited content check failed', { error });
       return false;
@@ -124,19 +130,17 @@ export class ContentModerationService {
   /**
    * Check if content matches spam patterns
    */
-  private async isSpam(content: any): Promise<boolean> {
+  private async isSpam(content: ModeratedContent): Promise<boolean> {
     try {
       const text = this.extractText(content);
       const spamPatterns = moderationConfig.spamPatterns || [];
-      
+
       // Check for spam indicators
-      const hasSpamPattern = spamPatterns.some(pattern => 
-        new RegExp(pattern, 'i').test(text)
-      );
-      
+      const hasSpamPattern = spamPatterns.some((pattern) => new RegExp(pattern, 'i').test(text));
+
       // Check for repetitive content
       const isRepetitive = this.isRepetitiveContent(text);
-      
+
       return hasSpamPattern || isRepetitive;
     } catch (error) {
       logger.error('Spam check failed', { error });
@@ -147,14 +151,12 @@ export class ContentModerationService {
   /**
    * Check if content contains harassment
    */
-  private async containsHarassment(content: any): Promise<boolean> {
+  private async containsHarassment(content: ModeratedContent): Promise<boolean> {
     try {
       const text = this.extractText(content);
       const harassmentPatterns = moderationConfig.harassmentPatterns || [];
-      
-      return harassmentPatterns.some(pattern => 
-        new RegExp(pattern, 'i').test(text)
-      );
+
+      return harassmentPatterns.some((pattern) => new RegExp(pattern, 'i').test(text));
     } catch (error) {
       logger.error('Harassment check failed', { error });
       return false;
@@ -164,7 +166,7 @@ export class ContentModerationService {
   /**
    * Check if user exceeds rate limits
    */
-  private async exceedsRateLimit(content: any): Promise<boolean> {
+  private async exceedsRateLimit(content: ModeratedContent): Promise<boolean> {
     try {
       const { creator } = content;
       if (!creator?.did) return false;
@@ -177,7 +179,7 @@ export class ContentModerationService {
       if (!recentPosts.success) return false;
 
       const posts = recentPosts.data.feed;
-      const recentPostCount = posts.filter(post => {
+      const recentPostCount = posts.filter((post) => {
         const postTime = new Date(post.post.indexedAt).getTime();
         const hourAgo = Date.now() - 3600000;
         return postTime > hourAgo;
@@ -193,12 +195,20 @@ export class ContentModerationService {
   /**
    * Extract text content from various content types
    */
-  private extractText(content: any): string {
+  private extractText(content: ModeratedContent): string {
     try {
       if (typeof content === 'string') return content;
       if (content.text) return content.text;
       if (content.record?.text) return content.record.text;
-      return '';
+
+      let text = '';
+      if (content.metadata) {
+        text += Object.values(content.metadata)
+          .filter((value): value is string => typeof value === 'string')
+          .join(' ');
+      }
+
+      return text;
     } catch (error) {
       logger.error('Text extraction failed', { error });
       return '';
@@ -212,7 +222,7 @@ export class ContentModerationService {
     try {
       const words = text.toLowerCase().split(/\s+/);
       const uniqueWords = new Set(words);
-      
+
       // If the ratio of unique words to total words is too low, it's repetitive
       return words.length > 10 && uniqueWords.size / words.length < 0.3;
     } catch (error) {

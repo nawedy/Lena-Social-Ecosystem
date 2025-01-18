@@ -1,5 +1,6 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { BskyAgent } from '@atproto/api';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
 import { RootState } from '../index';
 
 interface AuthState {

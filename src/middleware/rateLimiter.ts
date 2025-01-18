@@ -1,14 +1,19 @@
+import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
 import { createClient } from 'redis';
+
 import { config } from '../config';
+import { Logger } from '../utils/logger';
+
+const logger = new Logger('RateLimiter');
 
 const redisClient = createClient({
   url: config.redis.url,
   password: config.redis.password,
 });
 
-redisClient.on('error', err => console.error('Redis Client Error:', err));
+redisClient.on('error', (err) => logger.error('Redis Client Error:', { error: err }));
 
 // Different rate limit configurations for various endpoints
 export const rateLimiters = {
@@ -19,13 +24,13 @@ export const rateLimiters = {
     }),
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later',
+    message: 'Too many requests, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
   }),
 
-  // Auth endpoints rate limiter (more strict)
-  auth: rateLimit({
+  // Login rate limiter
+  login: rateLimit({
     store: new RedisStore({
       sendCommand: (...args: string[]) => redisClient.sendCommand(args),
     }),
@@ -47,32 +52,43 @@ export const rateLimiters = {
     standardHeaders: true,
     legacyHeaders: false,
   }),
+};
 
-  // Custom rate limiter factory
-  createCustomLimiter: (options: {
-    windowMs: number;
-    max: number;
-    message?: string;
-  }) =>
-    rateLimit({
-      store: new RedisStore({
-        sendCommand: (...args: string[]) => redisClient.sendCommand(args),
-      }),
-      ...options,
-      standardHeaders: true,
-      legacyHeaders: false,
+// Custom rate limiter factory
+export const createCustomLimiter = (options: {
+  windowMs: number;
+  max: number;
+  message?: string;
+}) => {
+  return rateLimit({
+    store: new RedisStore({
+      sendCommand: (...args: string[]) => redisClient.sendCommand(args),
     }),
+    windowMs: options.windowMs,
+    max: options.max,
+    message: options.message || 'Too many requests, please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 };
 
 // Middleware to track API usage for analytics
-export const apiUsageTracker = async (req: any, res: any, next: any) => {
+export const apiUsageTracker = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const key = `api:usage:${req.ip}:${new Date().toISOString().split('T')[0]}`;
     await redisClient.incr(key);
-    await redisClient.expire(key, 86400); // Expire after 24 hours
+    // Set expiry for 30 days
+    await redisClient.expire(key, 60 * 60 * 24 * 30);
     next();
   } catch (error) {
-    console.error('API usage tracking error:', error);
-    next(); // Continue even if tracking fails
+    if (error instanceof Error) {
+      logger.error('Error tracking API usage', { error: error.message });
+    }
+    // Don't block the request if tracking fails
+    next();
   }
 };

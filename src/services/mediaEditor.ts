@@ -46,10 +46,7 @@ export class MediaEditorService {
   }
 
   // Edit image with various options
-  public async editImage(
-    imageBlob: Blob,
-    options: EditingOptions
-  ): Promise<Blob> {
+  public async editImage(imageBlob: Blob, options: EditingOptions): Promise<Blob> {
     const img = await this.loadImage(imageBlob);
 
     // Set canvas size
@@ -71,10 +68,7 @@ export class MediaEditorService {
 
     // Handle flipping
     if (options.flip) {
-      this.ctx.scale(
-        options.flip.horizontal ? -1 : 1,
-        options.flip.vertical ? -1 : 1
-      );
+      this.ctx.scale(options.flip.horizontal ? -1 : 1, options.flip.vertical ? -1 : 1);
     }
 
     // Draw image with crop
@@ -104,7 +98,7 @@ export class MediaEditorService {
     // Convert canvas to blob
     return new Promise((resolve, reject) => {
       this.canvas.toBlob(
-        blob => {
+        (blob) => {
           if (!blob) reject(new Error('Failed to create blob'));
           else resolve(blob);
         },
@@ -126,12 +120,7 @@ export class MediaEditorService {
 
   // Apply filter to canvas
   private applyFilter(filter: Filter): void {
-    const imageData = this.ctx.getImageData(
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    );
+    const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     const data = imageData.data;
 
     for (let i = 0; i < data.length; i += 4) {
@@ -149,8 +138,7 @@ export class MediaEditorService {
       // Apply contrast
       if (filter.settings.contrast) {
         const factor =
-          (259 * (filter.settings.contrast + 255)) /
-          (255 * (259 - filter.settings.contrast));
+          (259 * (filter.settings.contrast + 255)) / (255 * (259 - filter.settings.contrast));
         data[i] = Math.min(255, factor * (r - 128) + 128);
         data[i + 1] = Math.min(255, factor * (g - 128) + 128);
         data[i + 2] = Math.min(255, factor * (b - 128) + 128);
@@ -160,14 +148,8 @@ export class MediaEditorService {
       if (filter.settings.saturation) {
         const gray = 0.2989 * r + 0.587 * g + 0.114 * b;
         data[i] = Math.min(255, gray + filter.settings.saturation * (r - gray));
-        data[i + 1] = Math.min(
-          255,
-          gray + filter.settings.saturation * (g - gray)
-        );
-        data[i + 2] = Math.min(
-          255,
-          gray + filter.settings.saturation * (b - gray)
-        );
+        data[i + 1] = Math.min(255, gray + filter.settings.saturation * (g - gray));
+        data[i + 2] = Math.min(255, gray + filter.settings.saturation * (b - gray));
       }
 
       // Apply sepia

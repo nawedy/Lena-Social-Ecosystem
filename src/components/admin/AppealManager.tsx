@@ -1,129 +1,145 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { format } from 'date-fns';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
   ActivityIndicator,
   Alert,
+  FlatList,
   RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+
 import { admin } from '../../services/admin';
-import { format } from 'date-fns';
-import { AppealStatus, AppealType, Appeal } from '../../types/appeals';
+import { Appeal, AppealStatus } from '../../types/appeals';
+import { Logger } from '../../utils/logger';
 
 interface AppealManagerProps {
+  logger: Logger;
   onStatusChange?: (appealId: string, newStatus: AppealStatus) => void;
 }
 
-export function AppealManager({ onStatusChange }: AppealManagerProps) {
+export const AppealManager: React.FC<AppealManagerProps> = ({
+  logger,
+  onStatusChange,
+}) => {
   const [appeals, setAppeals] = useState<Appeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const appealService = useMemo(() => admin, []);
 
   const loadAppeals = useCallback(async () => {
     try {
       setError(null);
-      const data = await admin.getAppeals();
-      setAppeals(data);
+      const fetchedAppeals = await appealService.getAppeals();
+      setAppeals(fetchedAppeals);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load appeals');
-      Alert.alert('Error', 'Failed to load appeals. Please try again.');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load appeals';
+      logger.error('Failed to load appeals', { error: err });
+      setError(errorMessage);
+      Alert.alert('Error', `${errorMessage}. Please try again.`);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [appealService, logger]);
 
   useEffect(() => {
-    loadAppeals();
+    void loadAppeals();
   }, [loadAppeals]);
+
+  const handleStatusChange = useCallback(
+    async (appealId: string, newStatus: AppealStatus) => {
+      try {
+        await appealService.updateAppealStatus(appealId, newStatus);
+        setAppeals(prev =>
+          prev.map(appeal =>
+            appeal.id === appealId ? { ...appeal, status: newStatus } : appeal
+          )
+        );
+        onStatusChange?.(appealId, newStatus);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to update appeal status';
+        logger.error('Failed to update appeal status', { error: err });
+        Alert.alert('Error', `${errorMessage}. Please try again.`);
+      }
+    },
+    [appealService, onStatusChange, logger]
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadAppeals();
   }, [loadAppeals]);
 
-  const handleStatusChange = useCallback(async (appealId: string, newStatus: AppealStatus) => {
-    try {
-      await admin.updateAppealStatus(appealId, newStatus);
-      setAppeals(prev => 
-        prev.map(appeal => 
-          appeal.id === appealId ? { ...appeal, status: newStatus } : appeal
-        )
-      );
-      onStatusChange?.(appealId, newStatus);
-      Alert.alert('Success', 'Appeal status updated successfully');
-    } catch (err) {
-      Alert.alert('Error', 'Failed to update appeal status. Please try again.');
-    }
-  }, [onStatusChange]);
-
   const sortedAppeals = useMemo(() => {
-    return [...appeals].sort((a, b) => {
-      // Sort by status (pending first)
-      if (a.status === 'pending' && b.status !== 'pending') return -1;
-      if (a.status !== 'pending' && b.status === 'pending') return 1;
-      
-      // Then by date (newest first)
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
+    return [...appeals].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   }, [appeals]);
 
-  const renderAppealItem = useCallback(({ item }: { item: Appeal }) => (
-    <View style={styles.appealItem}>
-      <View style={styles.appealHeader}>
-        <Text style={styles.appealType}>{item.type}</Text>
-        <Text style={styles.appealDate}>
-          {format(new Date(item.created_at), 'MMM d, yyyy HH:mm')}
-        </Text>
-      </View>
-
-      <View style={styles.appealContent}>
-        <Text style={styles.label}>User:</Text>
-        <Text style={styles.value}>{item.user_id}</Text>
-
-        <Text style={styles.label}>Reason:</Text>
-        <Text style={styles.value}>{item.reason}</Text>
-
-        {item.evidence && (
-          <>
-            <Text style={styles.label}>Evidence:</Text>
-            <Text style={styles.value}>{item.evidence}</Text>
-          </>
-        )}
-
-        <Text style={styles.label}>Status:</Text>
-        <Text style={[
-          styles.statusText,
-          item.status === 'approved' && styles.statusApproved,
-          item.status === 'rejected' && styles.statusRejected,
-          item.status === 'pending' && styles.statusPending
-        ]}>
-          {item.status.toUpperCase()}
-        </Text>
-      </View>
-
-      {item.status === 'pending' && (
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.approveButton]}
-            onPress={() => handleStatusChange(item.id, 'approved')}
-          >
-            <Text style={styles.actionButtonText}>Approve</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.rejectButton]}
-            onPress={() => handleStatusChange(item.id, 'rejected')}
-          >
-            <Text style={styles.actionButtonText}>Reject</Text>
-          </TouchableOpacity>
+  const renderAppealItem = useCallback(
+    ({ item }: { item: Appeal }) => (
+      <View style={styles.appealItem}>
+        <View style={styles.appealHeader}>
+          <Text style={styles.appealType}>{item.type}</Text>
+          <Text style={styles.appealDate}>
+            {format(new Date(item.created_at), 'MMM d, yyyy HH:mm')}
+          </Text>
         </View>
-      )}
-    </View>
-  ), [handleStatusChange]);
+
+        <View style={styles.appealContent}>
+          <Text style={styles.label}>User:</Text>
+          <Text style={styles.value}>{item.user_id}</Text>
+
+          <Text style={styles.label}>Reason:</Text>
+          <Text style={styles.value}>{item.reason}</Text>
+
+          {item.evidence && (
+            <>
+              <Text style={styles.label}>Evidence:</Text>
+              <Text style={styles.value}>{item.evidence}</Text>
+            </>
+          )}
+
+          <Text style={styles.label}>Status:</Text>
+          <Text
+            style={[
+              styles.statusText,
+              item.status === 'approved' && styles.statusApproved,
+              item.status === 'rejected' && styles.statusRejected,
+              item.status === 'pending' && styles.statusPending,
+            ]}
+          >
+            {item.status.toUpperCase()}
+          </Text>
+        </View>
+
+        {item.status === 'pending' && (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.approveButton]}
+              onPress={() => handleStatusChange(item.id, 'approved')}
+            >
+              <Text style={styles.actionButtonText}>Approve</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.rejectButton]}
+              onPress={() => handleStatusChange(item.id, 'rejected')}
+            >
+              <Text style={styles.actionButtonText}>Reject</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    ),
+    [handleStatusChange]
+  );
 
   if (loading) {
     return (
@@ -137,7 +153,10 @@ export function AppealManager({ onStatusChange }: AppealManagerProps) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={loadAppeals}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => void loadAppeals()}
+        >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -162,7 +181,7 @@ export function AppealManager({ onStatusChange }: AppealManagerProps) {
       />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -36,7 +36,7 @@ export interface PaymentAccount {
     status: 'pending' | 'verified' | 'failed';
     documents: string[];
   };
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -60,7 +60,7 @@ export interface PaymentTransaction {
     type: string;
     reference: string;
   };
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   createdAt: string;
   completedAt?: string;
 }
@@ -121,7 +121,7 @@ export class ATProtocolPayments {
     currency: string;
     source: PaymentTransaction['source'];
     destination: PaymentTransaction['destination'];
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
   }): Promise<PaymentTransaction> {
     const record = {
       $type: 'app.bsky.commerce.paymentTransaction',
@@ -162,7 +162,7 @@ export class ATProtocolPayments {
     }>;
   }): Promise<PaymentTransaction[]> {
     const transactions = await Promise.all(
-      params.splits.map(split => {
+      params.splits.map((split) => {
         const splitAmount = (params.amount * split.percentage) / 100;
         return this.processPayment({
           amount: splitAmount,
@@ -256,12 +256,10 @@ export class ATProtocolPayments {
       transactions: number;
     }>;
   }> {
-    const response = await this.agent.api.app.bsky.commerce.getPaymentAnalytics(
-      {
-        timeframe: params.timeframe,
-        type: params.type,
-      }
-    );
+    const response = await this.agent.api.app.bsky.commerce.getPaymentAnalytics({
+      timeframe: params.timeframe,
+      type: params.type,
+    });
 
     return response.data;
   }

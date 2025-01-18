@@ -1,15 +1,11 @@
 import { FirebaseFirestore } from '@firebase/firestore';
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-} from 'firebase/firestore';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { OpenAI } from 'openai';
+
 import { Report, ReportStatus, ReportType } from '../types/moderation';
 import { User, UserStatus } from '../types/user';
+
 import { NotificationService } from './NotificationService';
-import { OpenAI } from 'openai';
 
 export class ModerationService {
   private static instance: ModerationService;
@@ -85,8 +81,7 @@ export class ModerationService {
     }
 
     const report = reportDoc.data() as Report;
-    report.status =
-      decision === 'approve' ? ReportStatus.APPROVED : ReportStatus.REJECTED;
+    report.status = decision === 'approve' ? ReportStatus.APPROVED : ReportStatus.REJECTED;
     report.moderatorNotes = notes;
     report.reviewedBy = moderatorId;
     report.reviewTimestamp = new Date();
@@ -179,10 +174,7 @@ export class ModerationService {
     });
   }
 
-  private async analyzeContent(
-    contentType: string,
-    content: string
-  ): Promise<any> {
+  private async analyzeContent(_contentType: string, content: string): Promise<any> {
     try {
       const response = await this.openai.moderations.create({
         input: content,
@@ -231,7 +223,7 @@ export class ModerationService {
   private async takeAction(report: Report): Promise<void> {
     const severity = report.aiAnalysis?.severity || 0;
     const user = await this.db.collection('users').doc(report.reportedId).get();
-    const userData = user.data() as User;
+    const _userData = user.data() as User;
 
     let suspensionDuration = 0;
     if (severity >= 0.9) {
@@ -244,9 +236,7 @@ export class ModerationService {
 
     if (suspensionDuration > 0) {
       const suspensionEndDate = new Date();
-      suspensionEndDate.setDate(
-        suspensionEndDate.getDate() + suspensionDuration
-      );
+      suspensionEndDate.setDate(suspensionEndDate.getDate() + suspensionDuration);
 
       await this.db.collection('users').doc(report.reportedId).update({
         status: UserStatus.SUSPENDED,
@@ -268,25 +258,19 @@ export class ModerationService {
 
     // Remove violating content
     if (report.contentId) {
-      await this.db
-        .collection(report.contentType)
-        .doc(report.contentId)
-        .update({
-          status: 'removed',
-          removedReason: report.reportType,
-          removedTimestamp: new Date(),
-        });
+      await this.db.collection(report.contentType).doc(report.contentId).update({
+        status: 'removed',
+        removedReason: report.reportType,
+        removedTimestamp: new Date(),
+      });
     }
   }
 
   private async notifyModerators(data: any, urgent: boolean): Promise<void> {
-    const moderatorsQuery = query(
-      collection(this.db, 'users'),
-      where('role', '==', 'moderator')
-    );
+    const moderatorsQuery = query(collection(this.db, 'users'), where('role', '==', 'moderator'));
 
     const snapshot = await moderatorsQuery.get();
-    const moderators = snapshot.docs.map(doc => doc.data() as User);
+    const moderators = snapshot.docs.map((doc) => doc.data() as User);
 
     for (const moderator of moderators) {
       await this.notificationService.sendNotification(moderator.id, {

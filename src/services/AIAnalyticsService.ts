@@ -1,13 +1,13 @@
+import { AnalyticsService } from './AnalyticsService';
 import { EnhancedAnalyticsService } from './EnhancedAnalyticsService';
 import { NotificationService } from './NotificationService';
 import { RBACService, Permission } from './RBACService';
-import { AnalyticsService } from './AnalyticsService';
 
 interface AIModel {
   type: 'trend' | 'anomaly' | 'sentiment' | 'clustering' | 'recommendation';
   config: {
     algorithm: string;
-    parameters: Record<string, any>;
+    parameters: Record<string, unknown>;
     threshold?: number;
     confidence?: number;
   };
@@ -25,7 +25,7 @@ interface AIInsight {
     priority: number;
     implementation: string;
   }>;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 interface TrendAnalysis {
@@ -216,14 +216,13 @@ export class AIAnalyticsService {
     const insights: AIInsight[] = [];
 
     // Run analysis in parallel
-    const [trends, anomalies, clusters, segments, strategies] =
-      await Promise.all([
-        this.analyzeTrends(accountIds, options),
-        this.detectAnomalies(accountIds, options),
-        this.clusterContent(accountIds, options),
-        this.segmentAudience(accountIds, options),
-        this.generateOptimizationStrategies(accountIds, options),
-      ]);
+    const [trends, anomalies, clusters, segments, strategies] = await Promise.all([
+      this.analyzeTrends(accountIds, options),
+      this.detectAnomalies(accountIds, options),
+      this.clusterContent(accountIds, options),
+      this.segmentAudience(accountIds, options),
+      this.generateOptimizationStrategies(accountIds, options),
+    ]);
 
     // Process trend insights
     for (const trend of trends) {
@@ -283,11 +282,7 @@ export class AIAnalyticsService {
 
     // Process strategy insights
     for (const strategy of strategies) {
-      if (
-        strategy.recommendations.some(
-          r => r.confidence > (options.threshold || 0.8)
-        )
-      ) {
+      if (strategy.recommendations.some((r) => r.confidence > (options.threshold || 0.8))) {
         insights.push({
           type: 'strategy',
           confidence: this.calculateStrategyConfidence(strategy),
@@ -312,41 +307,29 @@ export class AIAnalyticsService {
     return insights;
   }
 
-  private async analyzeTrends(
-    accountIds: string[],
-    options: any
-  ): Promise<TrendAnalysis[]> {
+  private async analyzeTrends(_accountIds: string[], _options: any): Promise<TrendAnalysis[]> {
     // Implementation for trend analysis
     return [];
   }
 
-  private async detectAnomalies(
-    accountIds: string[],
-    options: any
-  ): Promise<AnomalyDetection> {
+  private async detectAnomalies(_accountIds: string[], _options: any): Promise<AnomalyDetection> {
     // Implementation for anomaly detection
     return {} as AnomalyDetection;
   }
 
-  private async clusterContent(
-    accountIds: string[],
-    options: any
-  ): Promise<ContentCluster[]> {
+  private async clusterContent(_accountIds: string[], _options: any): Promise<ContentCluster[]> {
     // Implementation for content clustering
     return [];
   }
 
-  private async segmentAudience(
-    accountIds: string[],
-    options: any
-  ): Promise<AudienceSegment[]> {
+  private async segmentAudience(_accountIds: string[], _options: any): Promise<AudienceSegment[]> {
     // Implementation for audience segmentation
     return [];
   }
 
   private async generateOptimizationStrategies(
-    accountIds: string[],
-    options: any
+    _accountIds: string[],
+    _options: any
   ): Promise<OptimizationStrategy[]> {
     // Implementation for strategy generation
     return [];
@@ -358,7 +341,7 @@ export class AIAnalyticsService {
     insights: AIInsight[]
   ): Promise<void> {
     const highImpactInsights = insights.filter(
-      insight => insight.impact * insight.confidence > 0.9
+      (insight) => insight.impact * insight.confidence > 0.9
     );
 
     if (highImpactInsights.length > 0) {
@@ -377,113 +360,107 @@ export class AIAnalyticsService {
   }
 
   // Helper methods for calculating metrics and generating descriptions
-  private calculateTrendImpact(trend: TrendAnalysis): number {
+  private calculateTrendImpact(_trend: TrendAnalysis): number {
     // Implementation
     return 0;
   }
 
-  private generateTrendDescription(trend: TrendAnalysis): string {
+  private generateTrendDescription(_trend: TrendAnalysis): string {
     // Implementation
     return '';
   }
 
-  private generateTrendRecommendations(trend: TrendAnalysis): any[] {
+  private generateTrendRecommendations(_trend: TrendAnalysis): any[] {
     // Implementation
     return [];
   }
 
-  private calculateAnomalyConfidence(anomaly: any): number {
+  private calculateAnomalyConfidence(_anomaly: any): number {
     // Implementation
     return 0;
   }
 
-  private calculateAnomalyImpact(anomaly: any): number {
+  private calculateAnomalyImpact(_anomaly: any): number {
     // Implementation
     return 0;
   }
 
-  private generateAnomalyDescription(anomaly: any): string {
+  private generateAnomalyDescription(_anomaly: any): string {
     // Implementation
     return '';
   }
 
-  private generateAnomalyRecommendations(anomaly: any): any[] {
+  private generateAnomalyRecommendations(_anomaly: any): any[] {
     // Implementation
     return [];
   }
 
-  private calculateClusterConfidence(cluster: ContentCluster): number {
+  private calculateClusterConfidence(_cluster: ContentCluster): number {
     // Implementation
     return 0;
   }
 
-  private calculateClusterImpact(cluster: ContentCluster): number {
+  private calculateClusterImpact(_cluster: ContentCluster): number {
     // Implementation
     return 0;
   }
 
-  private generateClusterDescription(cluster: ContentCluster): string {
+  private generateClusterDescription(_cluster: ContentCluster): string {
     // Implementation
     return '';
   }
 
-  private generateClusterRecommendations(cluster: ContentCluster): any[] {
+  private generateClusterRecommendations(_cluster: ContentCluster): any[] {
     // Implementation
     return [];
   }
 
-  private calculateSegmentConfidence(segment: AudienceSegment): number {
+  private calculateSegmentConfidence(_segment: AudienceSegment): number {
     // Implementation
     return 0;
   }
 
-  private calculateSegmentImpact(segment: AudienceSegment): number {
+  private calculateSegmentImpact(_segment: AudienceSegment): number {
     // Implementation
     return 0;
   }
 
-  private generateSegmentDescription(segment: AudienceSegment): string {
+  private generateSegmentDescription(_segment: AudienceSegment): string {
     // Implementation
     return '';
   }
 
-  private generateSegmentRecommendations(segment: AudienceSegment): any[] {
+  private generateSegmentRecommendations(_segment: AudienceSegment): any[] {
     // Implementation
     return [];
   }
 
-  private calculateStrategyConfidence(strategy: OptimizationStrategy): number {
+  private calculateStrategyConfidence(_strategy: OptimizationStrategy): number {
     // Implementation
     return 0;
   }
 
-  private calculateStrategyImpact(strategy: OptimizationStrategy): number {
+  private calculateStrategyImpact(_strategy: OptimizationStrategy): number {
     // Implementation
     return 0;
   }
 
-  private generateStrategyDescription(strategy: OptimizationStrategy): string {
+  private generateStrategyDescription(_strategy: OptimizationStrategy): string {
     // Implementation
     return '';
   }
 
-  private generateStrategyRecommendations(
-    strategy: OptimizationStrategy
-  ): any[] {
+  private generateStrategyRecommendations(_strategy: OptimizationStrategy): any[] {
     // Implementation
     return [];
   }
 
-  private formatInsightsNotification(insights: AIInsight[]): string {
+  private formatInsightsNotification(_insights: AIInsight[]): string {
     // Implementation
     return '';
   }
 
-  static trackModelPerformance(
-    modelName: string,
-    latency: number,
-    success: boolean
-  ) {
+  static trackModelPerformance(modelName: string, latency: number, success: boolean) {
     AnalyticsService.trackMetric('ai_model_latency', latency, {
       model: modelName,
     });
@@ -508,11 +485,7 @@ export class AIAnalyticsService {
     });
   }
 
-  static trackTrainingProgress(
-    modelName: string,
-    progress: number,
-    epoch: number
-  ) {
+  static trackTrainingProgress(modelName: string, progress: number, epoch: number) {
     AnalyticsService.trackMetric('model_training_progress', progress, {
       model: modelName,
       epoch: epoch.toString(),

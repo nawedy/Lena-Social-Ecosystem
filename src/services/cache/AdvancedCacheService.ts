@@ -1,6 +1,7 @@
-import { performanceMonitor } from '../../utils/performance';
-import LRU from 'lru-cache';
 import { AsyncStorage } from '@react-native-async-storage/async-storage';
+import LRU from 'lru-cache';
+
+import { performanceMonitor } from '../../utils/performance';
 
 interface CacheOptions {
   maxAge?: number;
@@ -49,17 +50,11 @@ export class AdvancedCacheService {
     return AdvancedCacheService.instance;
   }
 
-  public async set(
-    key: string,
-    value: any,
-    options: CacheOptions = {}
-  ): Promise<void> {
+  public async set(key: string, value: any, options: CacheOptions = {}): Promise<void> {
     const trace = await performanceMonitor.startTrace('cache_set');
     try {
       // Compress data if needed
-      const processedValue = options.compression
-        ? await this.compressData(value)
-        : value;
+      const processedValue = options.compression ? await this.compressData(value) : value;
 
       // Set in memory cache
       this.memoryCache.set(key, processedValue, {
@@ -82,10 +77,7 @@ export class AdvancedCacheService {
     }
   }
 
-  public async get<T>(
-    key: string,
-    options: CacheOptions = {}
-  ): Promise<T | null> {
+  public async get<T>(key: string, options: CacheOptions = {}): Promise<T | null> {
     const trace = await performanceMonitor.startTrace('cache_get');
     try {
       // Try memory cache first
@@ -121,10 +113,7 @@ export class AdvancedCacheService {
     }
   }
 
-  public async invalidate(
-    key: string,
-    options: CacheOptions = {}
-  ): Promise<void> {
+  public async invalidate(key: string, options: CacheOptions = {}): Promise<void> {
     const trace = await performanceMonitor.startTrace('cache_invalidate');
     try {
       // Remove from memory cache

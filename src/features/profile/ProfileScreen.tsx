@@ -8,20 +8,21 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { ApiService } from '../../services/api';
+
 import { UserIdentity } from '../../core/identity/did';
+import { ApiService } from '../../services/api';
 
 export function ProfileScreen() {
   const [profile, setProfile] = useState<UserIdentity | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const _fetchProfile = async () => {
+  const fetchProfile = async () => {
     try {
-      const _api = ApiService.getInstance();
-      const _session = api.getAgent().session;
+      const api = ApiService.getInstance();
+      const session = api.getAgent().session;
       if (!session) return;
 
-      const _response = await api.getAgent().getProfile({
+      const response = await api.getAgent().getProfile({
         actor: session.handle,
       });
 
@@ -42,12 +43,12 @@ export function ProfileScreen() {
   };
 
   useEffect(() => {
-    fetchProfile();
+    void fetchProfile();
   }, []);
 
-  const _onRefresh = () => {
+  const onRefresh = () => {
     setRefreshing(true);
-    fetchProfile();
+    void fetchProfile();
   };
 
   if (!profile) {
@@ -61,37 +62,41 @@ export function ProfileScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.header}>
-        {profile.profileData.avatar && (
-          <Image
-            source={{ uri: profile.profileData.avatar }}
-            style={styles.avatar}
-          />
+        {profile?.profileData?.avatar ? (
+          <Image source={{ uri: profile.profileData.avatar }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarPlaceholderText}>
+              {profile?.handle?.charAt(0)?.toUpperCase() || '?'}
+            </Text>
+          </View>
         )}
-        <Text style={styles.displayName}>
-          {profile.profileData.displayName || profile.handle}
-        </Text>
-        <Text style={styles.handle}>@{profile.handle}</Text>
-        {profile.profileData.description && (
-          <Text style={styles.bio}>{profile.profileData.description}</Text>
-        )}
+
+        <View style={styles.profileInfo}>
+          <Text style={styles.displayName}>
+            {profile?.profileData?.displayName || profile?.handle || 'Anonymous'}
+          </Text>
+          <Text style={styles.handle}>@{profile?.handle}</Text>
+          {profile?.profileData?.description && (
+            <Text style={styles.bio}>{profile.profileData.description}</Text>
+          )}
+        </View>
       </View>
 
       <View style={styles.stats}>
         <TouchableOpacity style={styles.statItem}>
-          <Text style={styles.statNumber}>0</Text>
+          <Text style={styles.statValue}>0</Text>
           <Text style={styles.statLabel}>Posts</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.statItem}>
-          <Text style={styles.statNumber}>0</Text>
+          <Text style={styles.statValue}>0</Text>
           <Text style={styles.statLabel}>Following</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.statItem}>
-          <Text style={styles.statNumber}>0</Text>
+          <Text style={styles.statValue}>0</Text>
           <Text style={styles.statLabel}>Followers</Text>
         </TouchableOpacity>
       </View>
@@ -103,7 +108,7 @@ export function ProfileScreen() {
   );
 }
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -114,45 +119,62 @@ const _styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
+    padding: 16,
     alignItems: 'center',
-    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#e1e1e1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  avatarPlaceholderText: {
+    fontSize: 36,
+    color: '#666',
+  },
+  profileInfo: {
+    alignItems: 'center',
   },
   displayName: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   handle: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   bio: {
     fontSize: 16,
     textAlign: 'center',
-    paddingHorizontal: 20,
-    color: '#333',
+    paddingHorizontal: 32,
   },
   stats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 20,
-    borderTopWidth: 1,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderBottomColor: '#eee',
   },
   statItem: {
     alignItems: 'center',
   },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  statValue: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,

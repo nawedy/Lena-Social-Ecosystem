@@ -1,10 +1,18 @@
-import { test, expect } from '@playwright/test';
-import { setup, teardown, getPage, getAgent } from './setup';
+declare global {
+  interface Window {
+    axe: any;
+  }
+}
+
 import { BskyAgent } from '@atproto/api';
-import { privacyCompliance } from '../../src/services/privacyCompliance';
-import { mlContentModeration } from '../../src/services/mlContentModeration';
+import { test, expect } from '@playwright/test';
+
 import { conflictResolution } from '../../src/services/conflictResolution';
+import { mlContentModeration } from '../../src/services/mlContentModeration';
 import { offlineSync } from '../../src/services/offlineSync';
+import { privacyCompliance } from '../../src/services/privacyCompliance';
+
+import { setup, teardown, getPage, getAgent } from './setup';
 
 let page: any;
 let agent: BskyAgent;

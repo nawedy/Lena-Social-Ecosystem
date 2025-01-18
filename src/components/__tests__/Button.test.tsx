@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+import React from 'react';
+
 import Button from '../Button';
 
 describe('Button', () => {
@@ -10,17 +11,13 @@ describe('Button', () => {
   });
 
   it('renders correctly with title', () => {
-    const { getByText } = render(
-      <Button title="Test Button" onPress={mockOnPress} />
-    );
+    const { getByText } = render(<Button title='Test Button' onPress={mockOnPress} />);
 
     expect(getByText('Test Button')).toBeTruthy();
   });
 
   it('calls onPress when pressed', () => {
-    const { getByText } = render(
-      <Button title="Test Button" onPress={mockOnPress} />
-    );
+    const { getByText } = render(<Button title='Test Button' onPress={mockOnPress} />);
 
     fireEvent.press(getByText('Test Button'));
     expect(mockOnPress).toHaveBeenCalledTimes(1);
@@ -29,12 +26,7 @@ describe('Button', () => {
   it('applies custom style', () => {
     const customStyle = { backgroundColor: 'red' };
     const { getByTestId } = render(
-      <Button
-        title="Test Button"
-        onPress={mockOnPress}
-        style={customStyle}
-        testID="button"
-      />
+      <Button title='Test Button' onPress={mockOnPress} style={customStyle} testID='button' />
     );
 
     const button = getByTestId('button');
@@ -43,12 +35,7 @@ describe('Button', () => {
 
   it('disables the button when disabled prop is true', () => {
     const { getByTestId } = render(
-      <Button
-        title="Test Button"
-        onPress={mockOnPress}
-        disabled={true}
-        testID="button"
-      />
+      <Button title='Test Button' onPress={mockOnPress} disabled={true} testID='button' />
     );
 
     const button = getByTestId('button');

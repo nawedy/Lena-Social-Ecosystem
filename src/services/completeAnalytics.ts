@@ -1,9 +1,11 @@
 import { BigQuery } from '@google-cloud/bigquery';
-import { Storage } from '@google-cloud/storage';
 import { PubSub } from '@google-cloud/pubsub';
+import { Storage } from '@google-cloud/storage';
+
 import { config } from '../config';
-import { performanceMonitoring } from './performanceMonitoring';
+
 import { advancedAnalytics } from './advancedAnalytics';
+import { performanceMonitoring } from './performanceMonitoring';
 
 interface AnalyticsEvent {
   id: string;
@@ -102,9 +104,7 @@ export class CompleteAnalyticsService {
   }
 
   // Event Tracking
-  async trackEvent(
-    event: Omit<AnalyticsEvent, 'id' | 'timestamp'>
-  ): Promise<void> {
+  async trackEvent(event: Omit<AnalyticsEvent, 'id' | 'timestamp'>): Promise<void> {
     const completeEvent: AnalyticsEvent = {
       ...event,
       id: crypto.randomUUID(),
@@ -134,9 +134,7 @@ export class CompleteAnalyticsService {
   }
 
   // Dashboard Management
-  async createDashboard(
-    dashboard: Omit<AnalyticsDashboard, 'id'>
-  ): Promise<AnalyticsDashboard> {
+  async createDashboard(dashboard: Omit<AnalyticsDashboard, 'id'>): Promise<AnalyticsDashboard> {
     const newDashboard: AnalyticsDashboard = {
       ...dashboard,
       id: crypto.randomUUID(),
@@ -155,7 +153,7 @@ export class CompleteAnalyticsService {
 
     const results: Record<string, any> = {};
     await Promise.all(
-      dashboard.queries.map(async query => {
+      dashboard.queries.map(async (query) => {
         try {
           results[query.id] = await this.queryAnalytics(query.query);
         } catch (error) {
@@ -251,7 +249,7 @@ export class CompleteAnalyticsService {
   // Private Methods
   private async ensureDatasetExists(): Promise<void> {
     const [datasets] = await this.bigquery.getDatasets();
-    const exists = datasets.some(d => d.id === this.DATASET_NAME);
+    const exists = datasets.some((d) => d.id === this.DATASET_NAME);
 
     if (!exists) {
       await this.bigquery.createDataset(this.DATASET_NAME);
@@ -314,7 +312,7 @@ export class CompleteAnalyticsService {
 
     // Add WHERE clause
     if (query.filters && query.filters.length > 0) {
-      const conditions = query.filters.map(filter => {
+      const conditions = query.filters.map((filter) => {
         switch (filter.operator) {
           case 'equals':
             return `${filter.field} = @${filter.field}`;
@@ -334,7 +332,7 @@ export class CompleteAnalyticsService {
     }
 
     // Add time range
-    sql += ` AND timestamp BETWEEN @start_time AND @end_time`;
+    sql += ' AND timestamp BETWEEN @start_time AND @end_time';
 
     // Add GROUP BY
     if (query.groupBy && query.groupBy.length > 0) {
@@ -344,7 +342,7 @@ export class CompleteAnalyticsService {
     // Add ORDER BY
     if (query.orderBy && query.orderBy.length > 0) {
       const orderClauses = query.orderBy.map(
-        order => `${order.field} ${order.direction.toUpperCase()}`
+        (order) => `${order.field} ${order.direction.toUpperCase()}`
       );
       sql += ` ORDER BY ${orderClauses.join(', ')}`;
     }
@@ -368,7 +366,7 @@ export class CompleteAnalyticsService {
     const [files] = await bucket.getFiles({ prefix: 'analytics/dashboards/' });
 
     await Promise.all(
-      files.map(async file => {
+      files.map(async (file) => {
         const content = await file.download();
         const dashboard: AnalyticsDashboard = JSON.parse(content[0].toString());
         this.dashboards.set(dashboard.id, dashboard);
@@ -412,7 +410,7 @@ export class CompleteAnalyticsService {
     const topic = this.pubsub.topic('analytics-events');
     const subscription = topic.subscription('analytics-processor');
 
-    subscription.on('message', async message => {
+    subscription.on('message', async (message) => {
       try {
         const event: AnalyticsEvent = JSON.parse(message.data.toString());
         await this.trackEvent(event);
@@ -433,13 +431,11 @@ export class CompleteAnalyticsService {
     const headers = Object.keys(data[0]);
     const csvRows = [
       headers.join(','),
-      ...data.map(row =>
+      ...data.map((row) =>
         headers
-          .map(header => {
+          .map((header) => {
             const value = row[header];
-            return typeof value === 'object'
-              ? JSON.stringify(value).replace(/"/g, '""')
-              : value;
+            return typeof value === 'object' ? JSON.stringify(value).replace(/"/g, '""') : value;
           })
           .join(',')
       ),

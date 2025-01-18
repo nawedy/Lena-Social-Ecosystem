@@ -1,7 +1,8 @@
-import { performanceMonitor } from '../../utils/performance';
-import { Monitoring } from '@google-cloud/monitoring';
 import { ErrorReporting } from '@google-cloud/error-reporting';
+import { Monitoring } from '@google-cloud/monitoring';
 import { Storage } from '@google-cloud/storage';
+
+import { performanceMonitor } from '../../utils/performance';
 
 interface AuditEvent {
   type: string;
@@ -61,10 +62,7 @@ export class SecurityAuditService {
     }
   }
 
-  public async logEvent(
-    event: AuditEvent,
-    options: AuditOptions = {}
-  ): Promise<void> {
+  public async logEvent(event: AuditEvent, _options: AuditOptions = {}): Promise<void> {
     const trace = await performanceMonitor.startTrace('security_audit_log');
     try {
       // Enrich event with metadata
@@ -117,7 +115,7 @@ export class SecurityAuditService {
 
   private async getEventCount(eventType: string): Promise<number> {
     // Get event count for the last hour
-    const query = {
+    const _query = {
       filter: {
         type: eventType,
         timestamp: {
@@ -209,9 +207,7 @@ export class SecurityAuditService {
     endTime: number,
     filter?: any
   ): Promise<AuditEvent[]> {
-    const trace = await performanceMonitor.startTrace(
-      'security_audit_get_logs'
-    );
+    const trace = await performanceMonitor.startTrace('security_audit_get_logs');
     try {
       const [files] = await this.storage.bucket(this.bucketName).getFiles({
         prefix: startTime.toString(),
@@ -245,10 +241,7 @@ export class SecurityAuditService {
     });
   }
 
-  public async setAlertThreshold(
-    eventType: string,
-    threshold: number
-  ): Promise<void> {
+  public async setAlertThreshold(eventType: string, threshold: number): Promise<void> {
     this.alertThresholds.set(eventType, threshold);
   }
 

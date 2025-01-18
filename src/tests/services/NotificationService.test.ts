@@ -1,5 +1,7 @@
+import { jest, describe, beforeEach, afterEach, it, expect } from '@jest/globals';
+
 import { NotificationService } from '../../services/NotificationService';
-import { RBACService, Role, Permission } from '../../services/RBACService';
+import { RBACService } from '../../services/RBACService';
 
 // Mock APM service
 jest.mock('@elastic/apm-rum', () => ({
@@ -42,8 +44,8 @@ describe('NotificationService', () => {
     beforeEach(async () => {
       await notificationService.initialize();
       // Setup test users
-      await rbac.assignRole('system', adminUserId, Role.ADMIN);
-      await rbac.assignRole('system', testUserId, Role.ANALYST);
+      await rbac.assignRole('system', adminUserId, 'admin');
+      await rbac.assignRole('system', testUserId, 'analyst');
     });
 
     it('should create notification rules', async () => {
@@ -58,7 +60,7 @@ describe('NotificationService', () => {
         channels: ['email', 'in_app'],
         template: 'high_engagement',
         recipients: {
-          roles: [Role.ANALYST],
+          roles: ['analyst'],
         },
       });
 
@@ -71,8 +73,7 @@ describe('NotificationService', () => {
         name: 'High Engagement',
         type: 'email',
         subject: 'High Engagement Alert',
-        content:
-          'Your content has achieved high engagement: {{engagement_rate}}',
+        content: 'Your content has achieved high engagement: {{engagement_rate}}',
         variables: ['engagement_rate'],
         locale: 'en',
       });
@@ -101,8 +102,7 @@ describe('NotificationService', () => {
 
       expect(notificationId).toBeDefined();
 
-      const status =
-        await notificationService.checkNotificationStatus(notificationId);
+      const status = await notificationService.checkNotificationStatus(notificationId);
       expect(status).toBe('sent');
     });
 
@@ -122,8 +122,7 @@ describe('NotificationService', () => {
         },
       ];
 
-      const notificationIds =
-        await notificationService.sendBulkNotifications(notifications);
+      const notificationIds = await notificationService.sendBulkNotifications(notifications);
 
       expect(notificationIds).toHaveLength(2);
       expect(Array.isArray(notificationIds)).toBe(true);
@@ -138,13 +137,9 @@ describe('NotificationService', () => {
       );
 
       // Mark as read
-      await notificationService.markNotificationAsRead(
-        notificationId,
-        testUserId
-      );
+      await notificationService.markNotificationAsRead(notificationId, testUserId);
 
-      const status =
-        await notificationService.checkNotificationStatus(notificationId);
+      const status = await notificationService.checkNotificationStatus(notificationId);
       expect(status).toBe('read');
     });
   });
@@ -157,26 +152,18 @@ describe('NotificationService', () => {
     it('should get unread notifications', async () => {
       // Send multiple notifications
       await Promise.all([
-        notificationService.sendNotification('in_app', 'Test 1', 'Content 1', [
-          testUserId,
-        ]),
-        notificationService.sendNotification('in_app', 'Test 2', 'Content 2', [
-          testUserId,
-        ]),
+        notificationService.sendNotification('in_app', 'Test 1', 'Content 1', [testUserId]),
+        notificationService.sendNotification('in_app', 'Test 2', 'Content 2', [testUserId]),
       ]);
 
-      const unread =
-        await notificationService.getUnreadNotifications(testUserId);
+      const unread = await notificationService.getUnreadNotifications(testUserId);
 
       expect(unread.length).toBeGreaterThan(0);
       expect(unread[0]).toHaveProperty('status', 'sent');
     });
 
     it('should handle notification subscriptions', async () => {
-      await notificationService.subscribeToNotifications(testUserId, [
-        'email',
-        'push',
-      ]);
+      await notificationService.subscribeToNotifications(testUserId, ['email', 'push']);
 
       // Send notification
       const notificationId = await notificationService.sendNotification(
@@ -186,8 +173,7 @@ describe('NotificationService', () => {
         [testUserId]
       );
 
-      const status =
-        await notificationService.checkNotificationStatus(notificationId);
+      const status = await notificationService.checkNotificationStatus(notificationId);
       expect(status).toBe('sent');
     });
   });
@@ -199,27 +185,20 @@ describe('NotificationService', () => {
 
     it('should handle invalid notification types', async () => {
       await expect(
-        notificationService.sendNotification(
-          'invalid_type' as unknown,
-          'Test',
-          'Content',
-          [testUserId]
-        )
+        notificationService.sendNotification('invalid_type' as unknown, 'Test', 'Content', [
+          testUserId,
+        ])
       ).rejects.toThrow();
     });
 
     it('should handle invalid recipients', async () => {
       await expect(
-        notificationService.sendNotification('in_app', 'Test', 'Content', [
-          'invalid_user',
-        ])
+        notificationService.sendNotification('in_app', 'Test', 'Content', ['invalid_user'])
       ).rejects.toThrow();
     });
 
     it('should handle invalid notification IDs', async () => {
-      await expect(
-        notificationService.checkNotificationStatus('invalid_id')
-      ).rejects.toThrow();
+      await expect(notificationService.checkNotificationStatus('invalid_id')).rejects.toThrow();
     });
   });
 
@@ -237,8 +216,7 @@ describe('NotificationService', () => {
       }));
 
       const startTime = Date.now();
-      const notificationIds =
-        await notificationService.sendBulkNotifications(notifications);
+      const notificationIds = await notificationService.sendBulkNotifications(notifications);
       const endTime = Date.now();
 
       expect(notificationIds).toHaveLength(100);
@@ -274,8 +252,7 @@ describe('NotificationService', () => {
         }
       );
 
-      const status =
-        await notificationService.checkNotificationStatus(notificationId);
+      const status = await notificationService.checkNotificationStatus(notificationId);
       expect(status).toBe('sent');
     });
   });

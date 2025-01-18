@@ -1,8 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { BskyAgent } from '@atproto/api';
+import { AtpSessionData, BskyAgent } from '@atproto/api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+interface AuthUser {
+  did: string;
+  handle: string;
+  email?: string;
+  displayName?: string;
+  avatar?: string;
+  session: AtpSessionData;
+}
+
+interface AuthError extends Error {
+  code?: string;
+  details?: unknown;
+}
 
 interface AuthContextType {
-  currentUser: any;
+  currentUser: AuthUser | null;
   login: (identifier: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
@@ -10,31 +24,31 @@ interface AuthContextType {
   error: string | null;
 }
 
-const _AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export function useAuth() {
-  const _context = useContext(AuthContext);
-  if (context === undefined) {
+  const context = useContext(AuthContext);
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const _agent = new BskyAgent({ service: 'https://bsky.social' });
+  const agent = new BskyAgent({ service: 'https://bsky.social' });
 
   useEffect(() => {
     // Check for stored session
-    const _session = window.localStorage.getItem('session');
+    const session = window.localStorage.getItem('session');
     if (session) {
-      const _sessionData = JSON.parse(session);
+      const sessionData = JSON.parse(session);
       agent
         .resumeSession(sessionData)
         .then(() => {
-          setCurrentUser(sessionData.handle);
+          setCurrentUser({ did: sessionData.did, handle: sessionData.handle, session: sessionData });
           setLoading(false);
         })
         .catch(() => {
@@ -46,43 +60,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  async function login(identifier: string, password: string) {
+  const login = useCallback(async (identifier: string, password: string) => {
     try {
-      const { success, data } = await agent.login({ identifier, password });
-      if (success) {
-        setCurrentUser(data.handle);
-        window.localStorage.setItem('session', JSON.stringify(data));
-        setError(null);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to login');
-      throw err;
-    }
-  }
+      setLoading(true);
+      const { data: session } = await agent.login({
+        identifier,
+        password,
+      });
 
-  async function logout() {
+      const { data: profile } = await agent.getProfile({
+        actor: session.handle,
+      });
+
+      const user: AuthUser = {
+        did: session.did,
+        handle: session.handle,
+        displayName: profile.displayName,
+        avatar: profile.avatar,
+        session,
+      };
+
+      setCurrentUser(user);
+      window.localStorage.setItem('session', JSON.stringify(session));
+      setError(null);
+    } catch (err) {
+      const authError = err as AuthError;
+      setError(authError.message || 'Failed to login');
+      throw authError;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
     try {
+      setLoading(true);
       await agent.logout();
       setCurrentUser(null);
       window.localStorage.removeItem('session');
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to logout');
-      throw err;
+    } catch (err) {
+      const authError = err as AuthError;
+      setError(authError.message || 'Failed to logout');
+      throw authError;
+    } finally {
+      setLoading(false);
     }
-  }
+  }, []);
 
-  async function register(email: string, password: string) {
+  const register = useCallback(async (_email: string, _password: string) => {
     try {
+      setLoading(true);
       // Implement registration logic here
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to register');
-      throw err;
+    } catch (err) {
+      const authError = err as AuthError;
+      setError(authError.message || 'Failed to register');
+      throw authError;
+    } finally {
+      setLoading(false);
     }
-  }
+  }, []);
 
-  const _value = {
+  const value = {
     currentUser,
     login,
     logout,

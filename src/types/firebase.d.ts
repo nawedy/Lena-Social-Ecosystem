@@ -1,11 +1,159 @@
 declare module '@firebase/firestore' {
+  export interface CollectionReference<T = DocumentData> extends Query<T> {
+    id: string;
+    path: string;
+    parent: DocumentReference | null;
+    doc(documentPath?: string): DocumentReference<T>;
+  }
+
   export interface FirebaseFirestore {
-    collection(collectionPath: string): any;
+    collection<T = DocumentData>(collectionPath: string): CollectionReference<T>;
   }
 }
 
 declare module 'firebase' {
-  const firebase: any;
+  export interface FirebaseApp {
+    name: string;
+    options: {
+      apiKey: string;
+      authDomain: string;
+      projectId: string;
+      storageBucket: string;
+      messagingSenderId: string;
+      appId: string;
+      measurementId?: string;
+    };
+  }
+
+  export interface FirebaseAuth {
+    currentUser: FirebaseUser | null;
+    signInWithEmailAndPassword(email: string, password: string): Promise<UserCredential>;
+    signOut(): Promise<void>;
+    onAuthStateChanged(callback: (user: FirebaseUser | null) => void): () => void;
+  }
+
+  export interface FirebaseUser {
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
+    emailVerified: boolean;
+    phoneNumber: string | null;
+    isAnonymous: boolean;
+    metadata: {
+      creationTime?: string;
+      lastSignInTime?: string;
+    };
+  }
+
+  export interface UserCredential {
+    user: FirebaseUser;
+    credential: {
+      providerId: string;
+      signInMethod: string;
+    } | null;
+  }
+
+  export type WhereFilterOp =
+    | '<'
+    | '<='
+    | '=='
+    | '!='
+    | '>='
+    | '>'
+    | 'array-contains'
+    | 'array-contains-any'
+    | 'in'
+    | 'not-in';
+
+  export type OrderByDirection = 'desc' | 'asc';
+
+  export type FieldValue = unknown;
+
+  export interface DocumentData {
+    [field: string]: FieldValue;
+  }
+
+  export interface DocumentReference<T = DocumentData> {
+    id: string;
+    path: string;
+    parent: CollectionReference<T>;
+    collection(collectionPath: string): CollectionReference<DocumentData>;
+    get(): Promise<DocumentSnapshot<T>>;
+    set(data: T): Promise<void>;
+    update(data: Partial<T>): Promise<void>;
+    delete(): Promise<void>;
+  }
+
+  export interface DocumentSnapshot<T = DocumentData> {
+    id: string;
+    ref: DocumentReference<T>;
+    data(): T | undefined;
+    exists(): boolean;
+    get(fieldPath: string): FieldValue;
+  }
+
+  export interface Query<T = DocumentData> {
+    where(fieldPath: string, opStr: WhereFilterOp, value: FieldValue): Query<T>;
+    orderBy(fieldPath: string, directionStr?: OrderByDirection): Query<T>;
+    limit(limit: number): Query<T>;
+    startAfter(snapshot: DocumentSnapshot<T>): Query<T>;
+    endBefore(snapshot: DocumentSnapshot<T>): Query<T>;
+    get(): Promise<QuerySnapshot<T>>;
+  }
+
+  export interface QuerySnapshot<T = DocumentData> {
+    docs: Array<QueryDocumentSnapshot<T>>;
+    empty: boolean;
+    size: number;
+    forEach(callback: (result: QueryDocumentSnapshot<T>) => void): void;
+  }
+
+  export interface QueryDocumentSnapshot<T = DocumentData> {
+    id: string;
+    ref: DocumentReference<T>;
+    data(): T;
+    exists(): boolean;
+  }
+
+  export interface CollectionReference<T = DocumentData> extends Query<T> {
+    id: string;
+    path: string;
+    parent: DocumentReference | null;
+    doc(documentPath?: string): DocumentReference<T>;
+    add(data: T): Promise<DocumentReference<T>>;
+  }
+
+  export interface Firestore {
+    collection(collectionPath: string): CollectionReference;
+    doc(documentPath: string): DocumentReference;
+    batch(): WriteBatch;
+  }
+
+  export interface WriteBatch {
+    set<T>(reference: DocumentReference<T>, data: T): WriteBatch;
+    update<T>(reference: DocumentReference<T>, data: Partial<T>): WriteBatch;
+    delete(reference: DocumentReference): WriteBatch;
+    commit(): Promise<void>;
+  }
+
+  export function collection<T = DocumentData>(firestore: FirebaseFirestore, path: string): CollectionReference<T>;
+  export function doc<T = DocumentData>(firestore: FirebaseFirestore, path: string): DocumentReference<T>;
+  export function getDoc<T>(reference: DocumentReference<T>): Promise<DocumentSnapshot<T>>;
+  export function getDocs<T>(query: Query<T>): Promise<QuerySnapshot<T>>;
+  export function setDoc<T>(reference: DocumentReference<T>, data: T): Promise<void>;
+  export function updateDoc<T>(reference: DocumentReference<T>, data: Partial<T>): Promise<void>;
+  export function deleteDoc(reference: DocumentReference): Promise<void>;
+  export function query<T>(query: Query<T>, ...queryConstraints: QueryConstraint[]): Query<T>;
+  export function where(fieldPath: string, opStr: WhereFilterOp, value: FieldValue): QueryConstraint;
+  export function orderBy(fieldPath: string, directionStr?: OrderByDirection): QueryConstraint;
+  export function limit(limit: number): QueryConstraint;
+
+  const firebase: {
+    app: (name?: string) => FirebaseApp;
+    auth: () => FirebaseAuth;
+    firestore: () => FirebaseFirestore;
+  };
   export default firebase;
 }
 
@@ -16,6 +164,12 @@ declare module '@firebase/auth' {
     displayName: string | null;
     photoURL: string | null;
     emailVerified: boolean;
+    phoneNumber: string | null;
+    isAnonymous: boolean;
+    metadata: {
+      creationTime?: string;
+      lastSignInTime?: string;
+    };
   }
 }
 
@@ -35,10 +189,7 @@ declare module 'firebase/app' {
     options: FirebaseOptions;
   }
 
-  export function initializeApp(
-    options: FirebaseOptions,
-    name?: string
-  ): FirebaseApp;
+  export function initializeApp(options: FirebaseOptions, name?: string): FirebaseApp;
   export function getApp(name?: string): FirebaseApp;
   export function getApps(): FirebaseApp[];
   export function deleteApp(app: FirebaseApp): Promise<void>;
@@ -98,10 +249,7 @@ declare module 'firebase/auth' {
     password: string
   ): Promise<UserCredential>;
   export function signOut(auth: Auth): Promise<void>;
-  export function sendPasswordResetEmail(
-    auth: Auth,
-    email: string
-  ): Promise<void>;
+  export function sendPasswordResetEmail(auth: Auth, email: string): Promise<void>;
   export function updateProfile(
     user: User,
     profile: { displayName?: string | null; photoURL?: string | null }
@@ -160,41 +308,20 @@ declare module 'firebase/firestore' {
   export type OrderByDirection = 'desc' | 'asc';
 
   export function getFirestore(app?: FirebaseApp): Firestore;
-  export function collection(
-    firestore: Firestore,
-    path: string
-  ): CollectionReference;
+  export function collection(firestore: Firestore, path: string): CollectionReference;
   export function doc(
     firestore: Firestore,
     path: string,
     ...pathSegments: string[]
   ): DocumentReference;
-  export function getDoc<T>(
-    reference: DocumentReference<T>
-  ): Promise<DocumentSnapshot<T>>;
+  export function getDoc<T>(reference: DocumentReference<T>): Promise<DocumentSnapshot<T>>;
   export function getDocs<T>(query: Query<T>): Promise<QuerySnapshot<T>>;
-  export function setDoc<T>(
-    reference: DocumentReference<T>,
-    data: T
-  ): Promise<void>;
-  export function updateDoc<T>(
-    reference: DocumentReference<T>,
-    data: Partial<T>
-  ): Promise<void>;
+  export function setDoc<T>(reference: DocumentReference<T>, data: T): Promise<void>;
+  export function updateDoc<T>(reference: DocumentReference<T>, data: Partial<T>): Promise<void>;
   export function deleteDoc(reference: DocumentReference): Promise<void>;
-  export function query<T>(
-    query: Query<T>,
-    ...queryConstraints: any[]
-  ): Query<T>;
-  export function where(
-    fieldPath: string,
-    opStr: WhereFilterOp,
-    value: any
-  ): QueryConstraint;
-  export function orderBy(
-    fieldPath: string,
-    directionStr?: OrderByDirection
-  ): QueryConstraint;
+  export function query<T>(query: Query<T>, ...queryConstraints: any[]): Query<T>;
+  export function where(fieldPath: string, opStr: WhereFilterOp, value: any): QueryConstraint;
+  export function orderBy(fieldPath: string, directionStr?: OrderByDirection): QueryConstraint;
   export function limit(limit: number): QueryConstraint;
 }
 
@@ -225,10 +352,7 @@ declare module 'firebase/storage' {
     snapshot: UploadTaskSnapshot;
     cancel(): boolean;
     catch(onRejected: (error: Error) => any): Promise<any>;
-    on(
-      event: TaskEvent,
-      nextOrObserver?: (snapshot: UploadTaskSnapshot) => any
-    ): Function;
+    on(event: TaskEvent, nextOrObserver?: (snapshot: UploadTaskSnapshot) => any): Function;
     pause(): boolean;
     resume(): boolean;
     then(
@@ -247,12 +371,7 @@ declare module 'firebase/storage' {
   }
 
   export type TaskEvent = 'state_changed';
-  export type TaskState =
-    | 'running'
-    | 'paused'
-    | 'success'
-    | 'canceled'
-    | 'error';
+  export type TaskState = 'running' | 'paused' | 'success' | 'canceled' | 'error';
 
   export function getStorage(app?: FirebaseApp): Storage;
   export function ref(storage: Storage, path?: string): StorageReference;

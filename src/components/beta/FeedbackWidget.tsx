@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+
 import { useBeta } from '../../contexts/BetaContext';
 
 type FeedbackType = 'general' | 'bug' | 'feature';
@@ -57,11 +58,8 @@ export function FeedbackWidget() {
       Alert.window.alert('Success', 'Thank you for your feedback!');
       setIsVisible(false);
       resetForm();
-    } catch (error) {
-      Alert.window.alert(
-        'Error',
-        'Failed to submit feedback. Please try again.'
-      );
+    } catch (_error) {
+      Alert.window.alert('Error', 'Failed to submit feedback. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -77,16 +75,13 @@ export function FeedbackWidget() {
 
   return (
     <>
-      <TouchableOpacity
-        style={styles.trigger}
-        onPress={() => setIsVisible(true)}
-      >
+      <TouchableOpacity style={styles.trigger} onPress={() => setIsVisible(true)}>
         <Text style={styles.triggerText}>Feedback</Text>
       </TouchableOpacity>
 
       <Modal
         visible={isVisible}
-        animationType="slide"
+        animationType='slide'
         transparent={true}
         onRequestClose={() => setIsVisible(false)}
       >
@@ -94,23 +89,17 @@ export function FeedbackWidget() {
           <View style={styles.modalContent}>
             <View style={styles.header}>
               <Text style={styles.headerText}>Submit Feedback</Text>
-              <TouchableOpacity
-                onPress={() => setIsVisible(false)}
-                style={styles.closeButton}
-              >
+              <TouchableOpacity onPress={() => setIsVisible(false)} style={styles.closeButton}>
                 <Text>✕</Text>
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.form}>
               <View style={styles.typeSelector}>
-                {(['general', 'bug', 'feature'] as FeedbackType[]).map(type => (
+                {(['general', 'bug', 'feature'] as FeedbackType[]).map((type) => (
                   <TouchableOpacity
                     key={type}
-                    style={[
-                      styles.typeButton,
-                      feedbackType === type && styles.typeButtonActive,
-                    ]}
+                    style={[styles.typeButton, feedbackType === type && styles.typeButtonActive]}
                     onPress={() => setFeedbackType(type)}
                   >
                     <Text
@@ -128,7 +117,7 @@ export function FeedbackWidget() {
               {feedbackType !== 'general' && (
                 <TextInput
                   style={styles.input}
-                  placeholder="Title"
+                  placeholder='Title'
                   value={title}
                   onChangeText={setTitle}
                 />
@@ -136,7 +125,7 @@ export function FeedbackWidget() {
 
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Description"
+                placeholder='Description'
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -146,13 +135,10 @@ export function FeedbackWidget() {
               {feedbackType !== 'general' && (
                 <View style={styles.prioritySelector}>
                   <Text style={styles.label}>Priority:</Text>
-                  {(['low', 'medium', 'high'] as const).map(p => (
+                  {(['low', 'medium', 'high'] as const).map((p) => (
                     <TouchableOpacity
                       key={p}
-                      style={[
-                        styles.priorityButton,
-                        priority === p && styles.priorityButtonActive,
-                      ]}
+                      style={[styles.priorityButton, priority === p && styles.priorityButtonActive]}
                       onPress={() => setPriority(p)}
                     >
                       <Text
@@ -172,14 +158,9 @@ export function FeedbackWidget() {
                 <View style={styles.ratingContainer}>
                   <Text style={styles.label}>Rating:</Text>
                   <View style={styles.stars}>
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <TouchableOpacity
-                        key={star}
-                        onPress={() => setRating(star)}
-                      >
-                        <Text style={styles.star}>
-                          {star <= rating ? '★' : '☆'}
-                        </Text>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                        <Text style={styles.star}>{star <= rating ? '★' : '☆'}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -187,10 +168,7 @@ export function FeedbackWidget() {
               )}
 
               <TouchableOpacity
-                style={[
-                  styles.submitButton,
-                  isSubmitting && styles.submitButtonDisabled,
-                ]}
+                style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
                 onPress={handleSubmit}
                 disabled={isSubmitting}
               >

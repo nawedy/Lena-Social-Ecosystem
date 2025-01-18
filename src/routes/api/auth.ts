@@ -1,5 +1,6 @@
 import express from 'express';
 import { body } from 'express-validator';
+
 import {
   register,
   login,
@@ -8,8 +9,8 @@ import {
   forgotPassword,
   resetPassword,
 } from '../../controllers/auth';
-import { validateRequest } from '../../middleware/validateRequest';
 import { requireAuth } from '../../middleware/requireAuth';
+import { validateRequest } from '../../middleware/validateRequest';
 
 const router = express.Router();
 
@@ -20,9 +21,7 @@ const registerValidation = [
     .isLength({ min: 3 })
     .withMessage('Username must be at least 3 characters'),
   body('email').isEmail().withMessage('Must be a valid email'),
-  body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
 ];
 
 // Login validation
@@ -36,12 +35,7 @@ router.post('/register', registerValidation, validateRequest, register);
 router.post('/login', loginValidation, validateRequest, login);
 router.post('/logout', requireAuth, logout);
 router.post('/refresh-token', refreshToken);
-router.post(
-  '/forgot-password',
-  body('email').isEmail(),
-  validateRequest,
-  forgotPassword
-);
+router.post('/forgot-password', body('email').isEmail(), validateRequest, forgotPassword);
 router.post(
   '/reset-password/:token',
   body('password').isLength({ min: 8 }),

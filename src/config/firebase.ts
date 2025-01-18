@@ -1,8 +1,8 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
@@ -27,7 +27,6 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 
 // Initialize Analytics
-export const analytics =
-  typeof window !== 'undefined' ? getAnalytics(app) : null;
+export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 export default app;

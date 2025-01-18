@@ -1,9 +1,13 @@
 import crypto from 'crypto';
-import { createClient } from 'redis';
-import { config } from '../config';
+
 import { BskyAgent } from '@atproto/api';
-import { atproto } from './atproto';
+import { createClient } from 'redis';
+
+import { config } from '../config';
 import { logger } from '../utils/logger';
+
+import { atproto } from './atproto';
+
 
 interface AuditLog {
   id: string;
@@ -38,11 +42,7 @@ export class SecurityService {
       url: config.redis.url,
       password: config.redis.password,
     });
-    this.encryptionKey = crypto.scryptSync(
-      config.security.secretKey,
-      'salt',
-      32
-    );
+    this.encryptionKey = crypto.scryptSync(config.security.secretKey, 'salt', 32);
   }
 
   public static getInstance(): SecurityService {
@@ -53,16 +53,10 @@ export class SecurityService {
   }
 
   // Data Encryption
-  async encryptData(
-    data: string
-  ): Promise<{ iv: string; encryptedData: string }> {
+  async encryptData(data: string): Promise<{ iv: string; encryptedData: string }> {
     try {
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv(
-        'aes-256-gcm',
-        this.encryptionKey,
-        iv
-      );
+      const cipher = crypto.createCipheriv('aes-256-gcm', this.encryptionKey, iv);
 
       let encryptedData = cipher.update(data, 'utf8', 'hex');
       encryptedData += cipher.final('hex');
@@ -103,9 +97,7 @@ export class SecurityService {
   }
 
   // Security Audit Logging
-  async logAuditEvent(
-    event: Omit<AuditLog, 'id' | 'timestamp'>
-  ): Promise<void> {
+  async logAuditEvent(event: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {
     try {
       const auditLog: AuditLog = {
         id: crypto.randomUUID(),
@@ -132,9 +124,7 @@ export class SecurityService {
   }
 
   // Security Alerts
-  async createSecurityAlert(
-    alert: Omit<SecurityAlert, 'id' | 'timestamp'>
-  ): Promise<void> {
+  async createSecurityAlert(alert: Omit<SecurityAlert, 'id' | 'timestamp'>): Promise<void> {
     try {
       const securityAlert: SecurityAlert = {
         id: crypto.randomUUID(),
@@ -158,11 +148,7 @@ export class SecurityService {
   }
 
   // Rate Limiting Check
-  async checkRateLimit(
-    key: string,
-    limit: number,
-    windowMs: number
-  ): Promise<boolean> {
+  async checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
     try {
       const count = await this.redisClient.incr(key);
       if (count === 1) {
@@ -176,7 +162,7 @@ export class SecurityService {
   }
 
   // Security Scanning
-  async scanContent(content: string): Promise<{
+  async scanContent(_content: string): Promise<{
     isSafe: boolean;
     threats: string[];
   }> {
@@ -194,22 +180,17 @@ export class SecurityService {
   }
 
   // Token Management
-  generateSecureToken(length: number = 32): string {
+  generateSecureToken(length = 32): string {
     return crypto.randomBytes(length).toString('hex');
   }
 
   // Password Hashing
   async hashPassword(password: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      crypto.scrypt(
-        password,
-        config.security.saltRounds,
-        64,
-        (err, derivedKey) => {
-          if (err) reject(err);
-          resolve(derivedKey.toString('hex'));
-        }
-      );
+      crypto.scrypt(password, config.security.saltRounds, 64, (err, derivedKey) => {
+        if (err) reject(err);
+        resolve(derivedKey.toString('hex'));
+      });
     });
   }
 

@@ -9,6 +9,7 @@ import {
   AccessibilityInfo,
   Platform,
 } from 'react-native';
+
 import { useTheme } from '../../theme';
 import { hapticFeedback } from '../../utils/haptics';
 

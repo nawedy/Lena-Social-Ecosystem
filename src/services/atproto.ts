@@ -6,15 +6,13 @@ import {
   AppBskyFeedPost,
   ComAtprotoRepoPutRecord,
 } from '@atproto/api';
+
 import { config } from '../config';
 
 class ATProtoService {
   private agent: BskyAgent;
   private static instance: ATProtoService;
-  private sessionListeners: ((
-    evt: AtpSessionEvent,
-    session?: AtpSessionData
-  ) => void)[] = [];
+  private sessionListeners: ((evt: AtpSessionEvent, session?: AtpSessionData) => void)[] = [];
 
   private constructor() {
     this.agent = new BskyAgent({
@@ -22,10 +20,8 @@ class ATProtoService {
       persistSession: true,
     });
 
-    this.agent.addEventListener('session', evt => {
-      this.sessionListeners.forEach(listener =>
-        listener(evt.type, this.agent.session)
-      );
+    this.agent.addEventListener('session', (evt) => {
+      this.sessionListeners.forEach((listener) => listener(evt.type, this.agent.session));
     });
   }
 
@@ -37,16 +33,12 @@ class ATProtoService {
   }
 
   // Session Management
-  addSessionListener(
-    listener: (evt: AtpSessionEvent, session?: AtpSessionData) => void
-  ) {
+  addSessionListener(listener: (evt: AtpSessionEvent, session?: AtpSessionData) => void) {
     this.sessionListeners.push(listener);
   }
 
-  removeSessionListener(
-    listener: (evt: AtpSessionEvent, session?: AtpSessionData) => void
-  ) {
-    this.sessionListeners = this.sessionListeners.filter(l => l !== listener);
+  removeSessionListener(listener: (evt: AtpSessionEvent, session?: AtpSessionData) => void) {
+    this.sessionListeners = this.sessionListeners.filter((l) => l !== listener);
   }
 
   async login(identifier: string, password: string) {
@@ -82,7 +74,7 @@ class ATProtoService {
           ? {
               $type: 'app.bsky.embed.images',
               images: await Promise.all(
-                opts.media.map(async m => {
+                opts.media.map(async (m) => {
                   const upload = await this.agent.uploadBlob(m.data, {
                     encoding: m.type === 'image' ? 'image/jpeg' : 'video/mp4',
                   });
@@ -91,11 +83,11 @@ class ATProtoService {
               ),
             }
           : opts?.quote
-            ? {
-                $type: 'app.bsky.embed.record',
-                record: { uri: opts.quote.uri, cid: opts.quote.cid },
-              }
-            : undefined,
+          ? {
+              $type: 'app.bsky.embed.record',
+              record: { uri: opts.quote.uri, cid: opts.quote.cid },
+            }
+          : undefined,
         labels: opts?.labels,
         langs: opts?.languageTags,
         createdAt: new Date().toISOString(),
@@ -126,10 +118,7 @@ class ATProtoService {
     }
   }
 
-  async getCustomFeed(
-    feedUri: string,
-    params?: { limit?: number; cursor?: string }
-  ) {
+  async getCustomFeed(feedUri: string, params?: { limit?: number; cursor?: string }) {
     try {
       return await this.agent.app.bsky.feed.getFeed({
         feed: feedUri,
@@ -243,12 +232,8 @@ class ATProtoService {
   }) {
     try {
       const [avatarBlob, bannerBlob] = await Promise.all([
-        params.avatar
-          ? this.agent.uploadBlob(params.avatar, { encoding: 'image/jpeg' })
-          : null,
-        params.banner
-          ? this.agent.uploadBlob(params.banner, { encoding: 'image/jpeg' })
-          : null,
+        params.avatar ? this.agent.uploadBlob(params.avatar, { encoding: 'image/jpeg' }) : null,
+        params.banner ? this.agent.uploadBlob(params.banner, { encoding: 'image/jpeg' }) : null,
       ]);
 
       const profile = {
@@ -303,13 +288,7 @@ class ATProtoService {
 
   // Content Moderation
   async reportContent(params: {
-    reasonType:
-      | 'spam'
-      | 'violation'
-      | 'misleading'
-      | 'sexual'
-      | 'rude'
-      | 'other';
+    reasonType: 'spam' | 'violation' | 'misleading' | 'sexual' | 'rude' | 'other';
     subject: { uri: string; cid: string };
     reason?: string;
   }) {

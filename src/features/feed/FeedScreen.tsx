@@ -1,3 +1,4 @@
+import { FlashList } from '@shopify/flash-list';
 import React, { useCallback } from 'react';
 import {
   View,
@@ -8,10 +9,12 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
-import { PostCard } from './components/PostCard';
+
+
 import { useATProto } from '../../contexts/ATProtoContext';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
+
+import { PostCard } from './components/PostCard';
 
 interface Post {
   uri: string;
@@ -36,63 +39,67 @@ interface Post {
 export function FeedScreen() {
   const { agent } = useATProto();
 
-  const _fetchFeed = useCallback(
+  const fetchFeed = useCallback(
     async (cursor?: string) => {
       if (!agent) {
         throw new Error('Not authenticated');
       }
 
-      const _response = await agent.getTimeline({ cursor, limit: 20 });
-      const _posts = response.data.feed.map(item => ({
-        uri: item.post.uri,
-        cid: item.post.cid,
-        author: item.post.author,
-        text: item.post.text,
-        media: item.post.embed?.images,
-        createdAt: item.post.createdAt,
-        likes: item.post.likeCount || 0,
-        reposts: item.post.repostCount || 0,
-      }));
+      try {
+        const response = await agent.getTimeline({ cursor, limit: 20 });
+        const posts = response.data.feed.map((item) => ({
+          uri: item.post.uri,
+          cid: item.post.cid,
+          author: item.post.author,
+          text: item.post.text,
+          media: item.post.embed?.images,
+          createdAt: item.post.indexedAt,
+          likes: item.post.likeCount || 0,
+          reposts: item.post.repostCount || 0,
+        }));
 
-      return {
-        data: posts,
-        cursor: response.data.cursor,
-      };
+        return {
+          data: posts,
+          cursor: response.data.cursor,
+        };
+      } catch (error) {
+        console.error('Error fetching feed:', error);
+        throw error;
+      }
     },
     [agent]
   );
 
+  const handleError = useCallback((error: Error) => {
+    Alert.alert('Error', error.message);
+  }, []);
+
   const {
-    items: posts,
+    data: posts,
     loading,
     error,
-    hasMore,
     lastElementRef,
     refresh,
   } = useInfiniteScroll<Post>({
     fetchData: fetchFeed,
   });
 
-  const _handleError = useCallback((error: Error) => {
-    Alert.window.alert('Error', error.message);
-  }, []);
-
-  const _renderItem = useCallback(
+  const renderItem = useCallback(
     ({ item: post }: { item: Post }) => {
       return <PostCard post={post} onError={handleError} />;
     },
     [handleError]
   );
 
-  const _renderFooter = useCallback(() => {
-    if (!hasMore) return null;
+  const renderFooter = useCallback(() => {
+    if (!loading) return null;
 
     return (
       <View style={styles.footer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size='large' color='#0000ff' />
       </View>
     );
-  }, [hasMore]);
+  }, [loading]);
 
   if (error) {
     return (
@@ -115,17 +122,14 @@ export function FeedScreen() {
         onEndReached={lastElementRef}
         ListFooterComponent={renderFooter}
         refreshControl={
-          <RefreshControl
-            refreshing={loading && posts.length === 0}
-            onRefresh={refresh}
-          />
+          <RefreshControl refreshing={loading && posts.length === 0} onRefresh={refresh} />
         }
       />
     </View>
   );
 }
 
-const _styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -138,23 +142,22 @@ const _styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    color: '#ff3b30',
+    marginBottom: 16,
     textAlign: 'center',
-    marginBottom: 20,
   },
   retryButton: {
+    backgroundColor: '#007AFF',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#0000ff',
-    borderRadius: 20,
+    borderRadius: 8,
   },
   retryText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   footer: {
-    paddingVertical: 20,
-    alignItems: 'center',
+    padding: 16,
   },
 });

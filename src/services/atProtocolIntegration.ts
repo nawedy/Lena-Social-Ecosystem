@@ -1,9 +1,4 @@
-import {
-  BskyAgent,
-  RichText,
-  AppBskyFeedPost,
-  AppBskyFeedDefs,
-} from '@atproto/api';
+import { BskyAgent, RichText, AppBskyFeedPost, AppBskyFeedDefs } from '@atproto/api';
 import { AtpSessionData } from '@atproto/api/dist/client/types';
 
 interface Record {
@@ -197,9 +192,7 @@ export class ATProtoService {
     }
   }
 
-  async getNotifications(
-    params: { limit?: number; cursor?: string } = {}
-  ): Promise<Record[]> {
+  async getNotifications(params: { limit?: number; cursor?: string } = {}): Promise<Record[]> {
     if (!this.session) {
       throw new Error('Not logged in');
     }
@@ -219,9 +212,7 @@ export class ATProtoService {
     }
 
     try {
-      await this.agent.updateSeenNotifications(
-        seenAt || new Date().toISOString()
-      );
+      await this.agent.updateSeenNotifications(seenAt || new Date().toISOString());
     } catch (error) {
       console.error('Failed to mark notifications as read:', error);
       throw error;

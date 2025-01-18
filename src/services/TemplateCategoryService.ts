@@ -58,10 +58,7 @@ export class TemplateCategoryService {
   }
 
   async createCategory(
-    data: Omit<
-      TemplateCategory,
-      'id' | 'templateCount' | 'createdAt' | 'lastModified'
-    >,
+    data: Omit<TemplateCategory, 'id' | 'templateCount' | 'createdAt' | 'lastModified'>,
     userId: string
   ): Promise<string> {
     const categoryData: Omit<TemplateCategory, 'id'> = {
@@ -73,10 +70,7 @@ export class TemplateCategoryService {
       modifiedBy: userId,
     };
 
-    const docRef = await addDoc(
-      collection(this.db, 'templateCategories'),
-      categoryData
-    );
+    const docRef = await addDoc(collection(this.db, 'templateCategories'), categoryData);
     return docRef.id;
   }
 
@@ -84,9 +78,7 @@ export class TemplateCategoryService {
     const docRef = doc(this.db, 'templateCategories', categoryId);
     const docSnap = await getDoc(docRef);
 
-    return docSnap.exists()
-      ? ({ id: docSnap.id, ...docSnap.data() } as TemplateCategory)
-      : null;
+    return docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as TemplateCategory) : null;
   }
 
   async updateCategory(
@@ -153,19 +145,16 @@ export class TemplateCategoryService {
     if (options.searchTerm) {
       queryConstraints.push(
         where('name', '>=', options.searchTerm),
-        where('name', '<=', options.searchTerm + '\uf8ff')
+        where('name', '<=', `${options.searchTerm}\uf8ff`)
       );
     }
 
     queryConstraints.push(orderBy('order'));
 
-    const q = query(
-      collection(this.db, 'templateCategories'),
-      ...queryConstraints
-    );
+    const q = query(collection(this.db, 'templateCategories'), ...queryConstraints);
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as TemplateCategory[];
@@ -179,17 +168,13 @@ export class TemplateCategoryService {
   private buildHierarchy(
     categories: TemplateCategory[],
     parent?: string,
-    level: number = 0
+    level = 0
   ): TemplateCategory[] {
     const hierarchy: TemplateCategory[] = [];
-    const children = categories.filter(c => c.parent === parent);
+    const children = categories.filter((c) => c.parent === parent);
 
     for (const child of children) {
-      const subcategories = this.buildHierarchy(
-        categories,
-        child.id,
-        level + 1
-      );
+      const subcategories = this.buildHierarchy(categories, child.id, level + 1);
       hierarchy.push({
         ...child,
         metadata: {
@@ -294,13 +279,13 @@ export class TemplateCategoryService {
       description: string;
       tags?: string[];
     },
-    limit: number = 5
+    limit = 5
   ): Promise<TemplateCategory[]> {
     // Get all categories
     const categories = await this.listCategories();
 
     // Calculate relevance scores
-    const scores = categories.map(category => {
+    const scores = categories.map((category) => {
       let score = 0;
 
       // Match by name
@@ -309,19 +294,13 @@ export class TemplateCategoryService {
       }
 
       // Match by description
-      if (
-        template.description
-          .toLowerCase()
-          .includes(category.description.toLowerCase())
-      ) {
+      if (template.description.toLowerCase().includes(category.description.toLowerCase())) {
         score += 2;
       }
 
       // Match by tags
       if (template.tags && category.metadata?.tags) {
-        const matchingTags = template.tags.filter(tag =>
-          category.metadata.tags.includes(tag)
-        );
+        const matchingTags = template.tags.filter((tag) => category.metadata.tags.includes(tag));
         score += matchingTags.length;
       }
 
@@ -332,14 +311,10 @@ export class TemplateCategoryService {
     return scores
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
-      .map(s => s.category);
+      .map((s) => s.category);
   }
 
-  async mergeCategoriesInto(
-    sourceIds: string[],
-    targetId: string,
-    userId: string
-  ): Promise<void> {
+  async mergeCategoriesInto(sourceIds: string[], targetId: string, userId: string): Promise<void> {
     const batch = writeBatch(this.db);
 
     // Update all templates in source categories
@@ -350,7 +325,7 @@ export class TemplateCategoryService {
       );
       const templates = await getDocs(templatesQuery);
 
-      templates.docs.forEach(doc => {
+      templates.docs.forEach((doc) => {
         batch.update(doc.ref, {
           categoryId: targetId,
           lastModified: new Date(),
@@ -382,10 +357,7 @@ export class TemplateCategoryService {
     await batch.commit();
   }
 
-  async reorderCategories(
-    parent: string | null,
-    orderedIds: string[]
-  ): Promise<void> {
+  async reorderCategories(parent: string | null, orderedIds: string[]): Promise<void> {
     const batch = writeBatch(this.db);
 
     orderedIds.forEach((id, index) => {
@@ -403,7 +375,7 @@ export class TemplateCategoryService {
     userId: string
   ): Promise<string[]> {
     const batch = writeBatch(this.db);
-    const categoryRefs = categories.map(category => {
+    const categoryRefs = categories.map((category) => {
       const ref = doc(this.db, 'templateCategories');
       batch.set(ref, {
         ...category,
@@ -416,41 +388,34 @@ export class TemplateCategoryService {
     });
 
     await batch.commit();
-    return categoryRefs.map(ref => ref.id);
+    return categoryRefs.map((ref) => ref.id);
   }
 
-  async exportCategories(
-    categoryIds?: string[]
-  ): Promise<Omit<TemplateCategory, 'id'>[]> {
-    let queryConstraints = [];
+  async exportCategories(categoryIds?: string[]): Promise<Omit<TemplateCategory, 'id'>[]> {
+    const _queryConstraints = [];
 
     if (categoryIds && categoryIds.length > 0) {
       // Firebase doesn't support 'in' queries with more than 10 items
       const chunks = this.chunkArray(categoryIds, 10);
       const snapshots = await Promise.all(
-        chunks.map(chunk =>
-          getDocs(
-            query(
-              collection(this.db, 'templateCategories'),
-              where('id', 'in', chunk)
-            )
-          )
+        chunks.map((chunk) =>
+          getDocs(query(collection(this.db, 'templateCategories'), where('id', 'in', chunk)))
         )
       );
 
       return snapshots
-        .flatMap(snapshot => snapshot.docs)
-        .map(doc => {
+        .flatMap((snapshot) => snapshot.docs)
+        .map((doc) => {
           const data = doc.data();
-          delete data.id;
+          data.id = undefined;
           return data as Omit<TemplateCategory, 'id'>;
         });
     }
 
     const snapshot = await getDocs(collection(this.db, 'templateCategories'));
-    return snapshot.docs.map(doc => {
+    return snapshot.docs.map((doc) => {
       const data = doc.data();
-      delete data.id;
+      data.id = undefined;
       return data as Omit<TemplateCategory, 'id'>;
     });
   }

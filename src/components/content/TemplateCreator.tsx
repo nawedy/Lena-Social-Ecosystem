@@ -1,4 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -10,14 +12,13 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
+
+import { ContentGenerationService } from '../../services/ContentGenerationService';
 import {
   ContentTemplateService,
   ContentTemplate,
   TemplateCategory,
 } from '../../services/ContentTemplateService';
-import { ContentGenerationService } from '../../services/ContentGenerationService';
 
 interface TemplateCreatorProps {
   userId: string;
@@ -37,11 +38,7 @@ interface ValidationError extends Error {
 type TemplateType = 'text' | 'image' | 'video';
 type AIProvider = 'openai' | 'anthropic' | 'google' | 'custom';
 
-export function TemplateCreator({
-  userId,
-  onTemplateCreated,
-  onCancel,
-}: TemplateCreatorProps) {
+export function TemplateCreator({ userId, onTemplateCreated, onCancel }: TemplateCreatorProps) {
   const { t } = useTranslation();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -57,7 +54,7 @@ export function TemplateCreator({
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [categories, setCategories] = useState<TemplateCategory[]>([]);
   const [popularTags, setPopularTags] = useState<string[]>([]);
-  const [error, setError] = useState<ValidationError | null>(null);
+  const [_error, setError] = useState<ValidationError | null>(null);
 
   const _templateService = ContentTemplateService.getInstance();
   const _contentGenService = ContentGenerationService.getInstance();
@@ -73,9 +70,7 @@ export function TemplateCreator({
       setCategories(loadedCategories);
     } catch (error) {
       console.error('Error loading categories:', error);
-      setError(
-        error instanceof Error ? error : new Error('Failed to load categories')
-      );
+      setError(error instanceof Error ? error : new Error('Failed to load categories'));
     }
   };
 
@@ -85,9 +80,7 @@ export function TemplateCreator({
       setPopularTags(loadedTags);
     } catch (error) {
       console.error('Error loading tags:', error);
-      setError(
-        error instanceof Error ? error : new Error('Failed to load tags')
-      );
+      setError(error instanceof Error ? error : new Error('Failed to load tags'));
     }
   };
 
@@ -99,7 +92,7 @@ export function TemplateCreator({
   };
 
   const _handleRemoveTag = (tag: string): void => {
-    setTags(tags.filter(t => t !== tag));
+    setTags(tags.filter((t) => t !== tag));
   };
 
   const _testTemplate = async (): Promise<void> => {
@@ -136,9 +129,7 @@ export function TemplateCreator({
       setTestResult(result);
     } catch (error) {
       console.error('Error testing template:', error);
-      setError(
-        error instanceof Error ? error : new Error('Failed to test template')
-      );
+      setError(error instanceof Error ? error : new Error('Failed to test template'));
       Alert.window.alert(t('error'), t('errors.testFailed'));
     } finally {
       setLoading(false);
@@ -222,9 +213,7 @@ export function TemplateCreator({
       onTemplateCreated();
     } catch (error) {
       console.error('Error creating template:', error);
-      setError(
-        error instanceof Error ? error : new Error('Failed to create template')
-      );
+      setError(error instanceof Error ? error : new Error('Failed to create template'));
       Alert.window.alert(t('error'), t('errors.createFailed'));
     } finally {
       setLoading(false);
@@ -235,15 +224,11 @@ export function TemplateCreator({
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onCancel}>
-          <Ionicons name="close" size={24} color="#666" />
+          <Ionicons name='close' size={24} color='#666' />
         </TouchableOpacity>
         <Text style={styles.title}>{t('templates.createNew')}</Text>
         <TouchableOpacity onPress={handleCreate} disabled={loading}>
-          <Text
-            style={[styles.saveButton, loading && styles.saveButtonDisabled]}
-          >
-            {t('save')}
-          </Text>
+          <Text style={[styles.saveButton, loading && styles.saveButtonDisabled]}>{t('save')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -277,13 +262,10 @@ export function TemplateCreator({
               showsHorizontalScrollIndicator={false}
               style={styles.categoryList}
             >
-              {categories.map(cat => (
+              {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[
-                    styles.categoryChip,
-                    category === cat.id && styles.categoryChipSelected,
-                  ]}
+                  style={[styles.categoryChip, category === cat.id && styles.categoryChipSelected]}
                   onPress={() => setCategory(cat.id)}
                 >
                   <Text
@@ -310,64 +292,34 @@ export function TemplateCreator({
           <Text style={styles.label}>{t('templates.type')}</Text>
           <View style={styles.typeContainer}>
             <TouchableOpacity
-              style={[
-                styles.typeButton,
-                type === 'text' && styles.typeButtonSelected,
-              ]}
+              style={[styles.typeButton, type === 'text' && styles.typeButtonSelected]}
               onPress={() => setType('text')}
             >
-              <Ionicons
-                name="text"
-                size={24}
-                color={type === 'text' ? '#fff' : '#666'}
-              />
+              <Ionicons name='text' size={24} color={type === 'text' ? '#fff' : '#666'} />
               <Text
-                style={[
-                  styles.typeButtonText,
-                  type === 'text' && styles.typeButtonTextSelected,
-                ]}
+                style={[styles.typeButtonText, type === 'text' && styles.typeButtonTextSelected]}
               >
                 {t('templates.text')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.typeButton,
-                type === 'image' && styles.typeButtonSelected,
-              ]}
+              style={[styles.typeButton, type === 'image' && styles.typeButtonSelected]}
               onPress={() => setType('image')}
             >
-              <Ionicons
-                name="image"
-                size={24}
-                color={type === 'image' ? '#fff' : '#666'}
-              />
+              <Ionicons name='image' size={24} color={type === 'image' ? '#fff' : '#666'} />
               <Text
-                style={[
-                  styles.typeButtonText,
-                  type === 'image' && styles.typeButtonTextSelected,
-                ]}
+                style={[styles.typeButtonText, type === 'image' && styles.typeButtonTextSelected]}
               >
                 {t('templates.image')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.typeButton,
-                type === 'video' && styles.typeButtonSelected,
-              ]}
+              style={[styles.typeButton, type === 'video' && styles.typeButtonSelected]}
               onPress={() => setType('video')}
             >
-              <Ionicons
-                name="videocam"
-                size={24}
-                color={type === 'video' ? '#fff' : '#666'}
-              />
+              <Ionicons name='videocam' size={24} color={type === 'video' ? '#fff' : '#666'} />
               <Text
-                style={[
-                  styles.typeButtonText,
-                  type === 'video' && styles.typeButtonTextSelected,
-                ]}
+                style={[styles.typeButtonText, type === 'video' && styles.typeButtonTextSelected]}
               >
                 {t('templates.video')}
               </Text>
@@ -407,26 +359,15 @@ export function TemplateCreator({
                 placeholder={t('templates.tagsPlaceholder')}
                 onSubmitEditing={handleAddTag}
               />
-              <TouchableOpacity
-                style={styles.addTagButton}
-                onPress={handleAddTag}
-              >
-                <Ionicons name="add" size={24} color="#007AFF" />
+              <TouchableOpacity style={styles.addTagButton} onPress={handleAddTag}>
+                <Ionicons name='add' size={24} color='#007AFF' />
               </TouchableOpacity>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.tagList}
-            >
-              {tags.map(tag => (
-                <TouchableOpacity
-                  key={tag}
-                  style={styles.tag}
-                  onPress={() => handleRemoveTag(tag)}
-                >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagList}>
+              {tags.map((tag) => (
+                <TouchableOpacity key={tag} style={styles.tag} onPress={() => handleRemoveTag(tag)}>
                   <Text style={styles.tagText}>{tag}</Text>
-                  <Ionicons name="close-circle" size={16} color="#666" />
+                  <Ionicons name='close-circle' size={16} color='#666' />
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -435,7 +376,7 @@ export function TemplateCreator({
               showsHorizontalScrollIndicator={false}
               style={styles.popularTags}
             >
-              {popularTags.map(tag => (
+              {popularTags.map((tag) => (
                 <TouchableOpacity
                   key={tag}
                   style={styles.popularTag}
@@ -453,9 +394,7 @@ export function TemplateCreator({
             <Text style={styles.label}>{t('templates.public')}</Text>
             <Switch value={isPublic} onValueChange={setIsPublic} />
           </View>
-          <Text style={styles.switchDescription}>
-            {t('templates.publicDescription')}
-          </Text>
+          <Text style={styles.switchDescription}>{t('templates.publicDescription')}</Text>
         </View>
 
         <View style={styles.inputGroup}>
@@ -487,8 +426,7 @@ export function TemplateCreator({
               <Text
                 style={[
                   styles.providerButtonText,
-                  aiProvider === 'anthropic' &&
-                    styles.providerButtonTextSelected,
+                  aiProvider === 'anthropic' && styles.providerButtonTextSelected,
                 ]}
               >
                 Anthropic
@@ -535,27 +473,23 @@ export function TemplateCreator({
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color='#fff' />
           ) : (
             <>
-              <Ionicons name="flask" size={20} color="#fff" />
-              <Text style={styles.testButtonText}>
-                {t('templates.testTemplate')}
-              </Text>
+              <Ionicons name='flask' size={20} color='#fff' />
+              <Text style={styles.testButtonText}>{t('templates.testTemplate')}</Text>
             </>
           )}
         </TouchableOpacity>
 
         {testResult && (
           <View style={styles.testResult}>
-            <Text style={styles.testResultTitle}>
-              {t('templates.testResult')}
-            </Text>
+            <Text style={styles.testResultTitle}>{t('templates.testResult')}</Text>
             {type === 'image' ? (
               <Image
                 source={{ uri: testResult.content }}
                 style={styles.testResultImage}
-                resizeMode="contain"
+                resizeMode='contain'
               />
             ) : (
               <Text style={styles.testResultText}>{testResult.content}</Text>

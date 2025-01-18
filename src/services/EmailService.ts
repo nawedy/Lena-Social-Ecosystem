@@ -1,9 +1,10 @@
 import sgMail from '@sendgrid/mail';
+
 import { AnalyticsService } from './AnalyticsService';
 
 export interface EmailTemplate {
   id: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export class EmailService {
@@ -34,8 +35,7 @@ export class EmailService {
         dynamicTemplateData: {
           INVITE_CODE: inviteCode,
           APP_STORE_LINK: 'https://apps.apple.com/app/tiktok-toe',
-          PLAY_STORE_LINK:
-            'https://play.google.com/store/apps/details?id=com.tiktok.toe',
+          PLAY_STORE_LINK: 'https://play.google.com/store/apps/details?id=com.tiktok.toe',
         },
       });
 
@@ -173,7 +173,7 @@ export class EmailService {
     }
   ): Promise<void> {
     try {
-      const personalizations = emails.map(email => ({
+      const personalizations = emails.map((email) => ({
         to: email,
         dynamicTemplateData: {
           WEEK_DATE: data.weekDate,

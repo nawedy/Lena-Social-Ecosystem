@@ -1,9 +1,16 @@
+import { describe, it, expect } from '@jest/globals';
+
+declare global {
+  let __DEV__: boolean;
+}
+
+globalThis.__DEV__ = true;
+
 // Mock process.env
 process.env = {
   ...process.env,
-  REACT_APP_PRODUCTION_URL: 'https://eri-ethio.com/tiktoktoe',
-  REACT_APP_ENVIRONMENT: 'test',
   NODE_ENV: 'test',
+  REACT_APP_ENVIRONMENT: 'test',
 };
 
 describe('Test Environment Setup', () => {

@@ -24,7 +24,7 @@ export class SubscriptionService {
   private agent: BskyAgent;
   private updateSubject = new ReplaySubject<Update>(100);
   private notificationCursor?: string;
-  private pollInterval: number = 5000; // 5 seconds
+  private pollInterval = 5000; // 5 seconds
   private pollTimeout?: NodeJS.Timeout;
 
   constructor(agent: BskyAgent) {

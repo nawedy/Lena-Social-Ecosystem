@@ -1,8 +1,9 @@
+import { Alert, Button, Input, Form } from 'antd';
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { useATProto } from '../../hooks/useATProto';
 import { MFAService } from '../../services/auth/MFAService';
-import { Alert, Button, Input, Form } from 'antd';
 
 export function Login() {
   const _navigate = useNavigate();
@@ -72,36 +73,27 @@ export function Login() {
 
   if (showMFA) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md">
-          <h2 className="text-center text-3xl font-bold text-gray-900">
+      <div className='flex min-h-screen items-center justify-center bg-gray-50'>
+        <div className='w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md'>
+          <h2 className='text-center text-3xl font-bold text-gray-900'>
             Two-Factor Authentication
           </h2>
-          <Form onFinish={handleVerifyMFA} className="mt-8 space-y-6">
-            {error && (
-              <Alert message={error} type="error" showIcon className="mb-4" />
-            )}
+          <Form onFinish={handleVerifyMFA} className='mt-8 space-y-6'>
+            {error && <Alert message={error} type='error' showIcon className='mb-4' />}
             <Form.Item
-              name="mfaCode"
-              rules={[
-                { required: true, message: 'Please enter your MFA code' },
-              ]}
+              name='mfaCode'
+              rules={[{ required: true, message: 'Please enter your MFA code' }]}
             >
               <Input
-                type="text"
+                type='text'
                 value={mfaCode}
-                onChange={e => setMFACode(e.target.value)}
-                placeholder="Enter MFA code"
+                onChange={(e) => setMFACode(e.target.value)}
+                placeholder='Enter MFA code'
                 maxLength={6}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
               />
             </Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              className="w-full"
-            >
+            <Button type='primary' htmlType='submit' loading={loading} className='w-full'>
               {loading ? 'Verifying...' : 'Verify MFA Code'}
             </Button>
           </Form>
@@ -111,46 +103,35 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md">
-        <h2 className="text-center text-3xl font-bold text-gray-900">
-          Sign in to your account
-        </h2>
-        <Form onFinish={handleLogin} className="mt-8 space-y-6">
-          {error && (
-            <Alert message={error} type="error" showIcon className="mb-4" />
-          )}
+    <div className='flex min-h-screen items-center justify-center bg-gray-50'>
+      <div className='w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md'>
+        <h2 className='text-center text-3xl font-bold text-gray-900'>Sign in to your account</h2>
+        <Form onFinish={handleLogin} className='mt-8 space-y-6'>
+          {error && <Alert message={error} type='error' showIcon className='mb-4' />}
           <Form.Item
-            name="identifier"
-            rules={[
-              { required: true, message: 'Please enter your email or handle' },
-            ]}
+            name='identifier'
+            rules={[{ required: true, message: 'Please enter your email or handle' }]}
           >
             <Input
-              type="text"
+              type='text'
               value={identifier}
-              onChange={e => setIdentifier(e.target.value)}
-              placeholder="Email or handle"
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder='Email or handle'
+              className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
             />
           </Form.Item>
           <Form.Item
-            name="password"
+            name='password'
             rules={[{ required: true, message: 'Please enter your password' }]}
           >
             <Input.Password
               value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Password"
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder='Password'
+              className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
             />
           </Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loading}
-            className="w-full"
-          >
+          <Button type='primary' htmlType='submit' loading={loading} className='w-full'>
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
         </Form>
