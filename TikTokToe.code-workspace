@@ -3,5 +3,10 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"IDX.aI.enableInlineCompletion": true,
+		"IDX.aI.enableCodebaseIndexing": true,
+		"IDX.aI.modelProvider": "gemini-api"
+	}
 }

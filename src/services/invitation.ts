@@ -5,7 +5,6 @@ import { query, transaction } from '../db';
 import { atproto } from './atproto';
 import { sendEmail } from './email';
 
-
 interface InvitationData {
   inviterDid: string;
   inviteeEmail: string;
@@ -27,7 +26,8 @@ class InvitationService {
 
   async generateInvitationCode(inviterDid: string): Promise<string> {
     const code =
-      Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
 
     await query(
       `UPDATE beta_users 
@@ -46,7 +46,7 @@ class InvitationService {
       const inviterProfile = await atproto.getProfile(data.inviterDid);
 
       // Create invitation record
-      await transaction(async (client) => {
+      await transaction(async client => {
         await client.query(
           `INSERT INTO beta_invitations 
           (inviter_did, invitee_email, invitation_code, status, metadata)
@@ -130,7 +130,8 @@ class InvitationService {
           external: {
             uri: 'https://tiktoktoe.app/beta',
             title: 'Join TikTokToe Beta',
-            description: 'Experience the future of social media with AT Protocol',
+            description:
+              'Experience the future of social media with AT Protocol',
           },
         },
       };
@@ -181,7 +182,7 @@ class InvitationService {
         return false;
       }
 
-      await transaction(async (client) => {
+      await transaction(async client => {
         // Update invitation status
         await client.query(
           `UPDATE beta_invitations 

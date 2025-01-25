@@ -28,7 +28,12 @@ export class PerformanceTestSuite {
   private logger: LoggerService;
   private baseUrl: string;
 
-  constructor(apm: APMService, metrics: MetricsService, logger: LoggerService, baseUrl: string) {
+  constructor(
+    apm: APMService,
+    metrics: MetricsService,
+    logger: LoggerService,
+    baseUrl: string
+  ) {
     this.apm = apm;
     this.metrics = metrics;
     this.logger = logger;
@@ -132,7 +137,7 @@ export function ${scenario.name}(data) {
   group('${scenario.name}', function() {
     ${scenario.flow
       .map(
-        (step) => `
+        step => `
     group('${step}', function() {
       const response = http.get(\`\${data.baseUrl}/${step}\`, {
         headers: { 'Authorization': \`Bearer \${data.authToken}\` }
@@ -157,8 +162,13 @@ export function ${scenario.name}(data) {
     `;
   }
 
-  public async runTests(config: TestConfig = this.getDefaultConfig()): Promise<void> {
-    const transaction = this.apm.startTransaction('run-performance-tests', 'testing');
+  public async runTests(
+    config: TestConfig = this.getDefaultConfig()
+  ): Promise<void> {
+    const transaction = this.apm.startTransaction(
+      'run-performance-tests',
+      'testing'
+    );
 
     try {
       const script = this.generateK6Script(config);

@@ -62,11 +62,16 @@ export function ProfileScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       <View style={styles.header}>
         {profile?.profileData?.avatar ? (
-          <Image source={{ uri: profile.profileData.avatar }} style={styles.avatar} />
+          <Image
+            source={{ uri: profile.profileData.avatar }}
+            style={styles.avatar}
+          />
         ) : (
           <View style={styles.avatarPlaceholder}>
             <Text style={styles.avatarPlaceholderText}>
@@ -77,7 +82,9 @@ export function ProfileScreen() {
 
         <View style={styles.profileInfo}>
           <Text style={styles.displayName}>
-            {profile?.profileData?.displayName || profile?.handle || 'Anonymous'}
+            {profile?.profileData?.displayName ||
+              profile?.handle ||
+              'Anonymous'}
           </Text>
           <Text style={styles.handle}>@{profile?.handle}</Text>
           {profile?.profileData?.description && (

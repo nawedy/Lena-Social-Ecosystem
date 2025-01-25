@@ -1,5 +1,8 @@
 declare module 'detox' {
   export interface Device {
+    setOffline: any;
+    selectImages: any;
+    selectImage: any;
     launchApp(params?: {}): Promise<void>;
     reloadReactNative(): Promise<void>;
     getPlatform(): string;

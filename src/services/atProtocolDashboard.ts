@@ -81,9 +81,11 @@ export class ATProtocolDashboard {
   }
 
   // Multi-Account Management
-  public async getMultiAccountDashboard(accounts: string[]): Promise<MultiAccountDashboard> {
+  public async getMultiAccountDashboard(
+    accounts: string[]
+  ): Promise<MultiAccountDashboard> {
     const accountsData = await Promise.all(
-      accounts.map(async (did) => {
+      accounts.map(async did => {
         const metrics = await this.getAccountMetrics(did);
         const content = await this.getContentMetrics(did);
         const monetization = await this.getMonetizationMetrics(did);
@@ -117,14 +119,14 @@ export class ATProtocolDashboard {
     await rt.detectFacets(this.agent);
 
     const mediaBlobs = await Promise.all(
-      (params.content.media || []).map((blob) => this.agent.uploadBlob(blob))
+      (params.content.media || []).map(blob => this.agent.uploadBlob(blob))
     );
 
     const record = {
       $type: 'app.bsky.feed.scheduledPost',
       text: rt.text,
       facets: rt.facets,
-      media: mediaBlobs.map((blob) => ({
+      media: mediaBlobs.map(blob => ({
         image: blob.data.blob,
         alt: 'Scheduled post image',
       })),
@@ -188,7 +190,7 @@ export class ATProtocolDashboard {
     };
   }> {
     const posts = await Promise.all(
-      params.accounts.map((did) =>
+      params.accounts.map(did =>
         this.agent.api.app.bsky.feed.getAuthorFeed({
           actor: did,
           limit: 100,
@@ -197,18 +199,19 @@ export class ATProtocolDashboard {
     );
 
     const allPosts = posts
-      .flatMap((response) => response.data.feed)
-      .filter((post) => {
+      .flatMap(response => response.data.feed)
+      .filter(post => {
         const postDate = new Date(post.post.indexedAt);
         return (
           postDate >= new Date(params.timeframe.start) &&
           postDate <= new Date(params.timeframe.end) &&
-          (!params.contentTypes || params.contentTypes.includes(post.post.record.$type))
+          (!params.contentTypes ||
+            params.contentTypes.includes(post.post.record.$type))
         );
       });
 
     const postsWithMetrics = await Promise.all(
-      allPosts.map(async (post) => {
+      allPosts.map(async post => {
         const metrics = await this.getPostMetrics(post.post.uri);
         return {
           ...post,
@@ -217,7 +220,10 @@ export class ATProtocolDashboard {
       })
     );
 
-    const totalViews = postsWithMetrics.reduce((sum, post) => sum + post.metrics.views, 0);
+    const totalViews = postsWithMetrics.reduce(
+      (sum, post) => sum + post.metrics.views,
+      0
+    );
     const totalEngagement = postsWithMetrics.reduce(
       (sum, post) => sum + post.metrics.engagement,
       0
@@ -232,11 +238,11 @@ export class ATProtocolDashboard {
         topPerformers: postsWithMetrics
           .sort((a, b) => b.metrics.engagement - a.metrics.engagement)
           .slice(0, 5)
-          .map((post) => post.post.uri),
+          .map(post => post.post.uri),
         underperformers: postsWithMetrics
           .sort((a, b) => a.metrics.engagement - b.metrics.engagement)
           .slice(0, 5)
-          .map((post) => post.post.uri),
+          .map(post => post.post.uri),
       },
     };
   }
@@ -253,14 +259,16 @@ export class ATProtocolDashboard {
     }>;
   }> {
     const insights = await Promise.all(
-      accounts.map((did) =>
+      accounts.map(did =>
         this.agent.api.app.bsky.actor.getInsights({
           actor: did,
         })
       )
     );
 
-    return this.aggregateAudienceInsights(insights.map((response) => response.data));
+    return this.aggregateAudienceInsights(
+      insights.map(response => response.data)
+    );
   }
 
   // Helper Methods
@@ -292,13 +300,17 @@ export class ATProtocolDashboard {
     });
 
     const posts = response.data.feed;
-    const totalViews = posts.reduce((sum, post) => sum + (post.post.viewCount || 0), 0);
+    const totalViews = posts.reduce(
+      (sum, post) => sum + (post.post.viewCount || 0),
+      0
+    );
 
     return {
       totalPosts: posts.length,
       totalViews,
       averageEngagement:
-        posts.reduce((sum, post) => sum + (post.post.engagement || 0), 0) / posts.length,
+        posts.reduce((sum, post) => sum + (post.post.engagement || 0), 0) /
+        posts.length,
       topPosts: posts
         .sort((a, b) => (b.post.engagement || 0) - (a.post.engagement || 0))
         .slice(0, 5),
@@ -338,28 +350,51 @@ export class ATProtocolDashboard {
   ): MultiAccountDashboard['consolidated'] {
     return {
       totalReach: accounts.reduce(
-        (sum, account) => sum + account.metrics.reachByDay.reduce((s, day) => s + day.reach, 0),
+        (sum, account) =>
+          sum + account.metrics.reachByDay.reduce((s, day) => s + day.reach, 0),
         0
       ),
-      totalEngagement: accounts.reduce((sum, account) => sum + account.metrics.engagement, 0),
-      totalRevenue: accounts.reduce((sum, account) => sum + account.monetization.revenue, 0),
+      totalEngagement: accounts.reduce(
+        (sum, account) => sum + account.metrics.engagement,
+        0
+      ),
+      totalRevenue: accounts.reduce(
+        (sum, account) => sum + account.monetization.revenue,
+        0
+      ),
       growth: {
-        followers: accounts.reduce((sum, account) => sum + account.metrics.followers, 0),
-        engagement: accounts.reduce((sum, account) => sum + account.metrics.engagement, 0),
-        revenue: accounts.reduce((sum, account) => sum + account.monetization.revenue, 0),
+        followers: accounts.reduce(
+          (sum, account) => sum + account.metrics.followers,
+          0
+        ),
+        engagement: accounts.reduce(
+          (sum, account) => sum + account.metrics.engagement,
+          0
+        ),
+        revenue: accounts.reduce(
+          (sum, account) => sum + account.monetization.revenue,
+          0
+        ),
       },
     };
   }
 
-  private aggregateContentTypes(posts: AppBskyFeedDefs.FeedViewPost[]): Record<string, number> {
-    return posts.reduce((acc, post) => {
-      const type = post.post.record.$type;
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+  private aggregateContentTypes(
+    posts: AppBskyFeedDefs.FeedViewPost[]
+  ): Record<string, number> {
+    return posts.reduce(
+      (acc, post) => {
+        const type = post.post.record.$type;
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
   }
 
-  private aggregatePerformanceByHour(posts: AppBskyFeedDefs.FeedViewPost[]): Array<{
+  private aggregatePerformanceByHour(
+    posts: AppBskyFeedDefs.FeedViewPost[]
+  ): Array<{
     hour: number;
     engagement: number;
     reach: number;
@@ -371,7 +406,7 @@ export class ATProtocolDashboard {
       count: 0,
     }));
 
-    posts.forEach((post) => {
+    posts.forEach(post => {
       const hour = new Date(post.post.indexedAt).getHours();
       hourlyData[hour].engagement += post.post.engagement || 0;
       hourlyData[hour].reach += post.post.viewCount || 0;

@@ -8,7 +8,6 @@ import { config } from '../config';
 import { analytics } from './analytics';
 import { atproto } from './atproto';
 
-
 interface BetaTester {
   id: string;
   email: string;
@@ -84,7 +83,9 @@ export class BetaTestingService {
     const batch: InvitationBatch = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + params.expiresInDays * 86400000).toISOString(),
+      expiresAt: new Date(
+        Date.now() + params.expiresInDays * 86400000
+      ).toISOString(),
       maxInvites: params.maxInvites,
       invitedCount: 0,
       features: params.features,
@@ -240,7 +241,11 @@ export class BetaTestingService {
   }
 
   // Feature Management
-  async toggleFeature(testerId: string, feature: string, enabled: boolean): Promise<void> {
+  async toggleFeature(
+    testerId: string,
+    feature: string,
+    enabled: boolean
+  ): Promise<void> {
     const testerKey = this.datastore.key(['BetaTester', testerId]);
     const [tester] = await this.datastore.get(testerKey);
 
@@ -301,7 +306,9 @@ export class BetaTestingService {
       activeTesters: stats.activeTesters,
       feedbackCount: stats.feedbackCount,
       averageSessionDuration:
-        stats.totalSessions > 0 ? stats.totalSessionDuration / stats.totalSessions : 0,
+        stats.totalSessions > 0
+          ? stats.totalSessionDuration / stats.totalSessions
+          : 0,
     };
   }
 
@@ -311,7 +318,10 @@ export class BetaTestingService {
     // This would typically integrate with your email service provider
   }
 
-  private async publishEvent(eventType: string, data: Record<string, any>): Promise<void> {
+  private async publishEvent(
+    eventType: string,
+    data: Record<string, any>
+  ): Promise<void> {
     const topic = this.pubsub.topic(this.TOPIC_NAME);
     const messageData = {
       eventType,

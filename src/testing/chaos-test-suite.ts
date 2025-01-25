@@ -91,7 +91,10 @@ export class ChaosTestSuite {
   }
 
   public async runChaosTest(test: ChaosTest): Promise<TestResult> {
-    const transaction = this.apm.startTransaction(`chaos-test-${test.name}`, 'testing');
+    const transaction = this.apm.startTransaction(
+      `chaos-test-${test.name}`,
+      'testing'
+    );
 
     try {
       // Start monitoring
@@ -244,7 +247,7 @@ export class ChaosTestSuite {
   }
 
   private async wait(duration: number): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, duration * 1000));
+    await new Promise(resolve => setTimeout(resolve, duration * 1000));
   }
 
   private async removeChaos(test: ChaosTest): Promise<void> {
@@ -340,7 +343,9 @@ export class ChaosTestSuite {
 
     for (const observation of observations) {
       if (observation.includes('error rate')) {
-        recommendations.push('Implement circuit breakers to handle failures gracefully');
+        recommendations.push(
+          'Implement circuit breakers to handle failures gracefully'
+        );
         recommendations.push('Add retry mechanisms with exponential backoff');
       }
 
@@ -359,7 +364,11 @@ export class ChaosTestSuite {
   }
 
   private isTestSuccessful(metrics: any): boolean {
-    return metrics.errorRate < 0.1 && metrics.latency < 1000 && metrics.availability > 0.99;
+    return (
+      metrics.errorRate < 0.1 &&
+      metrics.latency < 1000 &&
+      metrics.availability > 0.99
+    );
   }
 
   public async generateReport(results: TestResult[]): Promise<string> {
@@ -371,13 +380,13 @@ export class ChaosTestSuite {
 
 ## Summary
 - Total Tests: ${results.length}
-- Successful Tests: ${results.filter((r) => r.success).length}
-- Failed Tests: ${results.filter((r) => !r.success).length}
+- Successful Tests: ${results.filter(r => r.success).length}
+- Failed Tests: ${results.filter(r => !r.success).length}
 
 ## Test Results
 ${results
   .map(
-    (result) => `
+    result => `
 ### ${result.testName}
 - Duration: ${result.duration}s
 - Status: ${result.success ? '✅ Passed' : '❌ Failed'}
@@ -387,10 +396,10 @@ ${results
   - Availability: ${(result.metrics.availability * 100).toFixed(2)}%
 
 Observations:
-${result.observations.map((o) => `- ${o}`).join('\n')}
+${result.observations.map(o => `- ${o}`).join('\n')}
 
 Recommendations:
-${result.recommendations.map((r) => `- ${r}`).join('\n')}
+${result.recommendations.map(r => `- ${r}`).join('\n')}
 `
   )
   .join('\n')}
@@ -407,11 +416,11 @@ ${this.generateOverallRecommendations(results)}
     const recommendations = new Set<string>();
 
     for (const result of results) {
-      result.recommendations.forEach((r) => recommendations.add(r));
+      result.recommendations.forEach(r => recommendations.add(r));
     }
 
     return Array.from(recommendations)
-      .map((r) => `- ${r}`)
+      .map(r => `- ${r}`)
       .join('\n');
   }
 }

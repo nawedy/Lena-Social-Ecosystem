@@ -41,7 +41,10 @@ declare module '@atproto/api' {
     unrepost(params: { uri: string }): Promise<void>;
     follow(params: { subject: string }): Promise<ATProtoProfile>;
     unfollow(params: { subject: string }): Promise<void>;
-    uploadBlob(data: Uint8Array, opts?: { encoding?: string }): Promise<BlobRef>;
+    uploadBlob(
+      data: Uint8Array,
+      opts?: { encoding?: string }
+    ): Promise<BlobRef>;
   }
 
   export interface ATProtoSession {
@@ -340,14 +343,21 @@ declare module '@atproto/api' {
       getPosts: (params: { uris: string[] }) => Promise<{ posts: PostView[] }>;
     };
     actor: {
-      getProfile: (params: { actor: string }) => Promise<{ data: ProfileViewBasic }>;
-      searchActors: (params: { term: string; limit?: number }) => Promise<{ actors: ProfileViewBasic[] }>;
+      getProfile: (params: {
+        actor: string;
+      }) => Promise<{ data: ProfileViewBasic }>;
+      searchActors: (params: {
+        term: string;
+        limit?: number;
+      }) => Promise<{ actors: ProfileViewBasic[] }>;
     };
   }
 
   export interface AppBskyFeedNS {
     getPost: (params: GetPostParams) => Promise<{ data: PostView }>;
-    getPosts: (params: GetPostsParams) => Promise<{ data: { posts: PostView[] } }>;
+    getPosts: (
+      params: GetPostsParams
+    ) => Promise<{ data: { posts: PostView[] } }>;
   }
 
   export interface AppBskyNotificationNS {

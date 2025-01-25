@@ -14,14 +14,17 @@ const Upload: React.FC = () => {
 
   const _onDrop = useCallback((acceptedFiles: File[]) => {
     // Check file type and size
-    const _validFiles = acceptedFiles.filter((file) => {
-      const _isValid = file.type.startsWith('video/') || file.type.startsWith('image/');
+    const _validFiles = acceptedFiles.filter(file => {
+      const _isValid =
+        file.type.startsWith('video/') || file.type.startsWith('image/');
       const _isValidSize = file.size <= 100 * 1024 * 1024; // 100MB limit
       return isValid && isValidSize;
     });
 
     if (validFiles.length !== acceptedFiles.length) {
-      setError('Some files were rejected. Please only upload videos or images under 100MB.');
+      setError(
+        'Some files were rejected. Please only upload videos or images under 100MB.'
+      );
     }
 
     setFiles(validFiles);
@@ -48,8 +51,10 @@ const Upload: React.FC = () => {
 
     try {
       const _media = await Promise.all(
-        files.map(async (file) => ({
-          type: file.type.startsWith('video/') ? ('video' as const) : ('image' as const),
+        files.map(async file => ({
+          type: file.type.startsWith('video/')
+            ? ('video' as const)
+            : ('image' as const),
           data: new Blob([await file.arrayBuffer()], { type: file.type }),
         }))
       );
@@ -65,8 +70,10 @@ const Upload: React.FC = () => {
   };
 
   return (
-    <div className='max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-6'>
-      <h1 className='text-2xl font-bold mb-6 text-gray-900 dark:text-white'>Upload Content</h1>
+    <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+        Upload Content
+      </h1>
 
       <div
         {...getRootProps()}
@@ -76,16 +83,18 @@ const Upload: React.FC = () => {
       >
         <input {...getInputProps()} />
         {files.length > 0 ? (
-          <div className='space-y-4'>
+          <div className="space-y-4">
             {files.map((file, index) => (
-              <div key={index} className='flex items-center justify-between'>
-                <span className='text-sm text-gray-600 dark:text-gray-300'>{file.name}</span>
+              <div key={index} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  {file.name}
+                </span>
                 <button
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     setFiles(files.filter((_, i) => i !== index));
                   }}
-                  className='text-red-500 hover:text-red-700'
+                  className="text-red-500 hover:text-red-700"
                 >
                   Remove
                 </button>
@@ -94,32 +103,32 @@ const Upload: React.FC = () => {
           </div>
         ) : (
           <div>
-            <p className='text-gray-600 dark:text-gray-300'>
+            <p className="text-gray-600 dark:text-gray-300">
               Drag and drop your videos or images here, or click to select files
             </p>
-            <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
               Supported formats: MP4, MOV, AVI, JPG, PNG, GIF (max 100MB)
             </p>
           </div>
         )}
       </div>
 
-      <div className='mt-6'>
-        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+      <div className="mt-6">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Caption
         </label>
         <textarea
           value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          className='mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500'
+          onChange={e => setCaption(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           rows={3}
-          placeholder='Write a caption for your post...'
+          placeholder="Write a caption for your post..."
         />
       </div>
 
-      {error && <div className='mt-4 text-red-500 text-sm'>{error}</div>}
+      {error && <div className="mt-4 text-red-500 text-sm">{error}</div>}
 
-      <div className='mt-6'>
+      <div className="mt-6">
         <button
           onClick={handleUpload}
           disabled={isUploading || !files.length}

@@ -1,6 +1,13 @@
 import { format } from 'date-fns';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 import { useATProto } from '../../contexts/ATProtoContext';
@@ -24,10 +31,14 @@ interface FeedbackStats {
 export function FeedbackDashboard() {
   const { session } = useATProto();
   const [metrics, setMetrics] = useState<BetaMetrics | null>(null);
-  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null);
+  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(
+    null
+  );
   const [engagementData, setEngagementData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month'>('week');
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'week' | 'month'>(
+    'week'
+  );
 
   useEffect(() => {
     if (session?.did) {
@@ -84,7 +95,9 @@ export function FeedbackDashboard() {
           </View>
           <View style={styles.metricRow}>
             <Text style={styles.metricLabel}>Unique Repos:</Text>
-            <Text style={styles.metricValue}>{metrics.unique_repos_interacted}</Text>
+            <Text style={styles.metricValue}>
+              {metrics.unique_repos_interacted}
+            </Text>
           </View>
           <Text style={styles.lastActivity}>
             Last Activity: {format(new Date(metrics.last_activity), 'PPp')}
@@ -101,7 +114,9 @@ export function FeedbackDashboard() {
         <>
           <View style={styles.metricRow}>
             <Text style={styles.metricLabel}>Total Feedback:</Text>
-            <Text style={styles.metricValue}>{feedbackStats.total?.toLocaleString() || '0'}</Text>
+            <Text style={styles.metricValue}>
+              {feedbackStats.total?.toLocaleString() || '0'}
+            </Text>
           </View>
           <View style={styles.metricRow}>
             <Text style={styles.metricLabel}>Average Rating:</Text>
@@ -163,10 +178,10 @@ export function FeedbackDashboard() {
       {engagementData.length > 0 && (
         <LineChart
           data={{
-            labels: engagementData.map((d) => format(new Date(d.date), 'MMM d')),
+            labels: engagementData.map(d => format(new Date(d.date), 'MMM d')),
             datasets: [
               {
-                data: engagementData.map((d) => d.engagementCount),
+                data: engagementData.map(d => d.engagementCount),
               },
             ],
           }}
@@ -191,7 +206,9 @@ export function FeedbackDashboard() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadDashboardData} />}
+      refreshControl={
+        <RefreshControl refreshing={isLoading} onRefresh={loadDashboardData} />
+      }
     >
       {renderMetricsCard()}
       {renderFeedbackStats()}

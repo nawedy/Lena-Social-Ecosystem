@@ -238,13 +238,17 @@ export class RBACService {
     });
   }
 
-  public async revokeRole(adminUserId: string, targetUserId: string, role: Role): Promise<void> {
+  public async revokeRole(
+    adminUserId: string,
+    targetUserId: string,
+    role: Role
+  ): Promise<void> {
     // Validate admin permissions
     await this.validateAccess(adminUserId, 'system', Permission.REVOKE_ROLES);
 
     const userRoles = this.userRoles.get(targetUserId) || [];
     const oldRoles = [...userRoles];
-    const newRoles = userRoles.filter((r) => r.role !== role);
+    const newRoles = userRoles.filter(r => r.role !== role);
     this.userRoles.set(targetUserId, newRoles);
 
     // Clear permission cache
@@ -306,20 +310,22 @@ export class RBACService {
     const permissions = new Set<Permission>();
 
     // Filter out expired roles
-    const activeRoles = userRoles.filter((role) => !role.expiresAt || role.expiresAt > new Date());
+    const activeRoles = userRoles.filter(
+      role => !role.expiresAt || role.expiresAt > new Date()
+    );
 
     // Collect permissions from all active roles
     for (const userRole of activeRoles) {
       const roleDefinition = this.roleDefinitions.get(userRole.role);
       if (roleDefinition) {
-        roleDefinition.permissions.forEach((p) => permissions.add(p));
+        roleDefinition.permissions.forEach(p => permissions.add(p));
 
         // Add inherited permissions
         if (roleDefinition.inherits) {
           for (const inheritedRole of roleDefinition.inherits) {
             const inheritedDefinition = this.roleDefinitions.get(inheritedRole);
             if (inheritedDefinition) {
-              inheritedDefinition.permissions.forEach((p) => permissions.add(p));
+              inheritedDefinition.permissions.forEach(p => permissions.add(p));
             }
           }
         }
@@ -332,7 +338,10 @@ export class RBACService {
     return permissions;
   }
 
-  public async getAccessibleAccounts(userId: string, permission: Permission): Promise<string[]> {
+  public async getAccessibleAccounts(
+    userId: string,
+    permission: Permission
+  ): Promise<string[]> {
     const userRoles = this.userRoles.get(userId) || [];
     const accounts = new Set<string>();
 
@@ -343,7 +352,7 @@ export class RBACService {
       const roleDefinition = this.roleDefinitions.get(role.role);
       if (roleDefinition?.permissions.includes(permission)) {
         // Add accounts from role scope
-        role.scope.accounts?.forEach((account) => accounts.add(account));
+        role.scope.accounts?.forEach(account => accounts.add(account));
       }
     }
 
@@ -368,26 +377,28 @@ export class RBACService {
     // Apply filters
     if (filters) {
       if (filters.startDate) {
-        logs = logs.filter((log) => log.timestamp >= filters.startDate!);
+        logs = logs.filter(log => log.timestamp >= filters.startDate!);
       }
       if (filters.endDate) {
-        logs = logs.filter((log) => log.timestamp <= filters.endDate!);
+        logs = logs.filter(log => log.timestamp <= filters.endDate!);
       }
       if (filters.actions) {
-        logs = logs.filter((log) => filters.actions?.includes(log.action));
+        logs = logs.filter(log => filters.actions?.includes(log.action));
       }
       if (filters.resources) {
-        logs = logs.filter((log) => filters.resources?.includes(log.resource));
+        logs = logs.filter(log => filters.resources?.includes(log.resource));
       }
       if (filters.status) {
-        logs = logs.filter((log) => log.metadata.status === filters.status);
+        logs = logs.filter(log => log.metadata.status === filters.status);
       }
     }
 
     return logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }
 
-  private async logAudit(log: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {
+  private async logAudit(
+    log: Omit<AuditLog, 'id' | 'timestamp'>
+  ): Promise<void> {
     const auditLog: AuditLog = {
       id: `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),

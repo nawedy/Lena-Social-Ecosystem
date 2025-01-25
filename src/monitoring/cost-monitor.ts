@@ -5,7 +5,6 @@ import { LoggerService } from '../services/logger';
 import { MetricsService } from '../services/metrics';
 import { APMService } from '../utils/apm';
 
-
 interface CostBreakdown {
   service: string;
   amount: number;
@@ -96,7 +95,9 @@ export class CostMonitor {
       const response = await this.costExplorer
         .getCostAndUsage({
           TimePeriod: {
-            Start: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            Start: new Date(Date.now() - 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split('T')[0],
             End: new Date().toISOString().split('T')[0],
           },
           Granularity: 'DAILY',
@@ -109,7 +110,7 @@ export class CostMonitor {
         .promise();
 
       return (
-        response.ResultsByTime?.[0]?.Groups?.map((group) => ({
+        response.ResultsByTime?.[0]?.Groups?.map(group => ({
           service: group.Keys[0],
           amount: parseFloat(group.Metrics.UnblendedCost.Amount),
           unit: 'USD',
@@ -137,7 +138,7 @@ export class CostMonitor {
       `);
 
       // Convert storage size to cost (example: $0.115 per GB per month)
-      return metrics.rows.map((row) => ({
+      return metrics.rows.map(row => ({
         service: 'database',
         amount: ((row.size_bytes / 1024 / 1024 / 1024) * 0.115) / 30,
         unit: 'USD',
@@ -230,7 +231,12 @@ export class CostMonitor {
       return [
         {
           service: 'cdn',
-          amount: ((metrics.MetricDataResults[0].Values[0] || 0) / 1024 / 1024 / 1024) * 0.085,
+          amount:
+            ((metrics.MetricDataResults[0].Values[0] || 0) /
+              1024 /
+              1024 /
+              1024) *
+            0.085,
           unit: 'USD',
           startDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
           endDate: new Date().toISOString(),
@@ -247,7 +253,7 @@ export class CostMonitor {
     try {
       await this.db.query(
         'INSERT INTO cost_tracking (service, amount, unit, start_date, end_date, tags) VALUES ($1, $2, $3, $4, $5, $6)',
-        costs.map((cost) => [
+        costs.map(cost => [
           cost.service,
           cost.amount,
           cost.unit,
@@ -332,10 +338,13 @@ export class CostMonitor {
       this.metrics.recordTotalCost(totalCost);
 
       // Update per-service cost metrics
-      const costsByService = costs.reduce((acc, cost) => {
-        acc[cost.service] = (acc[cost.service] || 0) + cost.amount;
-        return acc;
-      }, {} as Record<string, number>);
+      const costsByService = costs.reduce(
+        (acc, cost) => {
+          acc[cost.service] = (acc[cost.service] || 0) + cost.amount;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
 
       for (const [service, amount] of Object.entries(costsByService)) {
         this.metrics.recordServiceCost(service, amount);
@@ -345,7 +354,10 @@ export class CostMonitor {
     }
   }
 
-  public async getCostReport(startDate: string, endDate: string): Promise<Record<string, any>> {
+  public async getCostReport(
+    startDate: string,
+    endDate: string
+  ): Promise<Record<string, any>> {
     const span = this.apm.startSpan('get-cost-report');
 
     try {
@@ -413,7 +425,9 @@ export class CostMonitor {
         .getCostForecast({
           TimePeriod: {
             Start: new Date().toISOString().split('T')[0],
-            End: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            End: new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split('T')[0],
           },
           Metric: 'UNBLENDED_COST',
           Granularity: 'MONTHLY',
@@ -422,7 +436,7 @@ export class CostMonitor {
 
       return {
         totalForecast: parseFloat(response.Total.Amount),
-        monthlyForecast: response.ForecastResultsByTime.map((result) => ({
+        monthlyForecast: response.ForecastResultsByTime.map(result => ({
           startDate: result.TimePeriod.Start,
           amount: parseFloat(result.MeanValue),
         })),
@@ -453,7 +467,8 @@ export class CostMonitor {
       recommendations.push(...riOpportunities);
 
       // Check for storage optimization opportunities
-      const storageRecommendations = await this.getStorageOptimizationRecommendations();
+      const storageRecommendations =
+        await this.getStorageOptimizationRecommendations();
       recommendations.push(...storageRecommendations);
 
       return recommendations;

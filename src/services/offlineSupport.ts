@@ -100,7 +100,9 @@ export class OfflineSupportService {
         key,
         value,
         timestamp: new Date().toISOString(),
-        expiresAt: ttl ? new Date(Date.now() + ttl * 1000).toISOString() : undefined,
+        expiresAt: ttl
+          ? new Date(Date.now() + ttl * 1000).toISOString()
+          : undefined,
       };
 
       await this.db.put('cache', data);
@@ -257,15 +259,19 @@ export class OfflineSupportService {
   private async initializeDB(): Promise<void> {
     try {
       this.db = await openDB(this.DB_CONFIG.name, this.DB_CONFIG.version, {
-        upgrade: (db) => {
-          this.DB_CONFIG.stores.forEach((store) => {
+        upgrade: db => {
+          this.DB_CONFIG.stores.forEach(store => {
             if (!db.objectStoreNames.contains(store.name)) {
               const objectStore = db.createObjectStore(store.name, {
                 keyPath: store.keyPath,
               });
 
-              store.indexes?.forEach((index) => {
-                objectStore.createIndex(index.name, index.keyPath, index.options);
+              store.indexes?.forEach(index => {
+                objectStore.createIndex(
+                  index.name,
+                  index.keyPath,
+                  index.options
+                );
               });
             }
           });
@@ -340,7 +346,8 @@ export class OfflineSupportService {
           const updatedOp = {
             ...syncOp,
             retries: syncOp.retries + 1,
-            status: syncOp.retries + 1 >= this.MAX_RETRIES ? 'failed' : 'pending',
+            status:
+              syncOp.retries + 1 >= this.MAX_RETRIES ? 'failed' : 'pending',
             error: error.message,
           };
 

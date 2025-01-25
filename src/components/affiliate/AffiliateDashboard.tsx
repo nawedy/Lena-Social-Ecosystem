@@ -1,4 +1,9 @@
-import { CopyOutlined, LinkOutlined, DollarOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  CopyOutlined,
+  LinkOutlined,
+  DollarOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import {
   Card,
   Table,
@@ -77,7 +82,9 @@ export function AffiliateDashboard() {
   const [showCreateProgram, setShowCreateProgram] = useState(false);
   const [showCreateLink, setShowCreateLink] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-  const [timePeriod, setTimePeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
+  const [timePeriod, setTimePeriod] = useState<
+    'day' | 'week' | 'month' | 'year'
+  >('month');
 
   const loadDashboardData = useCallback(async () => {
     if (!agent.session?.did) {
@@ -98,7 +105,8 @@ export function AffiliateDashboard() {
       setLinks(linksData);
       setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load dashboard data';
       setError(errorMessage);
       console.error('Error loading dashboard data:', err);
     } finally {
@@ -129,7 +137,8 @@ export function AffiliateDashboard() {
       setShowCreateProgram(false);
       void loadDashboardData();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create program';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to create program';
       setError(errorMessage);
       console.error('Error creating program:', err);
     } finally {
@@ -145,11 +154,16 @@ export function AffiliateDashboard() {
 
     try {
       setLoading(true);
-      await affiliateService.createAffiliateLink(selectedProgram, values.customId, agent.session.did);
+      await affiliateService.createAffiliateLink(
+        selectedProgram,
+        values.customId,
+        agent.session.did
+      );
       setShowCreateLink(false);
       void loadDashboardData();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create link';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to create link';
       setError(errorMessage);
       console.error('Error creating link:', err);
     } finally {
@@ -161,7 +175,11 @@ export function AffiliateDashboard() {
     <Row gutter={[16, 16]} className="mb-8">
       <Col span={6}>
         <Card>
-          <Statistic title="Total Clicks" value={stats?.clicks || 0} prefix={<LinkOutlined />} />
+          <Statistic
+            title="Total Clicks"
+            value={stats?.clicks || 0}
+            prefix={<LinkOutlined />}
+          />
         </Card>
       </Col>
       <Col span={6}>
@@ -336,11 +354,17 @@ export function AffiliateDashboard() {
     <div className="p-6">
       <AntTitle level={2}>Affiliate Dashboard</AntTitle>
 
-      {error && <Alert message={error} type="error" showIcon className="mb-4" />}
+      {error && (
+        <Alert message={error} type="error" showIcon className="mb-4" />
+      )}
 
       <div className="mb-4">
         <Space>
-          <Select value={timePeriod} onChange={setTimePeriod} style={{ width: 120 }}>
+          <Select
+            value={timePeriod}
+            onChange={setTimePeriod}
+            style={{ width: 120 }}
+          >
             <Select.Option value="day">Today</Select.Option>
             <Select.Option value="week">This Week</Select.Option>
             <Select.Option value="month">This Month</Select.Option>
@@ -357,10 +381,20 @@ export function AffiliateDashboard() {
 
       <Tabs defaultActiveKey="programs">
         <TabPane tab="Programs" key="programs">
-          <Table columns={programColumns} dataSource={programs} loading={loading} rowKey="uri" />
+          <Table
+            columns={programColumns}
+            dataSource={programs}
+            loading={loading}
+            rowKey="uri"
+          />
         </TabPane>
         <TabPane tab="Links" key="links">
-          <Table columns={linkColumns} dataSource={links} loading={loading} rowKey="uri" />
+          <Table
+            columns={linkColumns}
+            dataSource={links}
+            loading={loading}
+            rowKey="uri"
+          />
         </TabPane>
       </Tabs>
 
@@ -371,16 +405,32 @@ export function AffiliateDashboard() {
         footer={null}
       >
         <Form onFinish={handleCreateProgram}>
-          <Form.Item name="name" label="Program Name" rules={[{ required: true }]}>
+          <Form.Item
+            name="name"
+            label="Program Name"
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
+          <Form.Item
+            name="description"
+            label="Description"
+            rules={[{ required: true }]}
+          >
             <Input.TextArea />
           </Form.Item>
-          <Form.Item name="commission" label="Commission (%)" rules={[{ required: true }]}>
+          <Form.Item
+            name="commission"
+            label="Commission (%)"
+            rules={[{ required: true }]}
+          >
             <InputNumber min={0} max={100} />
           </Form.Item>
-          <Form.Item name="requirements" label="Requirements" rules={[{ required: true }]}>
+          <Form.Item
+            name="requirements"
+            label="Requirements"
+            rules={[{ required: true }]}
+          >
             <Input.TextArea placeholder="Enter requirements (one per line)" />
           </Form.Item>
           <Form.Item name="terms" label="Terms" rules={[{ required: true }]}>
@@ -401,7 +451,11 @@ export function AffiliateDashboard() {
         footer={null}
       >
         <Form onFinish={handleCreateLink}>
-          <Form.Item name="customId" label="Custom ID" rules={[{ required: true }]}>
+          <Form.Item
+            name="customId"
+            label="Custom ID"
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
           <Form.Item>

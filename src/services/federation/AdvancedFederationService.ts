@@ -66,7 +66,8 @@ export class AdvancedFederationService {
   private async loadPeers(): Promise<void> {
     const trace = performanceMonitor.startTrace('load_peers');
     try {
-      const cachedPeers = await this.cache.get<Map<string, FederationConfig>>('federation_peers');
+      const cachedPeers =
+        await this.cache.get<Map<string, FederationConfig>>('federation_peers');
       if (cachedPeers) {
         this.peers = cachedPeers;
       }
@@ -84,7 +85,10 @@ export class AdvancedFederationService {
     this.agent.on('peer:discovered', this.handlePeerDiscovery.bind(this));
 
     // Handle content replication events
-    this.agent.on('content:replicated', this.handleContentReplication.bind(this));
+    this.agent.on(
+      'content:replicated',
+      this.handleContentReplication.bind(this)
+    );
 
     // Handle federation errors
     this.agent.on('error', this.handleFederationError.bind(this));
@@ -181,7 +185,10 @@ export class AdvancedFederationService {
     }
   }
 
-  public async replicateContent(contentId: string, targetPeerId?: string): Promise<void> {
+  public async replicateContent(
+    contentId: string,
+    targetPeerId?: string
+  ): Promise<void> {
     const trace = performanceMonitor.startTrace('replicate_content');
     try {
       const event: FederationEvent = {
@@ -214,7 +221,10 @@ export class AdvancedFederationService {
     }
   }
 
-  private async replicateToSinglePeer(_contentId: string, peerId: string): Promise<void> {
+  private async replicateToSinglePeer(
+    _contentId: string,
+    peerId: string
+  ): Promise<void> {
     const peer = this.peers.get(peerId);
     if (!peer) {
       throw new Error('Peer not found');
@@ -225,7 +235,7 @@ export class AdvancedFederationService {
   }
 
   private async replicateToAllPeers(contentId: string): Promise<void> {
-    const promises = Array.from(this.peers.values()).map((peer) =>
+    const promises = Array.from(this.peers.values()).map(peer =>
       this.replicateToSinglePeer(contentId, peer.peerId)
     );
 

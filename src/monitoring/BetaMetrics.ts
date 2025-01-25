@@ -85,7 +85,10 @@ export const activeUsers = new client.Gauge({
 });
 
 // Example usage functions
-export const recordMigrationAttempt = async (durationMs: number, success: boolean) => {
+export const recordMigrationAttempt = async (
+  durationMs: number,
+  success: boolean
+) => {
   migrationAttempts.inc();
   if (success) {
     migrationSuccess.inc();
@@ -101,7 +104,11 @@ export const recordError = (type: string, component: string) => {
   errorCount.inc({ type, component });
 };
 
-export const updateBetaTesterStatus = (active: number, invited: number, inactive: number) => {
+export const updateBetaTesterStatus = (
+  active: number,
+  invited: number,
+  inactive: number
+) => {
   betaTesterStatus.set({ status: 'active' }, active);
   betaTesterStatus.set({ status: 'invited' }, invited);
   betaTesterStatus.set({ status: 'inactive' }, inactive);

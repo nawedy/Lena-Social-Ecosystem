@@ -44,7 +44,7 @@ export function APIConfiguration() {
         SecureStore.getItemAsync('replicate_api_key'),
       ]);
 
-      setApis((prev) => ({
+      setApis(prev => ({
         openai: { ...prev.openai, key: keys[0] || '' },
         stability: { ...prev.stability, key: keys[1] || '' },
         replicate: { ...prev.replicate, key: keys[2] || '' },
@@ -56,14 +56,14 @@ export function APIConfiguration() {
   };
 
   const _toggleKeyVisibility = (provider: string) => {
-    setApis((prev) => ({
+    setApis(prev => ({
       ...prev,
       [provider]: { ...prev[provider], isVisible: !prev[provider].isVisible },
     }));
   };
 
   const _updateAPIKey = async (provider: string, key: string) => {
-    setApis((prev) => ({
+    setApis(prev => ({
       ...prev,
       [provider]: { ...prev[provider], key, isValid: null },
     }));
@@ -76,7 +76,7 @@ export function APIConfiguration() {
       return;
     }
 
-    setApis((prev) => ({
+    setApis(prev => ({
       ...prev,
       [provider]: { ...prev[provider], isLoading: true },
     }));
@@ -85,7 +85,7 @@ export function APIConfiguration() {
       await contentGenService.updateAPIKey(provider, apiState.key);
       const _isValid = await contentGenService.testAPIConnection(provider);
 
-      setApis((prev) => ({
+      setApis(prev => ({
         ...prev,
         [provider]: { ...prev[provider], isValid, isLoading: false },
       }));
@@ -97,7 +97,7 @@ export function APIConfiguration() {
       }
     } catch (error) {
       console.error(`Error testing ${provider} API:`, error);
-      setApis((prev) => ({
+      setApis(prev => ({
         ...prev,
         [provider]: { ...prev[provider], isValid: false, isLoading: false },
       }));
@@ -115,17 +115,21 @@ export function APIConfiguration() {
           <TextInput
             style={styles.input}
             value={apiState.key}
-            onChangeText={(text) => updateAPIKey(provider, text)}
+            onChangeText={text => updateAPIKey(provider, text)}
             placeholder={t('settings.enterAPIKey')}
             secureTextEntry={!apiState.isVisible}
-            autoCapitalize='none'
+            autoCapitalize="none"
             autoCorrect={false}
           />
           <TouchableOpacity
             style={styles.visibilityButton}
             onPress={() => toggleKeyVisibility(provider)}
           >
-            <Ionicons name={apiState.isVisible ? 'eye-off' : 'eye'} size={24} color='#666' />
+            <Ionicons
+              name={apiState.isVisible ? 'eye-off' : 'eye'}
+              size={24}
+              color="#666"
+            />
           </TouchableOpacity>
         </View>
         <TouchableOpacity
@@ -138,7 +142,7 @@ export function APIConfiguration() {
           disabled={apiState.isLoading}
         >
           {apiState.isLoading ? (
-            <ActivityIndicator color='#fff' />
+            <ActivityIndicator color="#fff" />
           ) : (
             <>
               <Ionicons
@@ -146,13 +150,15 @@ export function APIConfiguration() {
                   apiState.isValid === true
                     ? 'checkmark-circle'
                     : apiState.isValid === false
-                    ? 'alert-circle'
-                    : 'radio-button-on'
+                      ? 'alert-circle'
+                      : 'radio-button-on'
                 }
                 size={20}
-                color='#fff'
+                color="#fff"
               />
-              <Text style={styles.testButtonText}>{t('settings.testConnection')}</Text>
+              <Text style={styles.testButtonText}>
+                {t('settings.testConnection')}
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -163,15 +169,19 @@ export function APIConfiguration() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>{t('settings.apiConfiguration')}</Text>
-      <Text style={styles.description}>{t('settings.apiConfigurationDescription')}</Text>
+      <Text style={styles.description}>
+        {t('settings.apiConfigurationDescription')}
+      </Text>
 
       {renderAPIKeyInput('openai', 'OpenAI API')}
       {renderAPIKeyInput('stability', 'Stability AI API')}
       {renderAPIKeyInput('replicate', 'Replicate API')}
 
       <View style={styles.infoContainer}>
-        <Ionicons name='information-circle' size={20} color='#666' />
-        <Text style={styles.infoText}>{t('settings.apiKeysSecureStorage')}</Text>
+        <Ionicons name="information-circle" size={20} color="#666" />
+        <Text style={styles.infoText}>
+          {t('settings.apiKeysSecureStorage')}
+        </Text>
       </View>
     </ScrollView>
   );

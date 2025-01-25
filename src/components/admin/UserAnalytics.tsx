@@ -17,7 +17,6 @@ import { PieChart } from 'react-native-chart-kit';
 import { admin } from '../../services/admin';
 import { atproto } from '../../services/atproto';
 
-
 interface UserStats {
   profile: any;
   activity: Array<{

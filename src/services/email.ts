@@ -43,7 +43,12 @@ class EmailService {
     }
   }
 
-  async sendEmail(to: string, subject: string, text: string, html?: string): Promise<void> {
+  async sendEmail(
+    to: string,
+    subject: string,
+    text: string,
+    html?: string
+  ): Promise<void> {
     try {
       const mailOptions = {
         from: config.email.senderEmail,
@@ -87,7 +92,10 @@ class EmailService {
     await this.sendEmail(to, subject, text, html);
   }
 
-  async sendVerificationEmail(to: string, verificationToken: string): Promise<void> {
+  async sendVerificationEmail(
+    to: string,
+    verificationToken: string
+  ): Promise<void> {
     const verificationLink = `${config.app.baseUrl}/verify-email?token=${verificationToken}`;
     const subject = 'Verify Your Email';
     const text = `Please click the following link to verify your email: ${verificationLink}`;

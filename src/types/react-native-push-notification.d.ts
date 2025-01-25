@@ -32,10 +32,22 @@ declare module 'react-native-push-notification' {
     localNotification(details: NotificationDetails): void;
     cancelAllLocalNotifications(): void;
     removeAllDeliveredNotifications(): void;
-    getScheduledLocalNotifications(callback: (notifications: NotificationDetails[]) => void): void;
+    getScheduledLocalNotifications(
+      callback: (notifications: NotificationDetails[]) => void
+    ): void;
     abandonPermissions(): void;
-    checkPermissions(callback: (permissions: { alert: boolean; badge: boolean; sound: boolean }) => void): void;
-    requestPermissions(): Promise<{ alert: boolean; badge: boolean; sound: boolean }>;
+    checkPermissions(
+      callback: (permissions: {
+        alert: boolean;
+        badge: boolean;
+        sound: boolean;
+      }) => void
+    ): void;
+    requestPermissions(): Promise<{
+      alert: boolean;
+      badge: boolean;
+      sound: boolean;
+    }>;
   }
 
   const PushNotification: PushNotification;

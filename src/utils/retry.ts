@@ -31,7 +31,7 @@ export async function withRetry<T>(
         throw error;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, delay));
       delay = Math.min(delay * finalConfig.backoffFactor, finalConfig.maxDelay);
     }
   }

@@ -84,7 +84,10 @@ export class AITestAutomation {
         results.push(result);
         await this.analytics.trackTestResult(suite.name, result);
 
-        if (!result.success && this.isBlockingFailure(testCase, suite.validationRules)) {
+        if (
+          !result.success &&
+          this.isBlockingFailure(testCase, suite.validationRules)
+        ) {
           console.error(`Blocking failure in test case ${testCase.id}`);
           break;
         }
@@ -99,7 +102,10 @@ export class AITestAutomation {
     return results;
   }
 
-  private async runTestCase(testCase: AITestCase, config: AITestConfig): Promise<TestResult> {
+  private async runTestCase(
+    testCase: AITestCase,
+    config: AITestConfig
+  ): Promise<TestResult> {
     const startTime = Date.now();
     let success = true;
     let output = '';
@@ -127,12 +133,19 @@ export class AITestAutomation {
     }
   }
 
-  private async generateAIResponse(_prompt: string, _config: AITestConfig): Promise<string> {
+  private async generateAIResponse(
+    _prompt: string,
+    _config: AITestConfig
+  ): Promise<string> {
     // Implementation would vary based on the AI provider
     return 'AI Response';
   }
 
-  private async calculateMetrics(output: string, testCase: AITestCase, startTime: number) {
+  private async calculateMetrics(
+    output: string,
+    testCase: AITestCase,
+    startTime: number
+  ) {
     return {
       executionTime: Date.now() - startTime,
       tokenCount: this.countTokens(output),
@@ -151,12 +164,12 @@ export class AITestAutomation {
     metrics: any
   ): Promise<boolean> {
     // Check expected patterns
-    const hasExpectedPatterns = testCase.expectedPatterns.every((pattern) =>
+    const hasExpectedPatterns = testCase.expectedPatterns.every(pattern =>
       new RegExp(pattern).test(output)
     );
 
     // Check prohibited patterns
-    const hasProhibitedPatterns = testCase.prohibitedPatterns.some((pattern) =>
+    const hasProhibitedPatterns = testCase.prohibitedPatterns.some(pattern =>
       new RegExp(pattern).test(output)
     );
 
@@ -167,26 +180,30 @@ export class AITestAutomation {
       (!testCase.maxTokens || tokenCount <= testCase.maxTokens);
 
     // Check latency
-    const withinLatency = !testCase.maxLatency || metrics.latency <= testCase.maxLatency;
+    const withinLatency =
+      !testCase.maxLatency || metrics.latency <= testCase.maxLatency;
 
     // Check required keywords
     const hasRequiredKeywords =
       !testCase.requiredKeywords ||
-      testCase.requiredKeywords.every((keyword) =>
+      testCase.requiredKeywords.every(keyword =>
         output.toLowerCase().includes(keyword.toLowerCase())
       );
 
     // Check sentiment
     const correctSentiment =
-      !testCase.sentimentScore || Math.abs(metrics.sentiment - testCase.sentimentScore) <= 0.2;
+      !testCase.sentimentScore ||
+      Math.abs(metrics.sentiment - testCase.sentimentScore) <= 0.2;
 
     // Check toxicity
     const withinToxicity =
-      !testCase.toxicityThreshold || metrics.toxicity <= testCase.toxicityThreshold;
+      !testCase.toxicityThreshold ||
+      metrics.toxicity <= testCase.toxicityThreshold;
 
     // Check creativity
     const meetsCreativity =
-      !testCase.creativityScore || metrics.creativity >= testCase.creativityScore;
+      !testCase.creativityScore ||
+      metrics.creativity >= testCase.creativityScore;
 
     return (
       hasExpectedPatterns &&
@@ -200,12 +217,18 @@ export class AITestAutomation {
     );
   }
 
-  private isBlockingFailure(_testCase: AITestCase, rules: ValidationRule[]): boolean {
-    const blockingRules = rules.filter((rule) => rule.severity === 'high');
+  private isBlockingFailure(
+    _testCase: AITestCase,
+    rules: ValidationRule[]
+  ): boolean {
+    const blockingRules = rules.filter(rule => rule.severity === 'high');
     return blockingRules.length > 0;
   }
 
-  private async validateResults(results: TestResult[], rules: ValidationRule[]): Promise<void> {
+  private async validateResults(
+    results: TestResult[],
+    rules: ValidationRule[]
+  ): Promise<void> {
     for (const rule of rules) {
       switch (rule.type) {
         case 'content':
@@ -224,9 +247,12 @@ export class AITestAutomation {
     }
   }
 
-  private async generateTestReport(suite: AITestSuite, results: TestResult[]): Promise<void> {
+  private async generateTestReport(
+    suite: AITestSuite,
+    results: TestResult[]
+  ): Promise<void> {
     const totalTests = results.length;
-    const passedTests = results.filter((r) => r.success).length;
+    const passedTests = results.filter(r => r.success).length;
     const failedTests = totalTests - passedTests;
 
     const averageMetrics = this.calculateAverageMetrics(results);
@@ -259,7 +285,9 @@ export class AITestAutomation {
     );
 
     const count = results.length;
-    return Object.fromEntries(Object.entries(sum).map(([key, value]) => [key, value / count]));
+    return Object.fromEntries(
+      Object.entries(sum).map(([key, value]) => [key, value / count])
+    );
   }
 
   private async generateRecommendations(
@@ -269,24 +297,30 @@ export class AITestAutomation {
     const recommendations: string[] = [];
 
     // Analyze patterns in failed tests
-    const failedTests = results.filter((r) => !r.success);
+    const failedTests = results.filter(r => !r.success);
     if (failedTests.length > 0) {
       const patterns = this.analyzeFailurePatterns(failedTests);
       recommendations.push(...patterns);
     }
 
     // Check performance issues
-    const slowTests = results.filter((r) => r.metrics.latency > suite.config.maxTokens * 10);
+    const slowTests = results.filter(
+      r => r.metrics.latency > suite.config.maxTokens * 10
+    );
     if (slowTests.length > 0) {
-      recommendations.push('Consider optimizing prompts for faster response times');
+      recommendations.push(
+        'Consider optimizing prompts for faster response times'
+      );
     }
 
     // Check token usage
     const highTokenTests = results.filter(
-      (r) => r.metrics.tokenCount > suite.config.maxTokens * 0.9
+      r => r.metrics.tokenCount > suite.config.maxTokens * 0.9
     );
     if (highTokenTests.length > 0) {
-      recommendations.push('Some responses are close to token limit, consider refining prompts');
+      recommendations.push(
+        'Some responses are close to token limit, consider refining prompts'
+      );
     }
 
     return recommendations;
@@ -296,16 +330,21 @@ export class AITestAutomation {
     const patterns: string[] = [];
 
     // Group failures by error type
-    const errorGroups = failedTests.reduce((acc, test) => {
-      const errorType = this.categorizeError(test.error || '');
-      acc[errorType] = (acc[errorType] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const errorGroups = failedTests.reduce(
+      (acc, test) => {
+        const errorType = this.categorizeError(test.error || '');
+        acc[errorType] = (acc[errorType] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     // Generate recommendations based on error patterns
     Object.entries(errorGroups).forEach(([errorType, count]) => {
       if (count > failedTests.length * 0.3) {
-        patterns.push(`High frequency of ${errorType} errors (${count} occurrences)`);
+        patterns.push(
+          `High frequency of ${errorType} errors (${count} occurrences)`
+        );
       }
     });
 
@@ -341,7 +380,10 @@ export class AITestAutomation {
     return this.countTokens(output) * 0.0001; // Simplified cost calculation
   }
 
-  private async calculateSimilarity(_output: string, _testCase: AITestCase): Promise<number> {
+  private async calculateSimilarity(
+    _output: string,
+    _testCase: AITestCase
+  ): Promise<number> {
     // Implement similarity calculation (e.g., cosine similarity)
     return 0.8;
   }
@@ -361,19 +403,31 @@ export class AITestAutomation {
     return 0.7;
   }
 
-  private async validateContentResults(_results: TestResult[], _rule: ValidationRule) {
+  private async validateContentResults(
+    _results: TestResult[],
+    _rule: ValidationRule
+  ) {
     // Implement content validation
   }
 
-  private async validatePerformanceResults(_results: TestResult[], _rule: ValidationRule) {
+  private async validatePerformanceResults(
+    _results: TestResult[],
+    _rule: ValidationRule
+  ) {
     // Implement performance validation
   }
 
-  private async validateSecurityResults(_results: TestResult[], _rule: ValidationRule) {
+  private async validateSecurityResults(
+    _results: TestResult[],
+    _rule: ValidationRule
+  ) {
     // Implement security validation
   }
 
-  private async validateCostResults(_results: TestResult[], _rule: ValidationRule) {
+  private async validateCostResults(
+    _results: TestResult[],
+    _rule: ValidationRule
+  ) {
     // Implement cost validation
   }
 }

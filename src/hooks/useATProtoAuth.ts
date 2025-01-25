@@ -4,7 +4,8 @@ import { useATProto } from '../contexts/ATProtoContext';
 import { ATProtoError } from '../utils/atproto-errors';
 
 export function useATProtoAuth() {
-  const { login, logout, isAuthenticated, isLoading, error, session } = useATProto();
+  const { login, logout, isAuthenticated, isLoading, error, session } =
+    useATProto();
 
   const handleLogin = useCallback(
     async (identifier: string, password: string) => {

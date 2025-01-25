@@ -94,7 +94,9 @@ declare module '@google-cloud/bigquery' {
     constructor(options?: BigQueryOptions);
 
     createQueryJob(options: QueryOptions): Promise<[Job]>;
-    query(options: QueryOptions): Promise<[Record<string, unknown>[], JobMetadata]>;
+    query(
+      options: QueryOptions
+    ): Promise<[Record<string, unknown>[], JobMetadata]>;
     dataset(datasetId: string): Dataset;
     table(tableId: string): Table;
   }

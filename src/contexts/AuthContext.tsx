@@ -1,5 +1,11 @@
 import { AtpSessionData, BskyAgent } from '@atproto/api';
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 
 interface AuthUser {
   did: string;
@@ -48,7 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       agent
         .resumeSession(sessionData)
         .then(() => {
-          setCurrentUser({ did: sessionData.did, handle: sessionData.handle, session: sessionData });
+          setCurrentUser({
+            did: sessionData.did,
+            handle: sessionData.handle,
+            session: sessionData,
+          });
           setLoading(false);
         })
         .catch(() => {

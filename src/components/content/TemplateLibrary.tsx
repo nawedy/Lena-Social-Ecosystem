@@ -25,7 +25,6 @@ import {
   TemplateType,
 } from '../../services/ContentTemplateService';
 
-
 interface TemplateLibraryProps {
   userId: string;
   onSelectTemplate: (template: ContentTemplate) => void;
@@ -38,7 +37,10 @@ interface TemplateLibraryError extends Error {
 
 type ViewMode = 'grid' | 'list';
 
-export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryProps) {
+export function TemplateLibrary({
+  userId,
+  onSelectTemplate,
+}: TemplateLibraryProps) {
   const { t } = useTranslation();
   const [searchQuery, _setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -52,7 +54,9 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
 
   const _templateService = ContentTemplateService.getInstance();
 
-  const _loadTemplates = async (options?: Partial<TemplateListOptions>): Promise<void> => {
+  const _loadTemplates = async (
+    options?: Partial<TemplateListOptions>
+  ): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -145,16 +149,22 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
         <Image
           source={{ uri: item.previewUrl }}
           style={styles.templatePreview}
-          resizeMode='cover'
+          resizeMode="cover"
         />
       ) : (
-        <View style={[styles.templatePreview, styles.templatePreviewPlaceholder]}>
+        <View
+          style={[styles.templatePreview, styles.templatePreviewPlaceholder]}
+        >
           <Ionicons
             name={
-              item.type === 'text' ? 'document-text' : item.type === 'image' ? 'image' : 'videocam'
+              item.type === 'text'
+                ? 'document-text'
+                : item.type === 'image'
+                  ? 'image'
+                  : 'videocam'
             }
             size={32}
-            color='#666'
+            color="#666"
           />
         </View>
       )}
@@ -163,7 +173,8 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
           {item.name}
         </Text>
         <Text style={styles.templateStats}>
-          {t('usageCount', { count: item.usageCount })} • {t('rating', { rating: item.rating })}
+          {t('usageCount', { count: item.usageCount })} •{' '}
+          {t('rating', { rating: item.rating })}
         </Text>
       </View>
     </TouchableOpacity>
@@ -180,20 +191,22 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
           <Image
             source={{ uri: item.previewUrl }}
             style={styles.listItemPreview}
-            resizeMode='cover'
+            resizeMode="cover"
           />
         ) : (
-          <View style={[styles.listItemPreview, styles.templatePreviewPlaceholder]}>
+          <View
+            style={[styles.listItemPreview, styles.templatePreviewPlaceholder]}
+          >
             <Ionicons
               name={
                 item.type === 'text'
                   ? 'document-text'
                   : item.type === 'image'
-                  ? 'image'
-                  : 'videocam'
+                    ? 'image'
+                    : 'videocam'
               }
               size={24}
-              color='#666'
+              color="#666"
             />
           </View>
         )}
@@ -205,7 +218,8 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
             {item.description}
           </Text>
           <Text style={styles.templateStats}>
-            {t('usageCount', { count: item.usageCount })} • {t('rating', { rating: item.rating })}
+            {t('usageCount', { count: item.usageCount })} •{' '}
+            {t('rating', { rating: item.rating })}
           </Text>
         </View>
       </View>
@@ -216,7 +230,7 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.searchContainer}>
-          <Ionicons name='search' size={20} color='#666' />
+          <Ionicons name="search" size={20} color="#666" />
           <TextInput
             style={styles.searchInput}
             placeholder={t('templates.searchPlaceholder')}
@@ -228,7 +242,11 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
           style={styles.viewModeButton}
           onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
         >
-          <Ionicons name={viewMode === 'grid' ? 'list' : 'grid'} size={24} color='#007AFF' />
+          <Ionicons
+            name={viewMode === 'grid' ? 'list' : 'grid'}
+            size={24}
+            color="#007AFF"
+          />
         </TouchableOpacity>
       </View>
 
@@ -238,16 +256,22 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
         style={styles.categoriesContainer}
       >
         <TouchableOpacity
-          style={[styles.categoryChip, !selectedCategory && styles.categoryChipSelected]}
+          style={[
+            styles.categoryChip,
+            !selectedCategory && styles.categoryChipSelected,
+          ]}
           onPress={() => setSelectedCategory(null)}
         >
           <Text
-            style={[styles.categoryChipText, !selectedCategory && styles.categoryChipTextSelected]}
+            style={[
+              styles.categoryChipText,
+              !selectedCategory && styles.categoryChipTextSelected,
+            ]}
           >
             {t('templates.allCategories')}
           </Text>
         </TouchableOpacity>
-        {categories.map((category) => (
+        {categories.map(category => (
           <TouchableOpacity
             key={category}
             style={[
@@ -259,7 +283,8 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
             <Text
               style={[
                 styles.categoryChipText,
-                selectedCategory === category && styles.categoryChipTextSelected,
+                selectedCategory === category &&
+                  styles.categoryChipTextSelected,
               ]}
             >
               {category}
@@ -273,44 +298,79 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
           style={[styles.typeChip, !selectedType && styles.typeChipSelected]}
           onPress={() => setSelectedType(null)}
         >
-          <Ionicons name='apps' size={20} color={!selectedType ? '#fff' : '#666'} />
-          <Text style={[styles.typeChipText, !selectedType && styles.typeChipTextSelected]}>
+          <Ionicons
+            name="apps"
+            size={20}
+            color={!selectedType ? '#fff' : '#666'}
+          />
+          <Text
+            style={[
+              styles.typeChipText,
+              !selectedType && styles.typeChipTextSelected,
+            ]}
+          >
             {t('templates.all')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.typeChip, selectedType === 'text' && styles.typeChipSelected]}
+          style={[
+            styles.typeChip,
+            selectedType === 'text' && styles.typeChipSelected,
+          ]}
           onPress={() => setSelectedType('text')}
         >
           <Ionicons
-            name='document-text'
+            name="document-text"
             size={20}
             color={selectedType === 'text' ? '#fff' : '#666'}
           />
           <Text
-            style={[styles.typeChipText, selectedType === 'text' && styles.typeChipTextSelected]}
+            style={[
+              styles.typeChipText,
+              selectedType === 'text' && styles.typeChipTextSelected,
+            ]}
           >
             {t('templates.text')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.typeChip, selectedType === 'image' && styles.typeChipSelected]}
+          style={[
+            styles.typeChip,
+            selectedType === 'image' && styles.typeChipSelected,
+          ]}
           onPress={() => setSelectedType('image')}
         >
-          <Ionicons name='image' size={20} color={selectedType === 'image' ? '#fff' : '#666'} />
+          <Ionicons
+            name="image"
+            size={20}
+            color={selectedType === 'image' ? '#fff' : '#666'}
+          />
           <Text
-            style={[styles.typeChipText, selectedType === 'image' && styles.typeChipTextSelected]}
+            style={[
+              styles.typeChipText,
+              selectedType === 'image' && styles.typeChipTextSelected,
+            ]}
           >
             {t('templates.image')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.typeChip, selectedType === 'video' && styles.typeChipSelected]}
+          style={[
+            styles.typeChip,
+            selectedType === 'video' && styles.typeChipSelected,
+          ]}
           onPress={() => setSelectedType('video')}
         >
-          <Ionicons name='videocam' size={20} color={selectedType === 'video' ? '#fff' : '#666'} />
+          <Ionicons
+            name="videocam"
+            size={20}
+            color={selectedType === 'video' ? '#fff' : '#666'}
+          />
           <Text
-            style={[styles.typeChipText, selectedType === 'video' && styles.typeChipTextSelected]}
+            style={[
+              styles.typeChipText,
+              selectedType === 'video' && styles.typeChipTextSelected,
+            ]}
           >
             {t('templates.video')}
           </Text>
@@ -319,13 +379,15 @@ export function TemplateLibrary({ userId, onSelectTemplate }: TemplateLibraryPro
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size='large' color='#007AFF' />
+          <ActivityIndicator size="large" color="#007AFF" />
         </View>
       ) : (
         <FlatList
           data={templates}
-          renderItem={viewMode === 'grid' ? renderTemplateGrid : renderTemplateList}
-          keyExtractor={(item) => item.id}
+          renderItem={
+            viewMode === 'grid' ? renderTemplateGrid : renderTemplateList
+          }
+          keyExtractor={item => item.id}
           numColumns={viewMode === 'grid' ? 2 : 1}
           key={viewMode} // Force re-render when changing view mode
           contentContainerStyle={styles.templateList}

@@ -1,12 +1,8 @@
 import { device, element, by, expect } from 'detox';
 
 describe('Authentication Flow', () => {
-  beforeAll(async () => {
-    await device.launchApp();
-  });
-
   beforeEach(async () => {
-    await device.reloadReactNative();
+    await device.launchApp();
   });
 
   it('should show login screen by default', async () => {

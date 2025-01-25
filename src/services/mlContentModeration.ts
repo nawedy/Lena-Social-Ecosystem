@@ -96,7 +96,10 @@ class MLContentModerationService {
     return MLContentModerationService.instance;
   }
 
-  async analyzeText(text: string, contentUri: string): Promise<ContentAnalysisResult> {
+  async analyzeText(
+    text: string,
+    contentUri: string
+  ): Promise<ContentAnalysisResult> {
     try {
       const [_syntaxResult] = await this.languageClient.analyzeSyntax({
         document: { content: text, type: 'PLAIN_TEXT' },
@@ -111,7 +114,7 @@ class MLContentModerationService {
       // Analyze for toxicity and other attributes
       const scores = await this.analyzeToxicity(text);
 
-      const entities = entityResult.entities?.map((entity) => ({
+      const entities = entityResult.entities?.map(entity => ({
         name: entity.name || '',
         type: entity.type || '',
         salience: entity.salience || 0,
@@ -140,7 +143,10 @@ class MLContentModerationService {
     }
   }
 
-  async analyzeImage(imageUrl: string, contentUri: string): Promise<ContentAnalysisResult> {
+  async analyzeImage(
+    imageUrl: string,
+    contentUri: string
+  ): Promise<ContentAnalysisResult> {
     try {
       const [_result] = await this.visionClient.safeSearchDetection(imageUrl);
       const [labelResult] = await this.visionClient.labelDetection(imageUrl);
@@ -148,7 +154,7 @@ class MLContentModerationService {
       const safeSearch = result.safeSearchAnnotation || {};
       const scores = this.normalizeVisionScores(safeSearch);
 
-      const labels = (labelResult.labelAnnotations || []).map((label) => ({
+      const labels = (labelResult.labelAnnotations || []).map(label => ({
         name: label.description || '',
         confidence: label.score || 0,
         category: label.topicality ? 'high-topicality' : 'standard',
@@ -175,11 +181,18 @@ class MLContentModerationService {
     }
   }
 
-  async analyzeVideo(videoUrl: string, contentUri: string): Promise<ContentAnalysisResult> {
+  async analyzeVideo(
+    videoUrl: string,
+    contentUri: string
+  ): Promise<ContentAnalysisResult> {
     try {
       const [operation] = await this.videoClient.annotateVideo({
         inputUri: videoUrl,
-        features: ['EXPLICIT_CONTENT_DETECTION', 'LABEL_DETECTION', 'OBJECT_TRACKING'],
+        features: [
+          'EXPLICIT_CONTENT_DETECTION',
+          'LABEL_DETECTION',
+          'OBJECT_TRACKING',
+        ],
       });
 
       const [_result] = await operation.promise();
@@ -187,7 +200,7 @@ class MLContentModerationService {
       const explicitAnnotation = result.explicitAnnotation || {};
       const scores = this.normalizeVideoScores(explicitAnnotation);
 
-      const labels = (result.labelAnnotations || []).map((label) => ({
+      const labels = (result.labelAnnotations || []).map(label => ({
         name: label.entity?.description || '',
         confidence: label.frames?.[0]?.confidence || 0,
         category: label.categoryEntities?.[0]?.description || 'standard',
@@ -214,7 +227,9 @@ class MLContentModerationService {
     }
   }
 
-  private async analyzeToxicity(text: string): Promise<ContentAnalysisResult['scores']> {
+  private async analyzeToxicity(
+    text: string
+  ): Promise<ContentAnalysisResult['scores']> {
     try {
       // Using Cloud Natural Language API for sentiment and content analysis
       const [result] = await this.languageClient.analyzeSentiment({
@@ -242,13 +257,19 @@ class MLContentModerationService {
     }
   }
 
-  private convertSentimentToToxicity(sentiment: number, magnitude: number): number {
+  private convertSentimentToToxicity(
+    sentiment: number,
+    magnitude: number
+  ): number {
     // Convert negative sentiment to toxicity score
     // Sentiment ranges from -1 to 1, we want toxicity from 0 to 1
     return Math.max(0, (-sentiment + 1) / 2) * Math.min(1, magnitude);
   }
 
-  private calculateSevereToxicity(sentiment: number, magnitude: number): number {
+  private calculateSevereToxicity(
+    sentiment: number,
+    magnitude: number
+  ): number {
     // Severe toxicity is a more stringent version of toxicity
     const toxicity = this.convertSentimentToToxicity(sentiment, magnitude);
     return Math.pow(toxicity, 1.5); // Exponential scaling for severe toxicity
@@ -316,7 +337,9 @@ class MLContentModerationService {
     return Math.min(1, hateMatches / 2);
   }
 
-  private normalizeVisionScores(safeSearch: SafeSearchAnnotation): ContentAnalysisResult['scores'] {
+  private normalizeVisionScores(
+    safeSearch: SafeSearchAnnotation
+  ): ContentAnalysisResult['scores'] {
     const likelihoodMap: { [key: string]: number } = {
       VERY_UNLIKELY: 0,
       UNLIKELY: 0.25,
@@ -334,20 +357,25 @@ class MLContentModerationService {
     };
   }
 
-  private normalizeVideoScores(explicitAnnotation: ExplicitAnnotation): ContentAnalysisResult['scores'] {
+  private normalizeVideoScores(
+    explicitAnnotation: ExplicitAnnotation
+  ): ContentAnalysisResult['scores'] {
     const frames = explicitAnnotation.frames || [];
     if (frames.length === 0) return {};
 
-    const averageScores = frames.reduce((acc: Record<string, number>, frame: Record<string, string>) => {
-      Object.entries(frame).forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          acc[key] = (acc[key] || 0) + this.normalizeVideoLikelihood(value);
-        }
-      });
-      return acc;
-    }, {});
+    const averageScores = frames.reduce(
+      (acc: Record<string, number>, frame: Record<string, string>) => {
+        Object.entries(frame).forEach(([key, value]) => {
+          if (typeof value === 'string') {
+            acc[key] = (acc[key] || 0) + this.normalizeVideoLikelihood(value);
+          }
+        });
+        return acc;
+      },
+      {}
+    );
 
-    Object.keys(averageScores).forEach((key) => {
+    Object.keys(averageScores).forEach(key => {
       averageScores[key] /= frames.length;
     });
 
@@ -393,7 +421,9 @@ class MLContentModerationService {
     };
   }
 
-  private async storeAnalysisResult(result: ContentAnalysisResult): Promise<void> {
+  private async storeAnalysisResult(
+    result: ContentAnalysisResult
+  ): Promise<void> {
     try {
       // Store in Cloud Storage for audit trail
       const bucket = this.storage.bucket(process.env.GCP_STORAGE_BUCKET || '');

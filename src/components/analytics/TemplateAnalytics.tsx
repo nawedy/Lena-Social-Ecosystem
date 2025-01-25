@@ -10,7 +10,12 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { LineChart, BarChart, PieChart, ContributionGraph } from 'react-native-chart-kit';
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ContributionGraph,
+} from 'react-native-chart-kit';
 
 import { APIUsageService } from '../../services/APIUsageService';
 import { ContentTemplateService } from '../../services/ContentTemplateService';
@@ -26,10 +31,15 @@ interface AnalyticsPeriod {
   label: string;
 }
 
-export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps) {
+export function TemplateAnalytics({
+  userId,
+  templateId,
+}: TemplateAnalyticsProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>(
+    'week'
+  );
   const [metrics, setMetrics] = useState<any>(null);
   const [topTemplates, setTopTemplates] = useState<any[]>([]);
   const [usageByCategory, setUsageByCategory] = useState<any[]>([]);
@@ -72,7 +82,11 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
       const { startDate, endDate } = getPeriodDates();
 
       // Load usage report
-      const _report = await apiUsageService.generateUsageReport(userId, startDate, endDate);
+      const _report = await apiUsageService.generateUsageReport(
+        userId,
+        startDate,
+        endDate
+      );
 
       // Get top templates
       const _templates = await templateService.listTemplates({
@@ -111,10 +125,12 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
   const _processCategoryData = (report: any) => {
     const categories: Record<string, number> = {};
     Object.values(report.providers).forEach((provider: any) => {
-      Object.entries(provider.breakdown).forEach(([operation, stats]: [string, any]) => {
-        const _category = operation.split('_')[0];
-        categories[category] = (categories[category] || 0) + stats.count;
-      });
+      Object.entries(provider.breakdown).forEach(
+        ([operation, stats]: [string, any]) => {
+          const _category = operation.split('_')[0];
+          categories[category] = (categories[category] || 0) + stats.count;
+        }
+      );
     });
 
     return Object.entries(categories).map(([name, count]) => ({
@@ -132,14 +148,16 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
     };
 
     Object.values(report.providers).forEach((provider: any) => {
-      Object.entries(provider.breakdown).forEach(([operation, stats]: [string, any]) => {
-        const _type = operation.includes('text')
-          ? 'text'
-          : operation.includes('image')
-          ? 'image'
-          : 'video';
-        types[type] += stats.count;
-      });
+      Object.entries(provider.breakdown).forEach(
+        ([operation, stats]: [string, any]) => {
+          const _type = operation.includes('text')
+            ? 'text'
+            : operation.includes('image')
+              ? 'image'
+              : 'video';
+          types[type] += stats.count;
+        }
+      );
     });
 
     return Object.entries(types).map(([name, count]) => ({
@@ -156,7 +174,7 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
   };
 
   const _processEngagementData = (templates: any[]) => {
-    return templates.map((template) => ({
+    return templates.map(template => ({
       template: template.name,
       usage: template.usageCount,
       rating: template.rating,
@@ -199,11 +217,15 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
         <Text style={styles.metricLabel}>{t('analytics.totalCost')}</Text>
       </View>
       <View style={styles.metricCard}>
-        <Text style={styles.metricValue}>{metrics.averageRating.toFixed(1)}</Text>
+        <Text style={styles.metricValue}>
+          {metrics.averageRating.toFixed(1)}
+        </Text>
         <Text style={styles.metricLabel}>{t('analytics.avgRating')}</Text>
       </View>
       <View style={styles.metricCard}>
-        <Text style={styles.metricValue}>{(metrics.successRate * 100).toFixed(1)}%</Text>
+        <Text style={styles.metricValue}>
+          {(metrics.successRate * 100).toFixed(1)}%
+        </Text>
         <Text style={styles.metricLabel}>{t('analytics.successRate')}</Text>
       </View>
     </View>
@@ -214,10 +236,10 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
       <Text style={styles.chartTitle}>{t('analytics.usageOverTime')}</Text>
       <LineChart
         data={{
-          labels: usageOverTime.map((d) => d.label),
+          labels: usageOverTime.map(d => d.label),
           datasets: [
             {
-              data: usageOverTime.map((d) => d.value),
+              data: usageOverTime.map(d => d.value),
             },
           ],
         }}
@@ -249,9 +271,9 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
         chartConfig={{
           color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
         }}
-        accessor='count'
-        backgroundColor='transparent'
-        paddingLeft='15'
+        accessor="count"
+        backgroundColor="transparent"
+        paddingLeft="15"
       />
     </View>
   );
@@ -261,10 +283,10 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
       <Text style={styles.chartTitle}>{t('analytics.usageByType')}</Text>
       <BarChart
         data={{
-          labels: usageByType.map((d) => d.name),
+          labels: usageByType.map(d => d.name),
           datasets: [
             {
-              data: usageByType.map((d) => d.count),
+              data: usageByType.map(d => d.count),
             },
           ],
         }}
@@ -286,7 +308,7 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
     <View style={styles.chartContainer}>
       <Text style={styles.chartTitle}>{t('analytics.templateEngagement')}</Text>
       <ContributionGraph
-        values={engagementData.map((d) => ({
+        values={engagementData.map(d => ({
           date: new Date().toISOString().split('T')[0],
           count: d.engagement,
         }))}
@@ -306,7 +328,7 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' color='#007AFF' />
+        <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
   }
@@ -315,21 +337,32 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>
-          {templateId ? t('analytics.templateAnalytics') : t('analytics.allTemplates')}
+          {templateId
+            ? t('analytics.templateAnalytics')
+            : t('analytics.allTemplates')}
         </Text>
         <View style={styles.periodSelector}>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'day' && styles.periodButtonSelected]}
+            style={[
+              styles.periodButton,
+              period === 'day' && styles.periodButtonSelected,
+            ]}
             onPress={() => setPeriod('day')}
           >
             <Text
-              style={[styles.periodButtonText, period === 'day' && styles.periodButtonTextSelected]}
+              style={[
+                styles.periodButtonText,
+                period === 'day' && styles.periodButtonTextSelected,
+              ]}
             >
               {t('analytics.day')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'week' && styles.periodButtonSelected]}
+            style={[
+              styles.periodButton,
+              period === 'week' && styles.periodButtonSelected,
+            ]}
             onPress={() => setPeriod('week')}
           >
             <Text
@@ -342,7 +375,10 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'month' && styles.periodButtonSelected]}
+            style={[
+              styles.periodButton,
+              period === 'month' && styles.periodButtonSelected,
+            ]}
             onPress={() => setPeriod('month')}
           >
             <Text
@@ -355,7 +391,10 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.periodButton, period === 'year' && styles.periodButtonSelected]}
+            style={[
+              styles.periodButton,
+              period === 'year' && styles.periodButtonSelected,
+            ]}
             onPress={() => setPeriod('year')}
           >
             <Text
@@ -384,11 +423,11 @@ export function TemplateAnalytics({ userId, templateId }: TemplateAnalyticsProps
             <View style={styles.templateInfo}>
               <Text style={styles.templateName}>{template.name}</Text>
               <Text style={styles.templateStats}>
-                {template.usageCount} {t('analytics.uses')} • {template.rating.toFixed(1)}{' '}
-                {t('analytics.rating')}
+                {template.usageCount} {t('analytics.uses')} •{' '}
+                {template.rating.toFixed(1)} {t('analytics.rating')}
               </Text>
             </View>
-            <Ionicons name='chevron-forward' size={20} color='#666' />
+            <Ionicons name="chevron-forward" size={20} color="#666" />
           </View>
         ))}
       </View>

@@ -205,7 +205,7 @@ export class ATProtocolAutomatedContent {
     }>;
   }): Promise<AutomatedPost[]> {
     const posts = await Promise.all(
-      params.schedule.map((slot) =>
+      params.schedule.map(slot =>
         this.generateContent({
           automationUri: params.automationUri,
           variables: slot.variables,
@@ -253,19 +253,21 @@ export class ATProtocolAutomatedContent {
       revenue: number;
     }>;
   }> {
-    const response = await this.agent.api.app.bsky.commerce.getAutomationPerformance({
-      automation: params.automationUri,
-      timeframe: params.timeframe,
-    });
+    const response =
+      await this.agent.api.app.bsky.commerce.getAutomationPerformance({
+        automation: params.automationUri,
+        timeframe: params.timeframe,
+      });
 
     return response.data;
   }
 
   // Private Methods
   private async getAutomation(uri: string): Promise<ContentAutomation> {
-    const response = await this.agent.api.app.bsky.commerce.getContentAutomation({
-      uri,
-    });
+    const response =
+      await this.agent.api.app.bsky.commerce.getContentAutomation({
+        uri,
+      });
 
     return response.data;
   }
@@ -287,7 +289,9 @@ export class ATProtocolAutomatedContent {
     await rt.detectFacets(this.agent);
 
     // Handle media if present
-    const media = template.media ? await this.generateMedia(template.media, variables) : undefined;
+    const media = template.media
+      ? await this.generateMedia(template.media, variables)
+      : undefined;
 
     return {
       text: rt.text,

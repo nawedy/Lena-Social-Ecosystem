@@ -49,6 +49,7 @@ export const config = {
   },
   monitoring: {
     logName: process.env.LOGGING_LOG_NAME || 'tiktoktoe-app',
-    metricPrefix: process.env.MONITORING_METRIC_PREFIX || 'custom.googleapis.com/tiktoktoe',
+    metricPrefix:
+      process.env.MONITORING_METRIC_PREFIX || 'custom.googleapis.com/tiktoktoe',
   },
 };

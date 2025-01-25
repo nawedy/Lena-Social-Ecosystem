@@ -8,7 +8,6 @@ import { useNotifications } from '../../hooks/useNotifications';
 
 import { NotificationItem } from './NotificationItem';
 
-
 interface Notification {
   id: string;
   type: 'like' | 'repost' | 'follow' | 'mention';
@@ -34,7 +33,9 @@ type NotificationsScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Notifications'>;
 };
 
-export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation }) => {
+export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({
+  navigation,
+}) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const { fetchNotifications, markAsRead } = useNotifications();
@@ -59,10 +60,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
       await markAsRead(notification.id);
 
       // Update local state to mark notification as read
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notification.id ? { ...n, read: true } : n
-        )
+      setNotifications(prev =>
+        prev.map(n => (n.id === notification.id ? { ...n, read: true } : n))
       );
 
       // Navigate based on notification type
@@ -94,7 +93,7 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
     <View style={styles.container}>
       <FlatList
         data={notifications}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <NotificationItem
             notification={item}

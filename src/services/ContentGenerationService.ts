@@ -79,7 +79,9 @@ export class ContentGenerationService {
       temperature: 0.7,
     });
 
-    return (response.choices[0].message.content || '').split(',').map((tag) => tag.trim());
+    return (response.choices[0].message.content || '')
+      .split(',')
+      .map(tag => tag.trim());
   }
 
   // Image Generation
@@ -132,7 +134,9 @@ export class ContentGenerationService {
       temperature: 0.8,
     });
 
-    return (response.choices[0].message.content || '').split('\n').filter((line) => line.trim());
+    return (response.choices[0].message.content || '')
+      .split('\n')
+      .filter(line => line.trim());
   }
 
   // Trend Analysis
@@ -144,7 +148,8 @@ export class ContentGenerationService {
       messages: [
         {
           role: 'system',
-          content: 'Analyze current social media trends and provide insights. Return as JSON.',
+          content:
+            'Analyze current social media trends and provide insights. Return as JSON.',
         },
         {
           role: 'user',

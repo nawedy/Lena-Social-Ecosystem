@@ -79,7 +79,7 @@ export function ConsolidatedAnalyticsDashboard() {
         Permission.VIEW_ANALYTICS
       );
       setAccessibleAccounts(accounts);
-      setState((prev) => ({
+      setState(prev => ({
         ...prev,
         filter: {
           ...prev.filter,
@@ -115,15 +115,23 @@ export function ConsolidatedAnalyticsDashboard() {
         <Text style={styles.sectionTitle}>{t('analytics.overview.title')}</Text>
 
         {/* Key Metrics */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.metricsScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.metricsScroll}
+        >
           {data.metrics.map((metric: any, index: number) => (
             <View key={index} style={styles.metricCard}>
               <Text style={styles.metricName}>{metric.name}</Text>
-              <Text style={styles.metricValue}>{formatMetricValue(metric.value)}</Text>
+              <Text style={styles.metricValue}>
+                {formatMetricValue(metric.value)}
+              </Text>
               <Text
                 style={[
                   styles.metricChange,
-                  metric.change > 0 ? styles.positiveChange : styles.negativeChange,
+                  metric.change > 0
+                    ? styles.positiveChange
+                    : styles.negativeChange,
                 ]}
               >
                 {formatPercentage(metric.change)}
@@ -134,7 +142,9 @@ export function ConsolidatedAnalyticsDashboard() {
 
         {/* Performance Trend */}
         <View style={styles.chart}>
-          <Text style={styles.chartTitle}>{t('analytics.overview.performanceTrend')}</Text>
+          <Text style={styles.chartTitle}>
+            {t('analytics.overview.performanceTrend')}
+          </Text>
           <LineChart
             data={{
               labels: generateTimeLabels(state.timeframe),
@@ -158,16 +168,24 @@ export function ConsolidatedAnalyticsDashboard() {
 
         {/* Top Content */}
         <View style={styles.topContent}>
-          <Text style={styles.subsectionTitle}>{t('analytics.overview.topContent')}</Text>
+          <Text style={styles.subsectionTitle}>
+            {t('analytics.overview.topContent')}
+          </Text>
           {data.content
-            .sort((a: any, b: any) => b.metrics.engagement - a.metrics.engagement)
+            .sort(
+              (a: any, b: any) => b.metrics.engagement - a.metrics.engagement
+            )
             .slice(0, 5)
             .map((content: any, index: number) => (
               <View key={index} style={styles.contentItem}>
                 <Text style={styles.contentTitle}>{content.title}</Text>
                 <View style={styles.contentMetrics}>
-                  <Text style={styles.contentMetric}>👁️ {formatNumber(content.metrics.views)}</Text>
-                  <Text style={styles.contentMetric}>❤️ {formatNumber(content.metrics.likes)}</Text>
+                  <Text style={styles.contentMetric}>
+                    👁️ {formatNumber(content.metrics.views)}
+                  </Text>
+                  <Text style={styles.contentMetric}>
+                    ❤️ {formatNumber(content.metrics.likes)}
+                  </Text>
                   <Text style={styles.contentMetric}>
                     💬 {formatNumber(content.metrics.comments)}
                   </Text>
@@ -178,13 +196,15 @@ export function ConsolidatedAnalyticsDashboard() {
 
         {/* Audience Insights */}
         <View style={styles.audienceInsights}>
-          <Text style={styles.subsectionTitle}>{t('analytics.overview.audienceInsights')}</Text>
+          <Text style={styles.subsectionTitle}>
+            {t('analytics.overview.audienceInsights')}
+          </Text>
           {data.audience.slice(0, 3).map((insight: any, index: number) => (
             <View key={index} style={styles.insightItem}>
               <MaterialIcons
-                name='lightbulb'
+                name="lightbulb"
                 size={24}
-                color='#ffc107'
+                color="#ffc107"
                 style={styles.insightIcon}
               />
               <View style={styles.insightContent}>
@@ -197,53 +217,68 @@ export function ConsolidatedAnalyticsDashboard() {
 
         {/* Predictions */}
         <View style={styles.predictions}>
-          <Text style={styles.subsectionTitle}>{t('analytics.overview.predictions')}</Text>
-          {data.predictions.slice(0, 3).map((prediction: any, index: number) => (
-            <View key={index} style={styles.predictionItem}>
-              <View style={styles.predictionHeader}>
-                <Text style={styles.predictionTitle}>{prediction.metric}</Text>
-                <Text style={styles.predictionConfidence}>
-                  {formatPercentage(prediction.confidence)} {t('analytics.confidence')}
-                </Text>
+          <Text style={styles.subsectionTitle}>
+            {t('analytics.overview.predictions')}
+          </Text>
+          {data.predictions
+            .slice(0, 3)
+            .map((prediction: any, index: number) => (
+              <View key={index} style={styles.predictionItem}>
+                <View style={styles.predictionHeader}>
+                  <Text style={styles.predictionTitle}>
+                    {prediction.metric}
+                  </Text>
+                  <Text style={styles.predictionConfidence}>
+                    {formatPercentage(prediction.confidence)}{' '}
+                    {t('analytics.confidence')}
+                  </Text>
+                </View>
+                <View style={styles.predictionChart}>
+                  <LineChart
+                    data={{
+                      labels: generateForecastLabels(),
+                      datasets: [
+                        {
+                          data: prediction.forecast,
+                        },
+                      ],
+                    }}
+                    width={Dimensions.get('window').width - 64}
+                    height={100}
+                    chartConfig={{
+                      backgroundColor: '#fff',
+                      backgroundGradientFrom: '#fff',
+                      backgroundGradientTo: '#fff',
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
+                    }}
+                    bezier
+                    withDots={false}
+                    withInnerLines={false}
+                    style={styles.predictionChartStyle}
+                  />
+                </View>
+                <View style={styles.recommendations}>
+                  {prediction.recommendations.map(
+                    (rec: any, recIndex: number) => (
+                      <View key={recIndex} style={styles.recommendation}>
+                        <Text style={styles.recommendationText}>
+                          {rec.action}
+                        </Text>
+                        <View style={styles.recommendationMetrics}>
+                          <Text style={styles.recommendationMetric}>
+                            💪 {formatImpact(rec.impact)}
+                          </Text>
+                          <Text style={styles.recommendationMetric}>
+                            ⏱️ {formatEffort(rec.effort)}
+                          </Text>
+                        </View>
+                      </View>
+                    )
+                  )}
+                </View>
               </View>
-              <View style={styles.predictionChart}>
-                <LineChart
-                  data={{
-                    labels: generateForecastLabels(),
-                    datasets: [
-                      {
-                        data: prediction.forecast,
-                      },
-                    ],
-                  }}
-                  width={Dimensions.get('window').width - 64}
-                  height={100}
-                  chartConfig={{
-                    backgroundColor: '#fff',
-                    backgroundGradientFrom: '#fff',
-                    backgroundGradientTo: '#fff',
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
-                  }}
-                  bezier
-                  withDots={false}
-                  withInnerLines={false}
-                  style={styles.predictionChartStyle}
-                />
-              </View>
-              <View style={styles.recommendations}>
-                {prediction.recommendations.map((rec: any, recIndex: number) => (
-                  <View key={recIndex} style={styles.recommendation}>
-                    <Text style={styles.recommendationText}>{rec.action}</Text>
-                    <View style={styles.recommendationMetrics}>
-                      <Text style={styles.recommendationMetric}>💪 {formatImpact(rec.impact)}</Text>
-                      <Text style={styles.recommendationMetric}>⏱️ {formatEffort(rec.effort)}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          ))}
+            ))}
         </View>
       </View>
     );
@@ -295,7 +330,9 @@ export function ConsolidatedAnalyticsDashboard() {
     return '';
   };
 
-  const _generateTimeLabels = (_timeframe: DashboardState['timeframe']): string[] => {
+  const _generateTimeLabels = (
+    _timeframe: DashboardState['timeframe']
+  ): string[] => {
     // Implementation
     return [];
   };
@@ -308,7 +345,7 @@ export function ConsolidatedAnalyticsDashboard() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' color='#007bff' />
+        <ActivityIndicator size="large" color="#007bff" />
       </View>
     );
   }
@@ -320,33 +357,52 @@ export function ConsolidatedAnalyticsDashboard() {
         <Text style={styles.title}>{t('analytics.consolidated.title')}</Text>
 
         {/* View Selector */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.viewSelector}>
-          {(['overview', 'content', 'audience', 'competitors', 'predictions'] as const).map(
-            (view) => (
-              <TouchableOpacity
-                key={view}
-                style={[styles.viewButton, state.view === view && styles.activeView]}
-                onPress={() => setState((prev) => ({ ...prev, view }))}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.viewSelector}
+        >
+          {(
+            [
+              'overview',
+              'content',
+              'audience',
+              'competitors',
+              'predictions',
+            ] as const
+          ).map(view => (
+            <TouchableOpacity
+              key={view}
+              style={[
+                styles.viewButton,
+                state.view === view && styles.activeView,
+              ]}
+              onPress={() => setState(prev => ({ ...prev, view }))}
+            >
+              <Text
+                style={[
+                  styles.viewButtonText,
+                  state.view === view && styles.activeViewText,
+                ]}
               >
-                <Text style={[styles.viewButtonText, state.view === view && styles.activeViewText]}>
-                  {t(`analytics.views.${view}`)}
-                </Text>
-              </TouchableOpacity>
-            )
-          )}
+                {t(`analytics.views.${view}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
 
         {/* Timeframe Selector */}
         <View style={styles.timeframeSelector}>
-          {(['hour', 'day', 'week', 'month'] as const).map((granularity) => (
+          {(['hour', 'day', 'week', 'month'] as const).map(granularity => (
             <TouchableOpacity
               key={granularity}
               style={[
                 styles.timeframeButton,
-                state.timeframe.granularity === granularity && styles.activeTimeframe,
+                state.timeframe.granularity === granularity &&
+                  styles.activeTimeframe,
               ]}
               onPress={() =>
-                setState((prev) => ({
+                setState(prev => ({
                   ...prev,
                   timeframe: {
                     ...prev.timeframe,
@@ -358,7 +414,8 @@ export function ConsolidatedAnalyticsDashboard() {
               <Text
                 style={[
                   styles.timeframeText,
-                  state.timeframe.granularity === granularity && styles.activeTimeframeText,
+                  state.timeframe.granularity === granularity &&
+                    styles.activeTimeframeText,
                 ]}
               >
                 {t(`analytics.timeframe.${granularity}`)}

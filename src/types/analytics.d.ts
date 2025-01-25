@@ -12,6 +12,9 @@ declare module '../utils/analytics' {
 
   export function track(event: AnalyticsEvent): void;
   export function identify(user: AnalyticsUser): void;
-  export function page(name: string, properties?: Record<string, string | number | boolean | null>): void;
+  export function page(
+    name: string,
+    properties?: Record<string, string | number | boolean | null>
+  ): void;
   export function reset(): void;
 }

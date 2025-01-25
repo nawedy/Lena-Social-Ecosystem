@@ -9,7 +9,12 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import { LineChart, BarChart, StackedBarChart, RadarChart } from 'react-native-chart-kit';
+import {
+  LineChart,
+  BarChart,
+  StackedBarChart,
+  RadarChart,
+} from 'react-native-chart-kit';
 
 import { AnalyticsService } from '../../services/AnalyticsService';
 
@@ -51,7 +56,9 @@ export function AIAdvancedAnalytics() {
   const [view, setView] = useState<ViewType>('prompts');
   const [timeframe, setTimeframe] = useState<TimeframeType>('day');
   const [promptAnalytics, setPromptAnalytics] = useState<PromptAnalytics[]>([]);
-  const [responseAnalytics, setResponseAnalytics] = useState<ResponseAnalytics[]>([]);
+  const [responseAnalytics, setResponseAnalytics] = useState<
+    ResponseAnalytics[]
+  >([]);
   const [costBreakdown, setCostBreakdown] = useState<CostBreakdown[]>([]);
   const [errorAnalytics, setErrorAnalytics] = useState<ErrorAnalytics[]>([]);
 
@@ -106,13 +113,15 @@ export function AIAdvancedAnalytics() {
   const _renderPromptAnalytics = () => (
     <ScrollView>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.promptEffectiveness')}</Text>
+        <Text style={styles.sectionTitle}>
+          {t('analytics.promptEffectiveness')}
+        </Text>
         <LineChart
           data={{
             labels: promptAnalytics.map((_, i) => i.toString()),
             datasets: [
               {
-                data: promptAnalytics.map((p) => p.effectiveness),
+                data: promptAnalytics.map(p => p.effectiveness),
               },
             ],
           }}
@@ -130,7 +139,7 @@ export function AIAdvancedAnalytics() {
           data={{
             labels: ['Length', 'Complexity', 'Keywords', 'Effect'],
             data: [
-              promptAnalytics.map((p) => [
+              promptAnalytics.map(p => [
                 p.averageLength / 100,
                 p.complexity,
                 p.topKeywords.length / 10,
@@ -150,7 +159,7 @@ export function AIAdvancedAnalytics() {
         <StackedBarChart
           data={{
             labels: promptAnalytics
-              .flatMap((p) => p.topKeywords)
+              .flatMap(p => p.topKeywords)
               .reduce((acc: Record<string, number>, keyword) => {
                 acc[keyword] = (acc[keyword] || 0) + 1;
                 return acc;
@@ -162,7 +171,7 @@ export function AIAdvancedAnalytics() {
             legend: ['Frequency'],
             data: [
               promptAnalytics
-                .flatMap((p) => p.topKeywords)
+                .flatMap(p => p.topKeywords)
                 .reduce((acc: Record<string, number>, keyword) => {
                   acc[keyword] = (acc[keyword] || 0) + 1;
                   return acc;
@@ -186,7 +195,9 @@ export function AIAdvancedAnalytics() {
   const _renderResponseAnalytics = () => (
     <ScrollView>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.responseSentiment')}</Text>
+        <Text style={styles.sectionTitle}>
+          {t('analytics.responseSentiment')}
+        </Text>
         <StackedBarChart
           data={{
             labels: Object.keys(
@@ -224,7 +235,7 @@ export function AIAdvancedAnalytics() {
             labels: ['Prompts', 'Completions', 'Total', 'Savings'],
             legend: ['Cost'],
             data: [
-              costBreakdown.map((c) => [
+              costBreakdown.map(c => [
                 c.promptCost,
                 c.completionCost,
                 c.totalCost,
@@ -245,12 +256,14 @@ export function AIAdvancedAnalytics() {
   const _renderErrorAnalytics = () => (
     <ScrollView>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('analytics.errorDistribution')}</Text>
+        <Text style={styles.sectionTitle}>
+          {t('analytics.errorDistribution')}
+        </Text>
         <StackedBarChart
           data={{
-            labels: errorAnalytics.map((e) => e.type),
+            labels: errorAnalytics.map(e => e.type),
             legend: ['Count'],
-            data: [errorAnalytics.map((e) => e.count)],
+            data: [errorAnalytics.map(e => e.count)],
             barColors: ['#dfe4ea'],
           }}
           width={Dimensions.get('window').width - 32}
@@ -266,7 +279,7 @@ export function AIAdvancedAnalytics() {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size='large' color='#0000ff' />
+          <ActivityIndicator size="large" color="#0000ff" />
         </View>
       );
     }
@@ -289,29 +302,41 @@ export function AIAdvancedAnalytics() {
     <View style={styles.container}>
       <View style={styles.header}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {(['prompts', 'responses', 'costs', 'errors'] as ViewType[]).map((v) => (
-            <TouchableOpacity
-              key={v}
-              style={[styles.tab, view === v && styles.activeTab]}
-              onPress={() => setView(v)}
-            >
-              <Text style={[styles.tabText, view === v && styles.activeTabText]}>
-                {t(`analytics.${v}`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {(['prompts', 'responses', 'costs', 'errors'] as ViewType[]).map(
+            v => (
+              <TouchableOpacity
+                key={v}
+                style={[styles.tab, view === v && styles.activeTab]}
+                onPress={() => setView(v)}
+              >
+                <Text
+                  style={[styles.tabText, view === v && styles.activeTabText]}
+                >
+                  {t(`analytics.${v}`)}
+                </Text>
+              </TouchableOpacity>
+            )
+          )}
         </ScrollView>
       </View>
 
       <View style={styles.timeframeContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {(['hour', 'day', 'week', 'month'] as TimeframeType[]).map((t) => (
+          {(['hour', 'day', 'week', 'month'] as TimeframeType[]).map(t => (
             <TouchableOpacity
               key={t}
-              style={[styles.timeframeButton, timeframe === t && styles.activeTimeframe]}
+              style={[
+                styles.timeframeButton,
+                timeframe === t && styles.activeTimeframe,
+              ]}
               onPress={() => setTimeframe(t)}
             >
-              <Text style={[styles.timeframeText, timeframe === t && styles.activeTimeframeText]}>
+              <Text
+                style={[
+                  styles.timeframeText,
+                  timeframe === t && styles.activeTimeframeText,
+                ]}
+              >
                 {t(`analytics.timeframe.${t}`)}
               </Text>
             </TouchableOpacity>

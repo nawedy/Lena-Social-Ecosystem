@@ -66,7 +66,7 @@ export class ATContentFilter {
         limit: 100,
       });
 
-      return response.records.map((record) => ({
+      return response.records.map(record => ({
         id: record.uri,
         ...record.value,
       }));
@@ -107,8 +107,14 @@ export class ATContentFilter {
         switch (rule.type) {
           case 'text':
             if (content.text && rule.criteria.keywords) {
-              const textAnalysis = await this.moderationService.moderateText(content.text);
-              matched = this.matchesTextCriteria(content.text, rule.criteria, textAnalysis);
+              const textAnalysis = await this.moderationService.moderateText(
+                content.text
+              );
+              matched = this.matchesTextCriteria(
+                content.text,
+                rule.criteria,
+                textAnalysis
+              );
               confidence = textAnalysis.confidence;
               categories = textAnalysis.categories;
               reasons = textAnalysis.reasons || [];
@@ -117,7 +123,9 @@ export class ATContentFilter {
 
           case 'image':
             if (content.image) {
-              const imageAnalysis = await this.moderationService.moderateImage(content.image);
+              const imageAnalysis = await this.moderationService.moderateImage(
+                content.image
+              );
               matched = this.matchesMediaCriteria(imageAnalysis, rule.criteria);
               confidence = imageAnalysis.confidence;
               categories = imageAnalysis.categories;
@@ -127,7 +135,9 @@ export class ATContentFilter {
 
           case 'video':
             if (content.video) {
-              const videoAnalysis = await this.moderationService.moderateVideo(content.video);
+              const videoAnalysis = await this.moderationService.moderateVideo(
+                content.video
+              );
               matched = this.matchesMediaCriteria(videoAnalysis, rule.criteria);
               confidence = videoAnalysis.confidence;
               categories = videoAnalysis.categories;
@@ -174,14 +184,14 @@ export class ATContentFilter {
   ): boolean {
     if (criteria.keywords) {
       const lowercaseText = text.toLowerCase();
-      const hasKeyword = criteria.keywords.some((keyword) =>
+      const hasKeyword = criteria.keywords.some(keyword =>
         lowercaseText.includes(keyword.toLowerCase())
       );
       if (hasKeyword) return true;
     }
 
     if (criteria.categories && criteria.threshold) {
-      const matchesCategory = criteria.categories.some((category) =>
+      const matchesCategory = criteria.categories.some(category =>
         analysis.categories.includes(category)
       );
       return matchesCategory && analysis.confidence >= criteria.threshold;
@@ -190,10 +200,13 @@ export class ATContentFilter {
     return false;
   }
 
-  private matchesMediaCriteria(analysis: any, criteria: FilterRule['criteria']): boolean {
+  private matchesMediaCriteria(
+    analysis: any,
+    criteria: FilterRule['criteria']
+  ): boolean {
     if (!criteria.categories || !criteria.threshold) return false;
 
-    const matchesCategory = criteria.categories.some((category) =>
+    const matchesCategory = criteria.categories.some(category =>
       analysis.categories.includes(category)
     );
     return matchesCategory && analysis.confidence >= criteria.threshold;
@@ -219,7 +232,11 @@ export class ATContentFilter {
     }
   }
 
-  async getFilterEvents(startDate?: Date, endDate?: Date, limit = 100): Promise<any[]> {
+  async getFilterEvents(
+    startDate?: Date,
+    endDate?: Date,
+    limit = 100
+  ): Promise<any[]> {
     try {
       const response = await this.agent.com.atproto.repo.listRecords({
         repo: this.agent.session?.did,
@@ -227,14 +244,14 @@ export class ATContentFilter {
         limit,
       });
 
-      let events = response.records.map((record) => record.value);
+      let events = response.records.map(record => record.value);
 
       if (startDate) {
-        events = events.filter((event) => new Date(event.timestamp) >= startDate);
+        events = events.filter(event => new Date(event.timestamp) >= startDate);
       }
 
       if (endDate) {
-        events = events.filter((event) => new Date(event.timestamp) <= endDate);
+        events = events.filter(event => new Date(event.timestamp) <= endDate);
       }
 
       return events;

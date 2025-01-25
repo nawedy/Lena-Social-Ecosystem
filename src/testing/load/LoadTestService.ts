@@ -56,7 +56,10 @@ export class LoadTestService {
     };
   }
 
-  public createLoadTest(scenarios: LoadTestScenario[], config: LoadTestConfig = {}): string {
+  public createLoadTest(
+    scenarios: LoadTestScenario[],
+    config: LoadTestConfig = {}
+  ): string {
     return `
       import { check, sleep } from 'k6';
       import http from 'k6/http';
@@ -83,7 +86,7 @@ export class LoadTestService {
         scenarios: {
           ${scenarios
             .map(
-              (scenario) => `
+              scenario => `
             ${scenario.name}: {
               executor: '${scenario.executor || 'ramping-vus'}',
               exec: '${scenario.exec || 'default'}',
@@ -123,7 +126,7 @@ export class LoadTestService {
       // Custom scenarios
       ${scenarios
         .map(
-          (scenario) => `
+          scenario => `
         export function ${scenario.name}() {
           // Implement scenario-specific logic here
           const response = http.get('http://test.k6.io/${scenario.name}');
@@ -149,7 +152,10 @@ export class LoadTestService {
     `;
   }
 
-  public async runLoadTest(_testScript: string, options: LoadTestConfig = {}): Promise<void> {
+  public async runLoadTest(
+    _testScript: string,
+    options: LoadTestConfig = {}
+  ): Promise<void> {
     const trace = performanceMonitor.startTrace('load_test');
     try {
       // Save test script to file
@@ -202,7 +208,10 @@ export class LoadTestService {
     }
   }
 
-  public createScenario(name: string, config: Partial<LoadTestScenario> = {}): LoadTestScenario {
+  public createScenario(
+    name: string,
+    config: Partial<LoadTestScenario> = {}
+  ): LoadTestScenario {
     return {
       name,
       weight: config.weight || 1,

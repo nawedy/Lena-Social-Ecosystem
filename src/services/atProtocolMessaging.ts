@@ -55,20 +55,22 @@ export class ATProtocolMessagingService {
     try {
       let encryptedText = params.text;
       if (params.encrypt) {
-        const { encryptedData, iv } = await securityService.encryptData(params.text);
+        const { encryptedData, iv } = await securityService.encryptData(
+          params.text
+        );
         encryptedText = JSON.stringify({ data: encryptedData, iv });
       }
 
       const attachments = params.attachments
         ? await Promise.all(
-            params.attachments.map(async (attachment) => {
+            params.attachments.map(async attachment => {
               const upload = await this.agent.uploadBlob(attachment.data, {
                 encoding:
                   attachment.type === 'image'
                     ? 'image/jpeg'
                     : attachment.type === 'video'
-                    ? 'video/mp4'
-                    : 'application/octet-stream',
+                      ? 'video/mp4'
+                      : 'application/octet-stream',
               });
               return {
                 type: attachment.type,
@@ -126,7 +128,7 @@ export class ATProtocolMessagingService {
       });
 
       const messages = await Promise.all(
-        response.messages.map(async (msg) => {
+        response.messages.map(async msg => {
           let text = msg.record.text;
           if (msg.record.isEncrypted) {
             const { data, iv } = JSON.parse(text);

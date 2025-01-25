@@ -38,7 +38,9 @@ export function TemplateApprovalWorkflow({
   const [comment, setComment] = useState('');
   const [changes, setChanges] = useState<string[]>([]);
   const [newChange, setNewChange] = useState('');
-  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(
+    new Set()
+  );
 
   const _approvalService = TemplateApprovalService.getInstance();
 
@@ -60,7 +62,12 @@ export function TemplateApprovalWorkflow({
 
   const _handleStatusUpdate = async (status: ApprovalStatus) => {
     try {
-      await approvalService.updateApprovalStatus(requestId, status, userId, comment);
+      await approvalService.updateApprovalStatus(
+        requestId,
+        status,
+        userId,
+        comment
+      );
       setComment('');
       await loadRequest();
       onStatusChange?.(status);
@@ -154,7 +161,7 @@ export function TemplateApprovalWorkflow({
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' color='#007AFF' />
+        <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
   }
@@ -172,7 +179,9 @@ export function TemplateApprovalWorkflow({
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Text style={styles.title}>{t('approval.requestTitle', { id: request.id })}</Text>
+            <Text style={styles.title}>
+              {t('approval.requestTitle', { id: request.id })}
+            </Text>
             {renderStatusBadge(request.status)}
           </View>
           <Text style={styles.subtitle}>
@@ -185,10 +194,12 @@ export function TemplateApprovalWorkflow({
 
         {request.changes.length > 0 && (
           <View style={styles.changesContainer}>
-            <Text style={styles.sectionTitle}>{t('approval.requestedChanges')}</Text>
+            <Text style={styles.sectionTitle}>
+              {t('approval.requestedChanges')}
+            </Text>
             {request.changes.map((change, index) => (
               <View key={index} style={styles.changeItem}>
-                <Ionicons name='alert-circle' size={20} color='#ffc107' />
+                <Ionicons name="alert-circle" size={20} color="#ffc107" />
                 <Text style={styles.changeText}>{change}</Text>
               </View>
             ))}
@@ -197,7 +208,7 @@ export function TemplateApprovalWorkflow({
 
         <View style={styles.commentsContainer}>
           <Text style={styles.sectionTitle}>{t('approval.comments')}</Text>
-          {request.comments?.map((comment) => (
+          {request.comments?.map(comment => (
             <View key={comment.id} style={styles.commentCard}>
               <View style={styles.commentHeader}>
                 {renderCommentType(comment.type)}
@@ -206,11 +217,14 @@ export function TemplateApprovalWorkflow({
                   {new Date(comment.timestamp).toLocaleString()}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => toggleCommentExpansion(comment.id)}>
+              <TouchableOpacity
+                onPress={() => toggleCommentExpansion(comment.id)}
+              >
                 <Text
                   style={[
                     styles.commentText,
-                    !expandedComments.has(comment.id) && styles.commentCollapsed,
+                    !expandedComments.has(comment.id) &&
+                      styles.commentCollapsed,
                   ]}
                 >
                   {comment.message}
@@ -220,7 +234,8 @@ export function TemplateApprovalWorkflow({
                 <View style={styles.commentLocation}>
                   <Text style={styles.locationText}>
                     {comment.location.field}
-                    {comment.location.context && `: ${comment.location.context}`}
+                    {comment.location.context &&
+                      `: ${comment.location.context}`}
                   </Text>
                 </View>
               )}
@@ -230,7 +245,9 @@ export function TemplateApprovalWorkflow({
 
         {isReviewer && request.status === 'pending' && (
           <View style={styles.reviewActions}>
-            <Text style={styles.sectionTitle}>{t('approval.requestChanges')}</Text>
+            <Text style={styles.sectionTitle}>
+              {t('approval.requestChanges')}
+            </Text>
             <View style={styles.changeInput}>
               <TextInput
                 style={styles.input}
@@ -239,15 +256,18 @@ export function TemplateApprovalWorkflow({
                 placeholder={t('approval.changePlaceholder')}
                 multiline
               />
-              <TouchableOpacity style={styles.addButton} onPress={handleAddChange}>
-                <Ionicons name='add' size={24} color='#fff' />
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={handleAddChange}
+              >
+                <Ionicons name="add" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
             {changes.map((change, index) => (
               <View key={index} style={styles.changeItem}>
                 <Text style={styles.changeText}>{change}</Text>
                 <TouchableOpacity onPress={() => handleRemoveChange(index)}>
-                  <Ionicons name='close' size={20} color='#dc3545' />
+                  <Ionicons name="close" size={20} color="#dc3545" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -262,8 +282,11 @@ export function TemplateApprovalWorkflow({
             placeholder={t('approval.commentPlaceholder')}
             multiline
           />
-          <TouchableOpacity style={styles.sendButton} onPress={handleAddComment}>
-            <Ionicons name='send' size={24} color='#fff' />
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={handleAddComment}
+          >
+            <Ionicons name="send" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -280,7 +303,9 @@ export function TemplateApprovalWorkflow({
             style={[styles.button, styles.changesButton]}
             onPress={handleRequestChanges}
           >
-            <Text style={styles.buttonText}>{t('approval.requestChanges')}</Text>
+            <Text style={styles.buttonText}>
+              {t('approval.requestChanges')}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.approveButton]}

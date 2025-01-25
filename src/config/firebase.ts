@@ -27,6 +27,7 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 
 // Initialize Analytics
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+export const analytics =
+  typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 export default app;

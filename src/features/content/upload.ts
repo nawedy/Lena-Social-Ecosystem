@@ -23,7 +23,10 @@ export class ContentManager {
     this.agent = new BskyAgent({ service: serviceUrl });
   }
 
-  async uploadContent(content: ContentData, metadata: ContentMetadata): Promise<string> {
+  async uploadContent(
+    content: ContentData,
+    metadata: ContentMetadata
+  ): Promise<string> {
     const richText = new RichText({ text: content.text });
     await richText.detectFacets(this.agent);
 

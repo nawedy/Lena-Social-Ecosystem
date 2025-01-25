@@ -25,7 +25,10 @@ export class ATProtocolErrorHandling {
     this.agent = agent;
   }
 
-  public async handleError(error: unknown, context?: Record<string, any>): Promise<ErrorRecord> {
+  public async handleError(
+    error: unknown,
+    context?: Record<string, any>
+  ): Promise<ErrorRecord> {
     const errorInfo = this.parseError(error);
 
     // Create error record

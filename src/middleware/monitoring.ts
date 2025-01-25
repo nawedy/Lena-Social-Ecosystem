@@ -66,9 +66,12 @@ export class MonitoringService {
       description: 'Total number of HTTP requests',
     });
 
-    this.responseTimeHistogram = meter.createHistogram('http_response_time_seconds', {
-      description: 'HTTP response time in seconds',
-    });
+    this.responseTimeHistogram = meter.createHistogram(
+      'http_response_time_seconds',
+      {
+        description: 'HTTP response time in seconds',
+      }
+    );
   }
 
   public static getInstance(config?: MonitoringConfig): MonitoringService {
@@ -90,7 +93,10 @@ export class MonitoringService {
       req.headers['x-trace-id'] = traceId;
 
       // Start APM transaction
-      const transaction = this.apm.startTransaction(`${req.method} ${req.path}`, 'request');
+      const transaction = this.apm.startTransaction(
+        `${req.method} ${req.path}`,
+        'request'
+      );
 
       // Increment request counter
       this.requestCounter.add(1, {

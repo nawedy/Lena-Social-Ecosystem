@@ -83,7 +83,7 @@ export class MediaService {
           ctx.drawImage(img, 0, 0, width, height);
 
           canvas.toBlob(
-            (blob) => {
+            blob => {
               if (!blob) {
                 reject(new Error('Could not generate preview blob'));
                 return;
@@ -165,7 +165,7 @@ export class MediaService {
             ctx.drawImage(video, 0, 0, width, height);
 
             canvas.toBlob(
-              (blob) => {
+              blob => {
                 if (!blob) {
                   reject(new Error('Could not generate preview blob'));
                   return;

@@ -151,7 +151,11 @@ export class AdvancedPermissionsService {
     return group;
   }
 
-  async addGroupMember(groupId: string, userId: string, roles: string[]): Promise<void> {
+  async addGroupMember(
+    groupId: string,
+    userId: string,
+    roles: string[]
+  ): Promise<void> {
     const key = this.datastore.key(['Group', groupId]);
     const [group] = await this.datastore.get(key);
 
@@ -213,8 +217,13 @@ export class AdvancedPermissionsService {
       const permissions = await this.getPermissionsForRoles(userRoles);
 
       // Check if any permission grants access
-      const hasPermission = permissions.some((permission) =>
-        this.matchesPermission(permission, params.resource, params.action, params.context)
+      const hasPermission = permissions.some(permission =>
+        this.matchesPermission(
+          permission,
+          params.resource,
+          params.action,
+          params.context
+        )
       );
 
       // Record performance metrics
@@ -239,7 +248,10 @@ export class AdvancedPermissionsService {
   }
 
   // Role Inheritance
-  async addRoleInheritance(childRoleId: string, parentRoleId: string): Promise<void> {
+  async addRoleInheritance(
+    childRoleId: string,
+    parentRoleId: string
+  ): Promise<void> {
     const [childRole, parentRole] = await Promise.all([
       this.getRole(childRoleId),
       this.getRole(parentRoleId),
@@ -250,7 +262,9 @@ export class AdvancedPermissionsService {
     }
 
     // Add parent's permissions to child
-    const updatedPermissions = [...new Set([...childRole.permissions, ...parentRole.permissions])];
+    const updatedPermissions = [
+      ...new Set([...childRole.permissions, ...parentRole.permissions]),
+    ];
 
     await this.updateRole(childRoleId, {
       permissions: updatedPermissions,
@@ -258,7 +272,10 @@ export class AdvancedPermissionsService {
   }
 
   // Group Hierarchy
-  async addGroupHierarchy(childGroupId: string, parentGroupId: string): Promise<void> {
+  async addGroupHierarchy(
+    childGroupId: string,
+    parentGroupId: string
+  ): Promise<void> {
     const [childGroup, parentGroup] = await Promise.all([
       this.getGroup(childGroupId),
       this.getGroup(parentGroupId),
@@ -269,7 +286,9 @@ export class AdvancedPermissionsService {
     }
 
     // Add parent's roles to child
-    const updatedRoles = [...new Set([...childGroup.roles, ...parentGroup.roles])];
+    const updatedRoles = [
+      ...new Set([...childGroup.roles, ...parentGroup.roles]),
+    ];
 
     await this.updateGroup(childGroupId, {
       roles: updatedRoles,
@@ -278,26 +297,30 @@ export class AdvancedPermissionsService {
 
   // Private Methods
   private async getUserRoles(userId: string): Promise<string[]> {
-    const query = this.datastore.createQuery('Group').filter('members.userId', '=', userId);
+    const query = this.datastore
+      .createQuery('Group')
+      .filter('members.userId', '=', userId);
 
     const [groups] = await this.datastore.runQuery(query);
 
     const roles = new Set<string>();
     groups.forEach((group: Group) => {
       // Add group-wide roles
-      group.roles.forEach((role) => roles.add(role));
+      group.roles.forEach(role => roles.add(role));
 
       // Add user-specific roles within the group
-      const member = group.members.find((m) => m.userId === userId);
+      const member = group.members.find(m => m.userId === userId);
       if (member) {
-        member.roles.forEach((role) => roles.add(role));
+        member.roles.forEach(role => roles.add(role));
       }
     });
 
     return Array.from(roles);
   }
 
-  private async getPermissionsForRoles(roleIds: string[]): Promise<Permission[]> {
+  private async getPermissionsForRoles(
+    roleIds: string[]
+  ): Promise<Permission[]> {
     const permissions = new Set<Permission>();
 
     for (const roleId of roleIds) {
@@ -329,7 +352,7 @@ export class AdvancedPermissionsService {
       return true;
     }
 
-    return permission.conditions.every((condition) => {
+    return permission.conditions.every(condition => {
       const contextValue = context[condition.field];
       if (contextValue === undefined) return false;
 
@@ -367,7 +390,9 @@ export class AdvancedPermissionsService {
     return role || null;
   }
 
-  private async getPermission(permissionId: string): Promise<Permission | null> {
+  private async getPermission(
+    permissionId: string
+  ): Promise<Permission | null> {
     // Check cache first
     if (this.permissionCache.has(permissionId)) {
       return this.permissionCache.get(permissionId)!;
@@ -435,7 +460,10 @@ export class AdvancedPermissionsService {
     }
   }
 
-  private async updateGroup(groupId: string, updates: Partial<Group>): Promise<Group> {
+  private async updateGroup(
+    groupId: string,
+    updates: Partial<Group>
+  ): Promise<Group> {
     const key = this.datastore.key(['Group', groupId]);
     const [existingGroup] = await this.datastore.get(key);
 

@@ -174,7 +174,10 @@ export class AutoRemediationService {
     }
   }
 
-  private async checkServiceRemediation(service: string, rules: RemediationRule[]): Promise<void> {
+  private async checkServiceRemediation(
+    service: string,
+    rules: RemediationRule[]
+  ): Promise<void> {
     try {
       // Get current metrics
       const metrics = await this.collectServiceMetrics(service);
@@ -201,7 +204,9 @@ export class AutoRemediationService {
     }
   }
 
-  private async collectServiceMetrics(service: string): Promise<Record<string, number>> {
+  private async collectServiceMetrics(
+    service: string
+  ): Promise<Record<string, number>> {
     const metrics: Record<string, number> = {};
 
     switch (service) {
@@ -227,7 +232,9 @@ export class AutoRemediationService {
     const lastRemediation = this.lastRemediationTime[service];
     if (!lastRemediation) return false;
 
-    const cooldownPeriod = Math.max(...this.remediationRules[service].map((rule) => rule.cooldown));
+    const cooldownPeriod = Math.max(
+      ...this.remediationRules[service].map(rule => rule.cooldown)
+    );
     return Date.now() - lastRemediation < cooldownPeriod * 1000;
   }
 
@@ -235,7 +242,7 @@ export class AutoRemediationService {
     rules: RemediationRule[],
     metrics: Record<string, number>
   ): RemediationRule[] {
-    return rules.filter((rule) => {
+    return rules.filter(rule => {
       const metricValue = metrics[rule.condition.metric];
       if (metricValue === undefined) return false;
 
@@ -332,7 +339,10 @@ export class AutoRemediationService {
     }
   }
 
-  public async getRemediationHistory(service: string, duration: number): Promise<RemediationHistoryEntry[]> {
+  public async getRemediationHistory(
+    service: string,
+    duration: number
+  ): Promise<RemediationHistoryEntry[]> {
     // Replace with actual implementation
     return [];
   }

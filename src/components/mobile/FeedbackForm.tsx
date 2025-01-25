@@ -102,7 +102,10 @@ export function FeedbackForm() {
       }
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      Alert.window.alert('Error', 'Failed to submit feedback. Please try again.');
+      Alert.window.alert(
+        'Error',
+        'Failed to submit feedback. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -130,12 +133,12 @@ export function FeedbackForm() {
             <View style={styles.pickerContainer}>
               <Picker
                 selectedValue={type}
-                onValueChange={(value) => setType(value)}
+                onValueChange={value => setType(value)}
                 style={styles.picker}
               >
-                <Picker.Item label='General Feedback' value='general' />
-                <Picker.Item label='Bug Report' value='bug' />
-                <Picker.Item label='Feature Request' value='feature' />
+                <Picker.Item label="General Feedback" value="general" />
+                <Picker.Item label="Bug Report" value="bug" />
+                <Picker.Item label="Feature Request" value="feature" />
               </Picker>
             </View>
           </View>
@@ -146,7 +149,7 @@ export function FeedbackForm() {
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder='Brief summary of your feedback'
+              placeholder="Brief summary of your feedback"
               maxLength={100}
             />
           </View>
@@ -157,7 +160,7 @@ export function FeedbackForm() {
               style={[styles.input, styles.textArea]}
               value={description}
               onChangeText={setDescription}
-              placeholder='Provide detailed feedback...'
+              placeholder="Provide detailed feedback..."
               multiline
               numberOfLines={6}
             />
@@ -166,14 +169,19 @@ export function FeedbackForm() {
           {type === 'general' && (
             <View style={styles.field}>
               <Text style={styles.label}>Rating</Text>
-              <AirbnbRating count={5} defaultRating={rating} onFinishRating={setRating} size={30} />
+              <AirbnbRating
+                count={5}
+                defaultRating={rating}
+                onFinishRating={setRating}
+                size={30}
+              />
             </View>
           )}
 
           <View style={styles.field}>
             <Text style={styles.label}>Attachments</Text>
             <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
-              <Icon name='camera-plus' size={24} color='#007AFF' />
+              <Icon name="camera-plus" size={24} color="#007AFF" />
               <Text style={styles.attachButtonText}>Add Image/Video</Text>
             </TouchableOpacity>
 
@@ -183,16 +191,17 @@ export function FeedbackForm() {
                   <Icon
                     name={attachment.type === 'image' ? 'image' : 'video'}
                     size={24}
-                    color='#666'
+                    color="#666"
                   />
                   <Text style={styles.attachmentName}>
-                    {attachment.type === 'image' ? 'Image' : 'Video'} {index + 1}
+                    {attachment.type === 'image' ? 'Image' : 'Video'}{' '}
+                    {index + 1}
                   </Text>
                   <TouchableOpacity
                     onPress={() => removeAttachment(index)}
                     style={styles.removeButton}
                   >
-                    <Icon name='close' size={20} color='#FF3B30' />
+                    <Icon name="close" size={20} color="#FF3B30" />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -205,7 +214,7 @@ export function FeedbackForm() {
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <ActivityIndicator color='#fff' />
+              <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.submitButtonText}>Submit Feedback</Text>
             )}

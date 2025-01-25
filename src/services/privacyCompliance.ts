@@ -25,7 +25,13 @@ export interface PrivacyPreferences {
 export interface DataRequest {
   id: string;
   userId: string;
-  type: 'export' | 'deletion' | 'correction' | 'restriction' | 'portability' | 'sale-opt-out';
+  type:
+    | 'export'
+    | 'deletion'
+    | 'correction'
+    | 'restriction'
+    | 'portability'
+    | 'sale-opt-out';
   status: 'pending' | 'processing' | 'completed' | 'failed';
   requestDate: string;
   completionDate?: string;
@@ -78,7 +84,7 @@ export class PrivacyComplianceService {
   private async initializeDataPartners(): Promise<void> {
     try {
       const response = await this.agent.api.app.bsky.privacy.getDataPartners();
-      response.partners.forEach((partner) => {
+      response.partners.forEach(partner => {
         this.dataPartners.set(partner.id, partner);
       });
     } catch (error) {
@@ -103,7 +109,11 @@ export class PrivacyComplianceService {
     metadata?: DataRequest['metadata']
   ): Promise<DataRequest> {
     try {
-      const request = await this.createPrivacyRequest(userId, 'deletion', metadata);
+      const request = await this.createPrivacyRequest(
+        userId,
+        'deletion',
+        metadata
+      );
       await this.processDataDeletion(userId, request.id);
       return request;
     } catch (error) {
@@ -117,7 +127,11 @@ export class PrivacyComplianceService {
     metadata?: DataRequest['metadata']
   ): Promise<DataRequest> {
     try {
-      const request = await this.createPrivacyRequest(userId, 'export', metadata);
+      const request = await this.createPrivacyRequest(
+        userId,
+        'export',
+        metadata
+      );
       await this.processDataExport(userId, request.id);
       return request;
     } catch (error) {
@@ -156,7 +170,10 @@ export class PrivacyComplianceService {
     };
   }
 
-  private async processOptOut(userId: string, requestId: string): Promise<void> {
+  private async processOptOut(
+    userId: string,
+    requestId: string
+  ): Promise<void> {
     try {
       await this.updateRequestStatus(requestId, 'processing');
 
@@ -181,7 +198,10 @@ export class PrivacyComplianceService {
     }
   }
 
-  private async processDataDeletion(userId: string, requestId: string): Promise<void> {
+  private async processDataDeletion(
+    userId: string,
+    requestId: string
+  ): Promise<void> {
     try {
       await this.updateRequestStatus(requestId, 'processing');
 
@@ -209,7 +229,10 @@ export class PrivacyComplianceService {
     }
   }
 
-  private async processDataExport(userId: string, requestId: string): Promise<void> {
+  private async processDataExport(
+    userId: string,
+    requestId: string
+  ): Promise<void> {
     try {
       await this.updateRequestStatus(requestId, 'processing');
 
@@ -220,7 +243,9 @@ export class PrivacyComplianceService {
       const userData = await this.gatherCompleteUserData(userId);
 
       // Encrypt data before storage
-      const { encryptedData, iv } = await securityService.encryptData(JSON.stringify(userData));
+      const { encryptedData, iv } = await securityService.encryptData(
+        JSON.stringify(userData)
+      );
 
       // Store encrypted data with retention policy
       await this.storeExportedData(requestId, { data: encryptedData, iv });
@@ -296,11 +321,17 @@ export class PrivacyComplianceService {
     // Implement request verification logic
   }
 
-  private async documentDeletion(_userId: string, _requestId: string): Promise<void> {
+  private async documentDeletion(
+    _userId: string,
+    _requestId: string
+  ): Promise<void> {
     // Implement deletion documentation logic
   }
 
-  private async generatePortabilityReport(_userId: string, _requestId: string): Promise<void> {
+  private async generatePortabilityReport(
+    _userId: string,
+    _requestId: string
+  ): Promise<void> {
     // Implement portability report generation
   }
 
@@ -330,7 +361,9 @@ export class PrivacyComplianceService {
     return 0;
   }
 
-  private categorizeRequestsByType(_requests: DataRequest[]): Record<DataRequest['type'], number> {
+  private categorizeRequestsByType(
+    _requests: DataRequest[]
+  ): Record<DataRequest['type'], number> {
     // Implement request categorization
     return {} as Record<DataRequest['type'], number>;
   }
@@ -345,12 +378,17 @@ export class PrivacyComplianceService {
     return [];
   }
 
-  private async getPrivacyPreferences(_userId: string): Promise<PrivacyPreferences> {
+  private async getPrivacyPreferences(
+    _userId: string
+  ): Promise<PrivacyPreferences> {
     // Implement preference fetching logic
     return {} as PrivacyPreferences;
   }
 
-  private async notifyDataPartners(_userId: string, _action: string): Promise<void> {
+  private async notifyDataPartners(
+    _userId: string,
+    _action: string
+  ): Promise<void> {
     // Implement data partner notification logic
   }
 

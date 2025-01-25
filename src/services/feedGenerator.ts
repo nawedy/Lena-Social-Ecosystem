@@ -50,7 +50,10 @@ export class FeedGeneratorService {
   }
 
   // Get posts for a custom feed
-  public async getFeedPosts(feedUri: string, params?: { limit?: number; cursor?: string }) {
+  public async getFeedPosts(
+    feedUri: string,
+    params?: { limit?: number; cursor?: string }
+  ) {
     return this.agent.api.app.bsky.feed.getFeed({
       feed: feedUri,
       ...params,
@@ -80,7 +83,10 @@ export class FeedGeneratorService {
   }
 
   // Remix a post
-  public async remixPost(originalPost: AppBskyFeedDefs.FeedViewPost, remixText: string) {
+  public async remixPost(
+    originalPost: AppBskyFeedDefs.FeedViewPost,
+    remixText: string
+  ) {
     const rt = new RichText({ text: remixText });
     await rt.detectFacets(this.agent); // Detect mentions, links, etc.
 
@@ -105,7 +111,11 @@ export class FeedGeneratorService {
   }
 
   // Create a list (e.g., curated accounts, topics)
-  public async createList(name: string, description: string, purpose: 'curate' | 'moderation') {
+  public async createList(
+    name: string,
+    description: string,
+    purpose: 'curate' | 'moderation'
+  ) {
     const record = {
       name,
       description,

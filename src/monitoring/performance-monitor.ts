@@ -32,12 +32,13 @@ export class PerformanceMonitor {
   public async monitorPerformance(): Promise<void> {
     try {
       // Collect metrics from all services
-      const [apiMetrics, dbMetrics, cacheMetrics, networkMetrics] = await Promise.all([
-        this.collectApiMetrics(),
-        this.collectDatabaseMetrics(),
-        this.collectCacheMetrics(),
-        this.collectNetworkMetrics(),
-      ]);
+      const [apiMetrics, dbMetrics, cacheMetrics, networkMetrics] =
+        await Promise.all([
+          this.collectApiMetrics(),
+          this.collectDatabaseMetrics(),
+          this.collectCacheMetrics(),
+          this.collectNetworkMetrics(),
+        ]);
 
       // Analyze service health
       const serviceHealth = this.analyzeServiceHealth([
@@ -274,12 +275,16 @@ export class PerformanceMonitor {
           issues.push(
             `Critical: ${metric.name} is ${metric.value} (threshold: ${metric.thresholds.critical})`
           );
-          recommendations.push(this.getRecommendation(service, metric.name, 'critical'));
+          recommendations.push(
+            this.getRecommendation(service, metric.name, 'critical')
+          );
         } else if (metric.value >= metric.thresholds.warning) {
           issues.push(
             `Warning: ${metric.name} is ${metric.value} (threshold: ${metric.thresholds.warning})`
           );
-          recommendations.push(this.getRecommendation(service, metric.name, 'warning'));
+          recommendations.push(
+            this.getRecommendation(service, metric.name, 'warning')
+          );
         }
       }
 
@@ -295,18 +300,25 @@ export class PerformanceMonitor {
     return health;
   }
 
-  private groupMetricsByService(metrics: PerformanceMetric[]): Record<string, PerformanceMetric[]> {
-    return metrics.reduce((acc, metric) => {
-      const service = metric.tags.service;
-      acc[service] = acc[service] || [];
-      acc[service].push(metric);
-      return acc;
-    }, {} as Record<string, PerformanceMetric[]>);
+  private groupMetricsByService(
+    metrics: PerformanceMetric[]
+  ): Record<string, PerformanceMetric[]> {
+    return metrics.reduce(
+      (acc, metric) => {
+        const service = metric.tags.service;
+        acc[service] = acc[service] || [];
+        acc[service].push(metric);
+        return acc;
+      },
+      {} as Record<string, PerformanceMetric[]>
+    );
   }
 
-  private determineStatus(issues: string[]): 'healthy' | 'degraded' | 'unhealthy' {
-    const criticalCount = issues.filter((i) => i.startsWith('Critical')).length;
-    const warningCount = issues.filter((i) => i.startsWith('Warning')).length;
+  private determineStatus(
+    issues: string[]
+  ): 'healthy' | 'degraded' | 'unhealthy' {
+    const criticalCount = issues.filter(i => i.startsWith('Critical')).length;
+    const warningCount = issues.filter(i => i.startsWith('Warning')).length;
 
     if (criticalCount > 0) return 'unhealthy';
     if (warningCount > 0) return 'degraded';
@@ -333,7 +345,10 @@ export class PerformanceMonitor {
     }
   }
 
-  private getApiRecommendation(metric: string, _severity: 'warning' | 'critical'): string {
+  private getApiRecommendation(
+    metric: string,
+    _severity: 'warning' | 'critical'
+  ): string {
     switch (metric) {
       case 'response_time':
         return 'Optimize API endpoints and consider caching';
@@ -346,7 +361,10 @@ export class PerformanceMonitor {
     }
   }
 
-  private getDatabaseRecommendation(metric: string, _severity: 'warning' | 'critical'): string {
+  private getDatabaseRecommendation(
+    metric: string,
+    _severity: 'warning' | 'critical'
+  ): string {
     switch (metric) {
       case 'query_time':
         return 'Optimize slow queries and add appropriate indexes';
@@ -359,7 +377,10 @@ export class PerformanceMonitor {
     }
   }
 
-  private getCacheRecommendation(metric: string, _severity: 'warning' | 'critical'): string {
+  private getCacheRecommendation(
+    metric: string,
+    _severity: 'warning' | 'critical'
+  ): string {
     switch (metric) {
       case 'hit_rate':
         return 'Review cache strategy and adjust TTL values';
@@ -372,7 +393,10 @@ export class PerformanceMonitor {
     }
   }
 
-  private getNetworkRecommendation(metric: string, _severity: 'warning' | 'critical'): string {
+  private getNetworkRecommendation(
+    metric: string,
+    _severity: 'warning' | 'critical'
+  ): string {
     switch (metric) {
       case 'network_latency':
         return 'Optimize network routes and consider using CDN';
@@ -385,7 +409,9 @@ export class PerformanceMonitor {
     }
   }
 
-  private async handleServiceIssues(serviceHealth: ServiceHealth[]): Promise<void> {
+  private async handleServiceIssues(
+    serviceHealth: ServiceHealth[]
+  ): Promise<void> {
     for (const health of serviceHealth) {
       if (health.status !== 'healthy') {
         // Log issues

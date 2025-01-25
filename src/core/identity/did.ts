@@ -18,7 +18,10 @@ export class IdentityManager {
     this.agent = new BskyAgent({ service: serviceUrl });
   }
 
-  async createSession(identifier: string, password: string): Promise<UserIdentity> {
+  async createSession(
+    identifier: string,
+    password: string
+  ): Promise<UserIdentity> {
     const response = await this.agent.login({ identifier, password });
 
     return {
@@ -45,8 +48,10 @@ export class IdentityManager {
     };
   }
 
-  async updateProfile(profile: Partial<UserIdentity['profileData']>): Promise<void> {
-    await this.agent.upsertProfile((existing) => ({
+  async updateProfile(
+    profile: Partial<UserIdentity['profileData']>
+  ): Promise<void> {
+    await this.agent.upsertProfile(existing => ({
       ...existing,
       ...profile,
     }));

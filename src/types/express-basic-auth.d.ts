@@ -5,7 +5,11 @@ declare module 'express-basic-auth' {
     users?: { [key: string]: string } | null;
     challenge?: boolean;
     realm?: string;
-    authorizer?: (username: string, password: string, req?: any) => boolean | Promise<boolean>;
+    authorizer?: (
+      username: string,
+      password: string,
+      req?: any
+    ) => boolean | Promise<boolean>;
     authorizeAsync?: boolean;
     unauthorizedResponse?: ((req: any) => any) | any;
   }

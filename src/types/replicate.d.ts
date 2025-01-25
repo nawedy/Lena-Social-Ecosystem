@@ -39,7 +39,10 @@ declare module 'replicate' {
   export default class Replicate {
     constructor(options: ReplicateOptions);
 
-    run(modelPath: string, options: PredictionOptions): Promise<Prediction['output']>;
+    run(
+      modelPath: string,
+      options: PredictionOptions
+    ): Promise<Prediction['output']>;
     predictions: {
       create(options: PredictionOptions): Promise<Prediction>;
       get(id: string): Promise<Prediction>;

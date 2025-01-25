@@ -1,4 +1,26 @@
-declare module '@firebase/firestore' {
+import {
+  User,
+  Auth,
+  FirebaseOptions,
+  FirebaseApp,
+  UserInfo,
+  UserMetadata,
+} from 'firebase/auth';
+import {
+  DocumentData,
+  DocumentReference,
+  CollectionReference,
+  Firestore,
+  WhereFilterOp,
+  OrderByDirection,
+  Query,
+  QuerySnapshot,
+  QueryDocumentSnapshot,
+  QueryConstraint,
+} from 'firebase/firestore';
+import type { UserCredential } from 'firebase/auth';
+
+declare module 'firebase/firestore' {
   export interface CollectionReference<T = DocumentData> extends Query<T> {
     id: string;
     path: string;
@@ -7,11 +29,13 @@ declare module '@firebase/firestore' {
   }
 
   export interface FirebaseFirestore {
-    collection<T = DocumentData>(collectionPath: string): CollectionReference<T>;
+    collection<T = DocumentData>(
+      collectionPath: string
+    ): CollectionReference<T>;
   }
 }
 
-declare module 'firebase' {
+declare module 'firebase/app' {
   export interface FirebaseApp {
     name: string;
     options: {
@@ -25,14 +49,7 @@ declare module 'firebase' {
     };
   }
 
-  export interface FirebaseAuth {
-    currentUser: FirebaseUser | null;
-    signInWithEmailAndPassword(email: string, password: string): Promise<UserCredential>;
-    signOut(): Promise<void>;
-    onAuthStateChanged(callback: (user: FirebaseUser | null) => void): () => void;
-  }
-
-  export interface FirebaseUser {
+  export interface User {
     uid: string;
     email: string | null;
     displayName: string | null;
@@ -53,20 +70,6 @@ declare module 'firebase' {
       signInMethod: string;
     } | null;
   }
-
-  export type WhereFilterOp =
-    | '<'
-    | '<='
-    | '=='
-    | '!='
-    | '>='
-    | '>'
-    | 'array-contains'
-    | 'array-contains-any'
-    | 'in'
-    | 'not-in';
-
-  export type OrderByDirection = 'desc' | 'asc';
 
   export type FieldValue = unknown;
 
@@ -137,27 +140,62 @@ declare module 'firebase' {
     commit(): Promise<void>;
   }
 
-  export function collection<T = DocumentData>(firestore: FirebaseFirestore, path: string): CollectionReference<T>;
-  export function doc<T = DocumentData>(firestore: FirebaseFirestore, path: string): DocumentReference<T>;
-  export function getDoc<T>(reference: DocumentReference<T>): Promise<DocumentSnapshot<T>>;
+  export function collection<T = DocumentData>(
+    firestore: FirebaseFirestore,
+    path: string
+  ): CollectionReference<T>;
+  export function doc<T = DocumentData>(
+    firestore: FirebaseFirestore,
+    path: string
+  ): DocumentReference<T>;
+  export function getDoc<T>(
+    reference: DocumentReference<T>
+  ): Promise<DocumentSnapshot<T>>;
   export function getDocs<T>(query: Query<T>): Promise<QuerySnapshot<T>>;
-  export function setDoc<T>(reference: DocumentReference<T>, data: T): Promise<void>;
-  export function updateDoc<T>(reference: DocumentReference<T>, data: Partial<T>): Promise<void>;
+  export function setDoc<T>(
+    reference: DocumentReference<T>,
+    data: T
+  ): Promise<void>;
+  export function updateDoc<T>(
+    reference: DocumentReference<T>,
+    data: Partial<T>
+  ): Promise<void>;
   export function deleteDoc(reference: DocumentReference): Promise<void>;
-  export function query<T>(query: Query<T>, ...queryConstraints: QueryConstraint[]): Query<T>;
-  export function where(fieldPath: string, opStr: WhereFilterOp, value: FieldValue): QueryConstraint;
-  export function orderBy(fieldPath: string, directionStr?: OrderByDirection): QueryConstraint;
+  export function query<T>(
+    query: Query<T>,
+    ...queryConstraints: QueryConstraint[]
+  ): Query<T>;
+  export function where(
+    fieldPath: string,
+    opStr: WhereFilterOp,
+    value: FieldValue
+  ): QueryConstraint;
+  export function orderBy(
+    fieldPath: string,
+    directionStr?: OrderByDirection
+  ): QueryConstraint;
   export function limit(limit: number): QueryConstraint;
-
-  const firebase: {
-    app: (name?: string) => FirebaseApp;
-    auth: () => FirebaseAuth;
-    firestore: () => FirebaseFirestore;
-  };
-  export default firebase;
 }
 
-declare module '@firebase/auth' {
+export {
+  User,
+  Auth,
+  FirebaseOptions,
+  FirebaseApp,
+  UserInfo,
+  UserMetadata,
+  DocumentData,
+  DocumentReference,
+  CollectionReference,
+  Firestore,
+  WhereFilterOp,
+  OrderByDirection,
+  Query,
+  QuerySnapshot,
+  QueryDocumentSnapshot,
+};
+
+declare module 'firebase/auth' {
   export interface User {
     uid: string;
     email: string | null;
@@ -189,7 +227,10 @@ declare module 'firebase/app' {
     options: FirebaseOptions;
   }
 
-  export function initializeApp(options: FirebaseOptions, name?: string): FirebaseApp;
+  export function initializeApp(
+    options: FirebaseOptions,
+    name?: string
+  ): FirebaseApp;
   export function getApp(name?: string): FirebaseApp;
   export function getApps(): FirebaseApp[];
   export function deleteApp(app: FirebaseApp): Promise<void>;
@@ -249,7 +290,10 @@ declare module 'firebase/auth' {
     password: string
   ): Promise<UserCredential>;
   export function signOut(auth: Auth): Promise<void>;
-  export function sendPasswordResetEmail(auth: Auth, email: string): Promise<void>;
+  export function sendPasswordResetEmail(
+    auth: Auth,
+    email: string
+  ): Promise<void>;
   export function updateProfile(
     user: User,
     profile: { displayName?: string | null; photoURL?: string | null }
@@ -308,20 +352,41 @@ declare module 'firebase/firestore' {
   export type OrderByDirection = 'desc' | 'asc';
 
   export function getFirestore(app?: FirebaseApp): Firestore;
-  export function collection(firestore: Firestore, path: string): CollectionReference;
+  export function collection(
+    firestore: Firestore,
+    path: string
+  ): CollectionReference;
   export function doc(
     firestore: Firestore,
     path: string,
     ...pathSegments: string[]
   ): DocumentReference;
-  export function getDoc<T>(reference: DocumentReference<T>): Promise<DocumentSnapshot<T>>;
+  export function getDoc<T>(
+    reference: DocumentReference<T>
+  ): Promise<DocumentSnapshot<T>>;
   export function getDocs<T>(query: Query<T>): Promise<QuerySnapshot<T>>;
-  export function setDoc<T>(reference: DocumentReference<T>, data: T): Promise<void>;
-  export function updateDoc<T>(reference: DocumentReference<T>, data: Partial<T>): Promise<void>;
+  export function setDoc<T>(
+    reference: DocumentReference<T>,
+    data: T
+  ): Promise<void>;
+  export function updateDoc<T>(
+    reference: DocumentReference<T>,
+    data: Partial<T>
+  ): Promise<void>;
   export function deleteDoc(reference: DocumentReference): Promise<void>;
-  export function query<T>(query: Query<T>, ...queryConstraints: any[]): Query<T>;
-  export function where(fieldPath: string, opStr: WhereFilterOp, value: any): QueryConstraint;
-  export function orderBy(fieldPath: string, directionStr?: OrderByDirection): QueryConstraint;
+  export function query<T>(
+    query: Query<T>,
+    ...queryConstraints: any[]
+  ): Query<T>;
+  export function where(
+    fieldPath: string,
+    opStr: WhereFilterOp,
+    value: any
+  ): QueryConstraint;
+  export function orderBy(
+    fieldPath: string,
+    directionStr?: OrderByDirection
+  ): QueryConstraint;
   export function limit(limit: number): QueryConstraint;
 }
 
@@ -352,7 +417,10 @@ declare module 'firebase/storage' {
     snapshot: UploadTaskSnapshot;
     cancel(): boolean;
     catch(onRejected: (error: Error) => any): Promise<any>;
-    on(event: TaskEvent, nextOrObserver?: (snapshot: UploadTaskSnapshot) => any): Function;
+    on(
+      event: TaskEvent,
+      nextOrObserver?: (snapshot: UploadTaskSnapshot) => any
+    ): Function;
     pause(): boolean;
     resume(): boolean;
     then(
@@ -371,7 +439,12 @@ declare module 'firebase/storage' {
   }
 
   export type TaskEvent = 'state_changed';
-  export type TaskState = 'running' | 'paused' | 'success' | 'canceled' | 'error';
+  export type TaskState =
+    | 'running'
+    | 'paused'
+    | 'success'
+    | 'canceled'
+    | 'error';
 
   export function getStorage(app?: FirebaseApp): Storage;
   export function ref(storage: Storage, path?: string): StorageReference;

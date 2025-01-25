@@ -26,7 +26,7 @@ declare global {
   var clearInterval: typeof import('timers').clearInterval;
   var crypto: Crypto;
   var window: Window & typeof globalThis;
-  
+
   namespace NodeJS {
     interface ProcessEnv {
       NODE_ENV: 'development' | 'production' | 'test';

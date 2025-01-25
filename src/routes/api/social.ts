@@ -30,7 +30,19 @@ const shareValidation = [
 // Social routes
 router.get('/notifications', requireAuth, getNotifications);
 router.put('/notifications/:id', requireAuth, markNotificationRead);
-router.post('/share/:videoId', requireAuth, shareValidation, validateRequest, shareVideo);
-router.post('/report', requireAuth, reportValidation, validateRequest, reportContent);
+router.post(
+  '/share/:videoId',
+  requireAuth,
+  shareValidation,
+  validateRequest,
+  shareVideo
+);
+router.post(
+  '/report',
+  requireAuth,
+  reportValidation,
+  validateRequest,
+  reportContent
+);
 
 export default router;

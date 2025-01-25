@@ -125,7 +125,9 @@ export class NotificationService {
     });
   }
 
-  public async createNotificationRule(rule: Omit<NotificationRule, 'id'>): Promise<string> {
+  public async createNotificationRule(
+    rule: Omit<NotificationRule, 'id'>
+  ): Promise<string> {
     const ruleId = `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const newRule: NotificationRule = {
       id: ruleId,
@@ -209,29 +211,36 @@ export class NotificationService {
     const notificationIds: string[] = [];
 
     // Group notifications by type for batch processing
-    const groupedNotifications = notifications.reduce((acc, notification) => {
-      if (!acc[notification.type]) {
-        acc[notification.type] = [];
-      }
-      acc[notification.type].push(notification);
-      return acc;
-    }, {} as Record<Notification['type'], typeof notifications>);
+    const groupedNotifications = notifications.reduce(
+      (acc, notification) => {
+        if (!acc[notification.type]) {
+          acc[notification.type] = [];
+        }
+        acc[notification.type].push(notification);
+        return acc;
+      },
+      {} as Record<Notification['type'], typeof notifications>
+    );
 
     // Process each group in parallel
     await Promise.all(
-      Object.entries(groupedNotifications).map(async ([type, notifications]) => {
-        const ids = await this.processBulkNotifications(
-          type as Notification['type'],
-          notifications
-        );
-        notificationIds.push(...ids);
-      })
+      Object.entries(groupedNotifications).map(
+        async ([type, notifications]) => {
+          const ids = await this.processBulkNotifications(
+            type as Notification['type'],
+            notifications
+          );
+          notificationIds.push(...ids);
+        }
+      )
     );
 
     return notificationIds;
   }
 
-  public async checkNotificationStatus(notificationId: string): Promise<Notification['status']> {
+  public async checkNotificationStatus(
+    notificationId: string
+  ): Promise<Notification['status']> {
     const notification = this.notifications.get(notificationId);
     if (!notification) {
       throw new Error(`Notification ${notificationId} not found`);
@@ -239,7 +248,10 @@ export class NotificationService {
     return notification.status;
   }
 
-  public async markNotificationAsRead(notificationId: string, userId: string): Promise<void> {
+  public async markNotificationAsRead(
+    notificationId: string,
+    userId: string
+  ): Promise<void> {
     const notification = this.notifications.get(notificationId);
     if (!notification) {
       throw new Error(`Notification ${notificationId} not found`);
@@ -264,7 +276,10 @@ export class NotificationService {
   public async getUnreadNotifications(userId: string): Promise<Notification[]> {
     const unread: Notification[] = [];
     for (const notification of this.notifications.values()) {
-      if (notification.recipients.includes(userId) && notification.status !== 'read') {
+      if (
+        notification.recipients.includes(userId) &&
+        notification.status !== 'read'
+      ) {
         unread.push(notification);
       }
     }
@@ -332,23 +347,33 @@ export class NotificationService {
     // Implementation for email sending
   }
 
-  private async sendPushNotification(_notification: Notification): Promise<void> {
+  private async sendPushNotification(
+    _notification: Notification
+  ): Promise<void> {
     // Implementation for push notification
   }
 
-  private async sendSlackNotification(_notification: Notification): Promise<void> {
+  private async sendSlackNotification(
+    _notification: Notification
+  ): Promise<void> {
     // Implementation for Slack notification
   }
 
-  private async sendWebhookNotification(_notification: Notification): Promise<void> {
+  private async sendWebhookNotification(
+    _notification: Notification
+  ): Promise<void> {
     // Implementation for webhook notification
   }
 
-  private async sendSMSNotification(_notification: Notification): Promise<void> {
+  private async sendSMSNotification(
+    _notification: Notification
+  ): Promise<void> {
     // Implementation for SMS notification
   }
 
-  private async sendInAppNotification(_notification: Notification): Promise<void> {
+  private async sendInAppNotification(
+    _notification: Notification
+  ): Promise<void> {
     // Implementation for in-app notification
   }
 }

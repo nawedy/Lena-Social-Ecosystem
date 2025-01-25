@@ -162,7 +162,7 @@ export class ATProtocolPayments {
     }>;
   }): Promise<PaymentTransaction[]> {
     const transactions = await Promise.all(
-      params.splits.map((split) => {
+      params.splits.map(split => {
         const splitAmount = (params.amount * split.percentage) / 100;
         return this.processPayment({
           amount: splitAmount,
@@ -256,10 +256,12 @@ export class ATProtocolPayments {
       transactions: number;
     }>;
   }> {
-    const response = await this.agent.api.app.bsky.commerce.getPaymentAnalytics({
-      timeframe: params.timeframe,
-      type: params.type,
-    });
+    const response = await this.agent.api.app.bsky.commerce.getPaymentAnalytics(
+      {
+        timeframe: params.timeframe,
+        type: params.type,
+      }
+    );
 
     return response.data;
   }

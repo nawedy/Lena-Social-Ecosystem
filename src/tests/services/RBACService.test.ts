@@ -20,7 +20,8 @@ describe('RBACService', () => {
     await rbacService.initialize();
 
     // Reset mocks
-    const mockAnalytics = AnalyticsService.getInstance() as jest.Mocked<AnalyticsService>;
+    const mockAnalytics =
+      AnalyticsService.getInstance() as jest.Mocked<AnalyticsService>;
     mockAnalytics.trackEvent.mockClear();
   });
 
@@ -43,21 +44,29 @@ describe('RBACService', () => {
     });
 
     it('should prevent assigning invalid roles', async () => {
-      await expect(rbacService.setUserRole(testUserId, 'invalid_role' as Role)).rejects.toThrow();
+      await expect(
+        rbacService.setUserRole(testUserId, 'invalid_role' as Role)
+      ).rejects.toThrow();
     });
   });
 
   describe('Permission Management', () => {
     it('should grant permissions correctly', async () => {
       await rbacService.grantPermission(testUserId, Permission.READ);
-      const hasPermission: boolean = await rbacService.hasPermission(testUserId, Permission.READ);
+      const hasPermission: boolean = await rbacService.hasPermission(
+        testUserId,
+        Permission.READ
+      );
       expect(hasPermission).toBe(true);
     });
 
     it('should revoke permissions correctly', async () => {
       await rbacService.grantPermission(testUserId, Permission.WRITE);
       await rbacService.revokePermission(testUserId, Permission.WRITE);
-      const hasPermission: boolean = await rbacService.hasPermission(testUserId, Permission.WRITE);
+      const hasPermission: boolean = await rbacService.hasPermission(
+        testUserId,
+        Permission.WRITE
+      );
       expect(hasPermission).toBe(false);
     });
 
@@ -65,9 +74,15 @@ describe('RBACService', () => {
       await rbacService.grantPermission(testUserId, Permission.READ);
       await rbacService.grantPermission(testUserId, Permission.WRITE);
 
-      expect(await rbacService.hasPermission(testUserId, Permission.READ)).toBe(true);
-      expect(await rbacService.hasPermission(testUserId, Permission.WRITE)).toBe(true);
-      expect(await rbacService.hasPermission(testUserId, Permission.DELETE)).toBe(false);
+      expect(await rbacService.hasPermission(testUserId, Permission.READ)).toBe(
+        true
+      );
+      expect(
+        await rbacService.hasPermission(testUserId, Permission.WRITE)
+      ).toBe(true);
+      expect(
+        await rbacService.hasPermission(testUserId, Permission.DELETE)
+      ).toBe(false);
     });
   });
 });

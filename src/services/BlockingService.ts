@@ -1,5 +1,11 @@
 import { FirebaseFirestore } from '@firebase/firestore';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 
 import { Block, BlockReason } from '../types/blocking';
 import { User } from '../types/user';
@@ -99,16 +105,21 @@ export class BlockingService {
     );
 
     const snapshot = await blocksQuery.get();
-    const blockedIds = snapshot.docs.map((doc) => (doc.data() as Block).blockedId);
+    const blockedIds = snapshot.docs.map(
+      doc => (doc.data() as Block).blockedId
+    );
 
     if (blockedIds.length === 0) {
       return [];
     }
 
-    const usersQuery = query(collection(this.db, 'users'), where('id', 'in', blockedIds));
+    const usersQuery = query(
+      collection(this.db, 'users'),
+      where('id', 'in', blockedIds)
+    );
 
     const usersSnapshot = await usersQuery.get();
-    return usersSnapshot.docs.map((doc) => doc.data() as User);
+    return usersSnapshot.docs.map(doc => doc.data() as User);
   }
 
   async getBlockingUsers(userId: string): Promise<User[]> {
@@ -119,16 +130,21 @@ export class BlockingService {
     );
 
     const snapshot = await blocksQuery.get();
-    const blockerIds = snapshot.docs.map((doc) => (doc.data() as Block).blockerId);
+    const blockerIds = snapshot.docs.map(
+      doc => (doc.data() as Block).blockerId
+    );
 
     if (blockerIds.length === 0) {
       return [];
     }
 
-    const usersQuery = query(collection(this.db, 'users'), where('id', 'in', blockerIds));
+    const usersQuery = query(
+      collection(this.db, 'users'),
+      where('id', 'in', blockerIds)
+    );
 
     const usersSnapshot = await usersQuery.get();
-    return usersSnapshot.docs.map((doc) => doc.data() as User);
+    return usersSnapshot.docs.map(doc => doc.data() as User);
   }
 
   async canInteract(userId1: string, userId2: string): Promise<boolean> {
@@ -140,32 +156,38 @@ export class BlockingService {
     return !blocks1 && !blocks2;
   }
 
-  private async removeFollowRelationships(userId1: string, userId2: string): Promise<void> {
+  private async removeFollowRelationships(
+    userId1: string,
+    userId2: string
+  ): Promise<void> {
     await Promise.all([
       this.db
         .collection('follows')
         .where('followerId', '==', userId1)
         .where('followedId', '==', userId2)
         .get()
-        .then((snapshot) => {
-          snapshot.forEach((doc) => doc.ref.delete());
+        .then(snapshot => {
+          snapshot.forEach(doc => doc.ref.delete());
         }),
       this.db
         .collection('follows')
         .where('followerId', '==', userId2)
         .where('followedId', '==', userId1)
         .get()
-        .then((snapshot) => {
-          snapshot.forEach((doc) => doc.ref.delete());
+        .then(snapshot => {
+          snapshot.forEach(doc => doc.ref.delete());
         }),
     ]);
   }
 
   private async notifyModerators(block: Block): Promise<void> {
-    const moderatorsQuery = query(collection(this.db, 'users'), where('role', '==', 'moderator'));
+    const moderatorsQuery = query(
+      collection(this.db, 'users'),
+      where('role', '==', 'moderator')
+    );
 
     const snapshot = await moderatorsQuery.get();
-    const moderators = snapshot.docs.map((doc) => doc.data() as User);
+    const moderators = snapshot.docs.map(doc => doc.data() as User);
 
     for (const moderator of moderators) {
       await this.notificationService.sendNotification(moderator.id, {

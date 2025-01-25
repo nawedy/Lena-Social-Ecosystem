@@ -159,7 +159,9 @@ export class ATProtocolPayment {
   }): Promise<Transaction> {
     // Validate payment method if provided
     if (params.paymentMethodUri) {
-      const paymentMethod = await this.getPaymentMethod(params.paymentMethodUri);
+      const paymentMethod = await this.getPaymentMethod(
+        params.paymentMethodUri
+      );
       if (!paymentMethod || paymentMethod.status !== 'active') {
         throw new Error('Invalid or inactive payment method');
       }
@@ -237,7 +239,7 @@ export class ATProtocolPayment {
       verification: {
         ...account.verification,
         status: 'pending',
-        submittedDocs: params.documents.map((doc) => doc.type),
+        submittedDocs: params.documents.map(doc => doc.type),
       },
       updatedAt: new Date().toISOString(),
     };
@@ -263,9 +265,11 @@ export class ATProtocolPayment {
       end: string;
     };
   }): Promise<PaymentAnalytics> {
-    const response = await this.agent.api.app.bsky.commerce.getPaymentAnalytics({
-      period: params.period,
-    });
+    const response = await this.agent.api.app.bsky.commerce.getPaymentAnalytics(
+      {
+        period: params.period,
+      }
+    );
 
     return response.data;
   }
@@ -299,7 +303,9 @@ export class ATProtocolPayment {
     }
   }
 
-  private async processTransaction(transaction: Transaction): Promise<Transaction> {
+  private async processTransaction(
+    transaction: Transaction
+  ): Promise<Transaction> {
     try {
       // Process payment through appropriate provider
       // This is where you'd integrate with payment processors
@@ -342,10 +348,12 @@ export class ATProtocolPayment {
     }
   }
 
-  private async processPaymentWithProvider(_transaction: Transaction): Promise<boolean> {
+  private async processPaymentWithProvider(
+    _transaction: Transaction
+  ): Promise<boolean> {
     // This is where you'd implement actual payment processing logic
     // For now, we'll simulate success
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(() => {
         resolve(Math.random() > 0.1); // 90% success rate
       }, 1000);

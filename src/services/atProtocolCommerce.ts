@@ -82,7 +82,7 @@ export class ATProtocolCommerce {
   }): Promise<Product> {
     // Upload product images
     const imageBlobs = await Promise.all(
-      params.images.map((image) => this.agent.uploadBlob(image))
+      params.images.map(image => this.agent.uploadBlob(image))
     );
 
     const record = {
@@ -91,7 +91,7 @@ export class ATProtocolCommerce {
       description: params.description,
       price: params.price,
       currency: params.currency,
-      images: imageBlobs.map((blob) => blob.data.blob),
+      images: imageBlobs.map(blob => blob.data.blob),
       variants: params.variants,
       inventory: params.inventory,
       tags: params.tags,
@@ -119,7 +119,11 @@ export class ATProtocolCommerce {
   }
 
   // Shopping Cart
-  public async addToCart(productUri: string, quantity = 1, variant?: string): Promise<void> {
+  public async addToCart(
+    productUri: string,
+    quantity = 1,
+    variant?: string
+  ): Promise<void> {
     const record = {
       $type: 'app.bsky.commerce.cartItem',
       product: productUri,
@@ -149,13 +153,12 @@ export class ATProtocolCommerce {
   }): Promise<Order> {
     // Get product details and calculate total
     const productDetails = await Promise.all(
-      params.products.map(async (item) => {
+      params.products.map(async item => {
         const product = await this.getProduct(item.uri);
         const price =
           item.variant && product.variants
-            ? product.variants.find((v) => v.options.includes(item.variant))?.prices[
-                item.variant
-              ] ?? product.price
+            ? (product.variants.find(v => v.options.includes(item.variant))
+                ?.prices[item.variant] ?? product.price)
             : product.price;
 
         return {
@@ -175,7 +178,9 @@ export class ATProtocolCommerce {
         price: shippingMethod.price,
       },
       status: 'pending' as const,
-      totalAmount: productDetails.reduce((sum, item) => sum + item.price, 0) + shippingMethod.price,
+      totalAmount:
+        productDetails.reduce((sum, item) => sum + item.price, 0) +
+        shippingMethod.price,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -238,7 +243,7 @@ export class ATProtocolCommerce {
     await rt.detectFacets(this.agent);
 
     const mediaBlobs = await Promise.all(
-      (params.media || []).map((blob) => this.agent.uploadBlob(blob))
+      (params.media || []).map(blob => this.agent.uploadBlob(blob))
     );
 
     const record = {
@@ -247,7 +252,7 @@ export class ATProtocolCommerce {
       rating: params.rating,
       text: rt.text,
       facets: rt.facets,
-      media: mediaBlobs.map((blob) => blob.data.blob),
+      media: mediaBlobs.map(blob => blob.data.blob),
       createdAt: new Date().toISOString(),
     };
 
@@ -271,9 +276,11 @@ export class ATProtocolCommerce {
       orders: number;
     }>;
   }> {
-    const response = await this.agent.api.app.bsky.commerce.getProductAnalytics({
-      product: productUri,
-    });
+    const response = await this.agent.api.app.bsky.commerce.getProductAnalytics(
+      {
+        product: productUri,
+      }
+    );
 
     return response.data;
   }

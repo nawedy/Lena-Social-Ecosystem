@@ -71,7 +71,13 @@ export const ContentFilterConfig = z.object({
   mode: z.enum(['strict', 'moderate', 'permissive']),
   filters: z.array(
     z.object({
-      type: z.enum(['toxicity', 'profanity', 'bias', 'personal-info', 'custom']),
+      type: z.enum([
+        'toxicity',
+        'profanity',
+        'bias',
+        'personal-info',
+        'custom',
+      ]),
       threshold: z.number().min(0).max(1),
       action: z.enum(['block', 'flag', 'replace']),
       replacement: z.string().optional(),
@@ -200,7 +206,9 @@ export const CostConfig = z.object({
   ),
   optimization: z.object({
     enabled: z.boolean(),
-    strategies: z.array(z.enum(['model-selection', 'batch-processing', 'caching', 'compression'])),
+    strategies: z.array(
+      z.enum(['model-selection', 'batch-processing', 'caching', 'compression'])
+    ),
     rules: z.array(
       z.object({
         condition: z.string(),

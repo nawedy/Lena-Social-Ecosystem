@@ -15,7 +15,9 @@ interface PostProps {
 const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
   const { agent } = useATProto();
   const [isLiked, setIsLiked] = useState(post.viewer?.like !== undefined);
-  const [isReposted, setIsReposted] = useState(post.viewer?.repost !== undefined);
+  const [isReposted, setIsReposted] = useState(
+    post.viewer?.repost !== undefined
+  );
   const [isSaved, setIsSaved] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -128,14 +130,14 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
   const _renderPostText = (text: string, facets?: any[]) => {
     const _rt = new RichText({ text, facets });
     return (
-      <div className='whitespace-pre-wrap'>
+      <div className="whitespace-pre-wrap">
         {rt.segments.map((segment, i) => {
           if (segment.isMention()) {
             return (
               <a
                 key={i}
                 href={`/profile/${segment.text}`}
-                className='text-blue-500 hover:underline'
+                className="text-blue-500 hover:underline"
               >
                 {segment.text}
               </a>
@@ -146,9 +148,9 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
               <a
                 key={i}
                 href={segment.link?.uri}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='text-blue-500 hover:underline'
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
               >
                 {segment.text}
               </a>
@@ -159,7 +161,7 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
               <a
                 key={i}
                 href={`/tag/${segment.tag?.tag}`}
-                className='text-blue-500 hover:underline'
+                className="text-blue-500 hover:underline"
               >
                 {segment.text}
               </a>
@@ -172,20 +174,20 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
   };
 
   return (
-    <article className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 space-y-4'>
+    <article className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 space-y-4">
       {/* Post Header */}
-      <div className='flex items-center justify-between'>
-        <div className='flex items-center space-x-3'>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
           <img
             src={post.post.author.avatar}
             alt={post.post.author.displayName || post.post.author.handle}
-            className='w-10 h-10 rounded-full'
+            className="w-10 h-10 rounded-full"
           />
           <div>
-            <p className='font-semibold'>
+            <p className="font-semibold">
               {post.post.author.displayName || post.post.author.handle}
             </p>
-            <p className='text-sm text-gray-500'>
+            <p className="text-sm text-gray-500">
               {formatDistanceToNow(new Date(post.post.indexedAt), {
                 addSuffix: true,
               })}
@@ -193,7 +195,7 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
           </div>
         </div>
 
-        <div className='flex items-center space-x-2'>
+        <div className="flex items-center space-x-2">
           <button
             onClick={handleSave}
             className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 ${
@@ -202,20 +204,20 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
           >
             📌
           </button>
-          <button className='p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500'>
+          <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500">
             •••
           </button>
         </div>
       </div>
 
       {/* Post Content */}
-      <div className='text-gray-800 dark:text-gray-200'>
+      <div className="text-gray-800 dark:text-gray-200">
         {renderPostText(post.post.record.text, post.post.record.facets)}
       </div>
 
       {/* Media */}
       {post.post.embed && (
-        <div className='rounded-lg overflow-hidden'>
+        <div className="rounded-lg overflow-hidden">
           <MediaCarousel
             items={[
               {
@@ -230,10 +232,10 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
       )}
 
       {/* Interaction Buttons */}
-      <div className='flex items-center justify-between border-t border-b py-2'>
+      <div className="flex items-center justify-between border-t border-b py-2">
         <button
           onClick={() => setShowReplyForm(!showReplyForm)}
-          className='flex items-center space-x-2 text-gray-500 hover:text-blue-500'
+          className="flex items-center space-x-2 text-gray-500 hover:text-blue-500"
         >
           <span>💭</span>
           <span>{post.replyCount || 0}</span>
@@ -258,7 +260,7 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
         </button>
         <button
           onClick={() => setIsRemixing(!isRemixing)}
-          className='flex items-center space-x-2 text-gray-500 hover:text-purple-500'
+          className="flex items-center space-x-2 text-gray-500 hover:text-purple-500"
         >
           <span>🎵</span>
           <span>Remix</span>
@@ -267,24 +269,24 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
 
       {/* Reply Form */}
       {showReplyForm && (
-        <div className='space-y-2'>
+        <div className="space-y-2">
           <textarea
             value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            placeholder='Write your reply...'
-            className='w-full p-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700'
+            onChange={e => setReplyText(e.target.value)}
+            placeholder="Write your reply..."
+            className="w-full p-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700"
             rows={3}
           />
-          <div className='flex justify-end space-x-2'>
+          <div className="flex justify-end space-x-2">
             <button
               onClick={() => setShowReplyForm(false)}
-              className='px-4 py-2 text-gray-500 hover:text-gray-700'
+              className="px-4 py-2 text-gray-500 hover:text-gray-700"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmitReply}
-              className='px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600'
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               disabled={!replyText.trim()}
             >
               Reply
@@ -295,24 +297,24 @@ const Post: React.FC<PostProps> = ({ post, onRemix, onReply }) => {
 
       {/* Remix Form */}
       {isRemixing && (
-        <div className='space-y-2'>
+        <div className="space-y-2">
           <textarea
             value={remixText}
-            onChange={(e) => setRemixText(e.target.value)}
-            placeholder='Add your remix...'
-            className='w-full p-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700'
+            onChange={e => setRemixText(e.target.value)}
+            placeholder="Add your remix..."
+            className="w-full p-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700"
             rows={3}
           />
-          <div className='flex justify-end space-x-2'>
+          <div className="flex justify-end space-x-2">
             <button
               onClick={() => setIsRemixing(false)}
-              className='px-4 py-2 text-gray-500 hover:text-gray-700'
+              className="px-4 py-2 text-gray-500 hover:text-gray-700"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmitRemix}
-              className='px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600'
+              className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
               disabled={!remixText.trim()}
             >
               Post Remix

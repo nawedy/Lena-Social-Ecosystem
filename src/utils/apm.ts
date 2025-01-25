@@ -61,7 +61,10 @@ export class APMService {
 
   public middleware() {
     return (req: Request, res: Response, next: NextFunction) => {
-      const transaction = this.apm.startTransaction(`${req.method} ${req.path}`, 'request');
+      const transaction = this.apm.startTransaction(
+        `${req.method} ${req.path}`,
+        'request'
+      );
 
       if (transaction) {
         // Add custom context
@@ -100,7 +103,11 @@ export class APMService {
     };
   }
 
-  public createSpan<T>(name: string, type: string, fn: (span: any) => Promise<T>): Promise<T> {
+  public createSpan<T>(
+    name: string,
+    type: string,
+    fn: (span: any) => Promise<T>
+  ): Promise<T> {
     const span = this.apm.startSpan(name, type);
     return fn(span).finally(() => {
       if (span) span.end();

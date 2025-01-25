@@ -74,9 +74,15 @@ declare module 'detox' {
     typeText(text: string): Promise<void>;
     replaceText(text: string): Promise<void>;
     clearText(): Promise<void>;
-    scroll(pixels: number, direction: 'up' | 'down' | 'left' | 'right'): Promise<void>;
+    scroll(
+      pixels: number,
+      direction: 'up' | 'down' | 'left' | 'right'
+    ): Promise<void>;
     scrollTo(edge: 'top' | 'bottom' | 'left' | 'right'): Promise<void>;
-    swipe(direction: 'up' | 'down' | 'left' | 'right', speed?: 'fast' | 'slow'): Promise<void>;
+    swipe(
+      direction: 'up' | 'down' | 'left' | 'right',
+      speed?: 'fast' | 'slow'
+    ): Promise<void>;
     setColumnToValue(column: number, value: string): Promise<void>;
     setDatePickerDate(dateString: string, dateFormat?: string): Promise<void>;
     pinch(scale: number, speed?: 'fast' | 'slow'): Promise<void>;

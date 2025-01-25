@@ -131,7 +131,7 @@ export class AITestSuite {
 
     for (const batch of batches) {
       const batchResults = await Promise.all(
-        batch.map((testCase) => this.executeTestWithRetry(testCase))
+        batch.map(testCase => this.executeTestWithRetry(testCase))
       );
       results.push(...batchResults);
 
@@ -156,7 +156,9 @@ export class AITestSuite {
     return batches;
   }
 
-  private async executeTestWithRetry(testCase: AITestCase): Promise<TestResult> {
+  private async executeTestWithRetry(
+    testCase: AITestCase
+  ): Promise<TestResult> {
     let attempt = 0;
     let delay = this.config.retryStrategy.initialDelay;
 
@@ -222,27 +224,33 @@ export class AITestSuite {
       this.context.metrics.errors.push(new Error(result.error));
     }
     this.context.metrics.qualityScores.push(
-      (result.metrics.similarity + result.metrics.creativity + (1 - result.metrics.toxicity)) / 3
+      (result.metrics.similarity +
+        result.metrics.creativity +
+        (1 - result.metrics.toxicity)) /
+        3
     );
   }
 
   private shouldContinueTesting(results: TestResult[]): boolean {
-    const failureRate = results.filter((r) => !r.success).length / results.length;
+    const failureRate = results.filter(r => !r.success).length / results.length;
     return failureRate <= 1 - this.config.thresholds.successRate;
   }
 
   private async generateReport(results: TestResult[]): Promise<TestReport> {
     const duration = Date.now() - this.context.startTime;
     const metrics = this.calculateMetrics(results);
-    const recommendations = await this.generateRecommendations(results, metrics);
+    const recommendations = await this.generateRecommendations(
+      results,
+      metrics
+    );
 
     return {
       suiteName: this.config.name,
       timestamp: new Date().toISOString(),
       duration,
       totalTests: results.length,
-      passedTests: results.filter((r) => r.success).length,
-      failedTests: results.filter((r) => !r.success).length,
+      passedTests: results.filter(r => r.success).length,
+      failedTests: results.filter(r => !r.success).length,
       skippedTests: 0,
       metrics,
       testResults: results,
@@ -260,7 +268,7 @@ export class AITestSuite {
       p95Latency: latencies[p95Index],
       totalCost: this.sum(this.context.metrics.costs),
       averageTokens: this.average(this.context.metrics.tokenUsage),
-      successRate: results.filter((r) => r.success).length / results.length,
+      successRate: results.filter(r => r.success).length / results.length,
       qualityScore: this.average(this.context.metrics.qualityScores),
     };
   }
@@ -284,7 +292,9 @@ export class AITestSuite {
     // Token usage recommendations
     const avgTokens = metrics.averageTokens;
     if (avgTokens < this.config.thresholds.minTokens) {
-      recommendations.push('Prompts might be too short for effective responses');
+      recommendations.push(
+        'Prompts might be too short for effective responses'
+      );
     } else if (avgTokens > this.config.thresholds.maxTokens) {
       recommendations.push('Consider reducing prompt length to optimize costs');
     }
@@ -306,8 +316,8 @@ export class AITestSuite {
     const errorTypes = new Map<string, number>();
 
     results
-      .filter((r) => !r.success)
-      .forEach((result) => {
+      .filter(r => !r.success)
+      .forEach(result => {
         const errorType = this.categorizeError(result.error);
         errorTypes.set(errorType, (errorTypes.get(errorType) || 0) + 1);
       });
@@ -315,7 +325,9 @@ export class AITestSuite {
     errorTypes.forEach((count, type) => {
       const percentage = (count / results.length) * 100;
       if (percentage > 10) {
-        patterns.push(`High frequency of ${type} errors (${percentage.toFixed(1)}%)`);
+        patterns.push(
+          `High frequency of ${type} errors (${percentage.toFixed(1)}%)`
+        );
       }
     });
 
@@ -332,11 +344,13 @@ export class AITestSuite {
 
   // Helper methods
   private async delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private average(numbers: number[]): number {
-    return numbers.length > 0 ? numbers.reduce((a, b) => a + b, 0) / numbers.length : 0;
+    return numbers.length > 0
+      ? numbers.reduce((a, b) => a + b, 0) / numbers.length
+      : 0;
   }
 
   private sum(numbers: number[]): number {

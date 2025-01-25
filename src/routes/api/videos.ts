@@ -28,7 +28,10 @@ const videoValidation = [
 
 // Comment validation
 const commentValidation = [
-  body('content').trim().isLength({ min: 1 }).withMessage('Comment cannot be empty'),
+  body('content')
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage('Comment cannot be empty'),
 ];
 
 // Video routes
@@ -45,7 +48,13 @@ router.get('/:id', getVideoById);
 router.post('/:id/like', requireAuth, likeVideo);
 router.delete('/:id/like', requireAuth, unlikeVideo);
 router.get('/:id/comments', getComments);
-router.post('/:id/comments', requireAuth, commentValidation, validateRequest, addComment);
+router.post(
+  '/:id/comments',
+  requireAuth,
+  commentValidation,
+  validateRequest,
+  addComment
+);
 router.delete('/:id/comments/:commentId', requireAuth, deleteComment);
 
 export default router;

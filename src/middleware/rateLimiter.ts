@@ -13,7 +13,9 @@ const redisClient = createClient({
   password: config.redis.password,
 });
 
-redisClient.on('error', (err) => logger.error('Redis Client Error:', { error: err }));
+redisClient.on('error', err =>
+  logger.error('Redis Client Error:', { error: err })
+);
 
 // Different rate limit configurations for various endpoints
 export const rateLimiters = {

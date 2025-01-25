@@ -96,15 +96,15 @@ export function TikTokMigrationWizard() {
       setProgress(status.progress);
 
       // Update step statuses
-      setSteps((steps) =>
-        steps.map((step) => {
+      setSteps(steps =>
+        steps.map(step => {
           if (status.completedSteps.includes(step.id)) {
             return { ...step, status: 'completed' };
           }
           if (step.id === status.currentStep) {
             return { ...step, status: 'in_progress' };
           }
-          if (status.errors.some((error) => error.includes(step.id))) {
+          if (status.errors.some(error => error.includes(step.id))) {
             return { ...step, status: 'failed' };
           }
           return step;
@@ -116,16 +116,20 @@ export function TikTokMigrationWizard() {
 
       // Handle completion
       if (status.status === 'completed') {
-        Alert.window.alert(t('migration.complete.title'), t('migration.complete.message'), [
-          { text: t('common.ok') },
-        ]);
+        Alert.window.alert(
+          t('migration.complete.title'),
+          t('migration.complete.message'),
+          [{ text: t('common.ok') }]
+        );
       }
 
       // Handle failure
       if (status.status === 'failed') {
-        Alert.window.alert(t('migration.failed.title'), t('migration.failed.message'), [
-          { text: t('common.ok') },
-        ]);
+        Alert.window.alert(
+          t('migration.failed.title'),
+          t('migration.failed.message'),
+          [{ text: t('common.ok') }]
+        );
       }
     } catch (error) {
       console.error('Error checking migration status:', error);
@@ -155,15 +159,24 @@ export function TikTokMigrationWizard() {
       });
     } catch (error) {
       console.error('Error starting migration:', error);
-      Alert.window.alert(t('migration.error.start.title'), t('migration.error.start.message'), [
-        { text: t('common.ok') },
-      ]);
+      Alert.window.alert(
+        t('migration.error.start.title'),
+        t('migration.error.start.message'),
+        [{ text: t('common.ok') }]
+      );
     }
   };
 
   const _renderStepIcon = (step: MigrationStep) => {
     const _color = getStepColor(step.status);
-    return <MaterialIcons name={step.icon} size={24} color={color} style={styles.stepIcon} />;
+    return (
+      <MaterialIcons
+        name={step.icon}
+        size={24}
+        color={color}
+        style={styles.stepIcon}
+      />
+    );
   };
 
   const _getStepColor = (status: MigrationStep['status']) => {
@@ -193,7 +206,7 @@ export function TikTokMigrationWizard() {
           value={username}
           onChangeText={setUsername}
           placeholder={t('migration.username.placeholder')}
-          autoCapitalize='none'
+          autoCapitalize="none"
           autoCorrect={false}
           editable={!migrationId}
         />
@@ -201,10 +214,14 @@ export function TikTokMigrationWizard() {
         <Text style={styles.sectionTitle}>{t('migration.options.title')}</Text>
         {Object.entries(options).map(([key, value]) => (
           <View key={key} style={styles.option}>
-            <Text style={styles.optionLabel}>{t(`migration.options.${key}`)}</Text>
+            <Text style={styles.optionLabel}>
+              {t(`migration.options.${key}`)}
+            </Text>
             <Switch
               value={value}
-              onValueChange={(newValue) => setOptions((prev) => ({ ...prev, [key]: newValue }))}
+              onValueChange={newValue =>
+                setOptions(prev => ({ ...prev, [key]: newValue }))
+              }
               disabled={!!migrationId}
             />
           </View>
@@ -228,7 +245,10 @@ export function TikTokMigrationWizard() {
 
       <View style={styles.steps}>
         {steps.map((step, index) => (
-          <View key={step.id} style={[styles.step, index === steps.length - 1 && styles.lastStep]}>
+          <View
+            key={step.id}
+            style={[styles.step, index === steps.length - 1 && styles.lastStep]}
+          >
             <View style={styles.stepHeader}>
               {renderStepIcon(step)}
               <View style={styles.stepContent}>
@@ -236,12 +256,16 @@ export function TikTokMigrationWizard() {
                 <Text style={styles.stepDescription}>{step.description}</Text>
               </View>
               {step.status === 'in_progress' && (
-                <ActivityIndicator size='small' color='#007bff' style={styles.stepLoader} />
+                <ActivityIndicator
+                  size="small"
+                  color="#007bff"
+                  style={styles.stepLoader}
+                />
               )}
             </View>
             {step.status === 'failed' && (
               <Text style={styles.stepError}>
-                {errors.find((error) => error.includes(step.id))}
+                {errors.find(error => error.includes(step.id))}
               </Text>
             )}
           </View>

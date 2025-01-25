@@ -82,7 +82,7 @@ class AppealService {
 
   async submitAppeal(appeal: AppealRequest): Promise<{ id: string }> {
     try {
-      const result = await transaction(async (client) => {
+      const result = await transaction(async client => {
         // Check if user has unknown pending appeals
         const {
           rows: [pendingAppeal],
@@ -163,7 +163,7 @@ class AppealService {
 
   async reviewAppeal(review: AppealReview): Promise<boolean> {
     try {
-      await transaction(async (client) => {
+      await transaction(async client => {
         // Update appeal status
         const {
           rows: [appeal],
@@ -196,7 +196,11 @@ class AppealService {
         if (review.decision === 'approved') {
           const {
             rows: [action],
-          } = await client.query<{ id: string; type: string; target_did: string }>(
+          } = await client.query<{
+            id: string;
+            type: string;
+            target_did: string;
+          }>(
             `
             SELECT * FROM mod_actions WHERE id = $1
           `,
@@ -339,8 +343,11 @@ class AppealService {
   async getUserAppeals(userId: string): Promise<Appeal[]> {
     try {
       return Array.from(this.appealQueue.values())
-        .filter((appeal) => appeal.user_id === userId)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        .filter(appeal => appeal.user_id === userId)
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
     } catch (error) {
       this.logger.error('User appeals retrieval failed', { userId, error });
       throw new Error(`Failed to get user appeals: ${error.message}`);
@@ -381,7 +388,11 @@ class AppealService {
 
       return updatedAppeal;
     } catch (error) {
-      this.logger.error('Appeal status update failed', { appealId, status, error });
+      this.logger.error('Appeal status update failed', {
+        appealId,
+        status,
+        error,
+      });
       throw new Error(`Failed to update appeal status: ${error.message}`);
     }
   }
@@ -420,7 +431,10 @@ class AppealService {
       }
 
       // Restore the post using AT Protocol
-      await this.agent.api.app.bsky.feed.post.create({ did: appeal.user_id }, postData.record);
+      await this.agent.api.app.bsky.feed.post.create(
+        { did: appeal.user_id },
+        postData.record
+      );
 
       this.logger.info('Post restored', {
         appealId: appeal.id,
@@ -473,8 +487,11 @@ class AppealService {
   async getPendingAppeals(): Promise<Appeal[]> {
     try {
       return Array.from(this.appealQueue.values())
-        .filter((appeal) => appeal.status === 'pending')
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        .filter(appeal => appeal.status === 'pending')
+        .sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
     } catch (error) {
       this.logger.error('Pending appeals retrieval failed', { error });
       throw new Error(`Failed to get pending appeals: ${error.message}`);
@@ -491,9 +508,9 @@ class AppealService {
       const appeals = Array.from(this.appealQueue.values());
       return {
         total: appeals.length,
-        pending: appeals.filter((a) => a.status === 'pending').length,
-        approved: appeals.filter((a) => a.status === 'approved').length,
-        rejected: appeals.filter((a) => a.status === 'denied').length,
+        pending: appeals.filter(a => a.status === 'pending').length,
+        approved: appeals.filter(a => a.status === 'approved').length,
+        rejected: appeals.filter(a => a.status === 'denied').length,
       };
     } catch (error) {
       this.logger.error('Appeals stats retrieval failed', { error });

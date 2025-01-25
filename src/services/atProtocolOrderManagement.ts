@@ -57,7 +57,13 @@ export interface OrderRoute {
     estimatedDays: number;
     cost: number;
   };
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'processing'
+    | 'shipped'
+    | 'delivered'
+    | 'cancelled';
   tracking?: {
     carrier: string;
     number: string;
@@ -127,7 +133,10 @@ export class ATProtocolOrderManagement {
     shippingAddress: string;
   }): Promise<OrderRoute> {
     // Find optimal supplier and fulfillment center
-    const routing = await this.calculateOptimalRouting(params.items, params.shippingAddress);
+    const routing = await this.calculateOptimalRouting(
+      params.items,
+      params.shippingAddress
+    );
 
     const record = {
       $type: 'app.bsky.commerce.orderRoute',
@@ -237,10 +246,11 @@ export class ATProtocolOrderManagement {
     // 2. Calculating shipping costs and times from each fulfillment center
     // 3. Optimizing for cost, time, and supplier performance
 
-    const response = await this.agent.api.app.bsky.commerce.calculateOptimalRoute({
-      items,
-      shippingAddress,
-    });
+    const response =
+      await this.agent.api.app.bsky.commerce.calculateOptimalRoute({
+        items,
+        shippingAddress,
+      });
 
     return response.data;
   }

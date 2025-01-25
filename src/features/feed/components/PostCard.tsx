@@ -20,7 +20,12 @@ interface PostCardProps {
   onError?: (error: Error) => void;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onError }) => {
+export const PostCard: React.FC<PostCardProps> = ({
+  post,
+  onLike,
+  onRepost,
+  onError,
+}) => {
   const { agent } = useATProto();
   const [isLiking, setIsLiking] = useState(false);
   const [isReposting, setIsReposting] = useState(false);
@@ -44,9 +49,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onEr
       } else {
         await agent.like(post.uri, post.cid);
       }
-      setLocalLikes((prev) => prev + 1);
+      setLocalLikes(prev => prev + 1);
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Unknown error'), 'like post');
+      handleError(
+        error instanceof Error ? error : new Error('Unknown error'),
+        'like post'
+      );
     } finally {
       setIsLiking(false);
     }
@@ -62,9 +70,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onEr
       } else {
         await agent.repost(post.uri, post.cid);
       }
-      setLocalReposts((prev) => prev + 1);
+      setLocalReposts(prev => prev + 1);
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Unknown error'), 'repost');
+      handleError(
+        error instanceof Error ? error : new Error('Unknown error'),
+        'repost'
+      );
     } finally {
       setIsReposting(false);
     }
@@ -83,7 +94,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onEr
           <View style={[styles.avatar, styles.placeholderAvatar]} />
         )}
         <View style={styles.authorInfo}>
-          <Text style={styles.displayName}>{post.author.displayName || post.author.handle}</Text>
+          <Text style={styles.displayName}>
+            {post.author.displayName || post.author.handle}
+          </Text>
           <Text style={styles.handle}>@{post.author.handle}</Text>
         </View>
         <Text style={styles.timestamp}>
@@ -95,17 +108,25 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onEr
 
       {post.media && post.media.length > 0 && (
         <View style={styles.mediaContainer}>
-          {post.media.map((media) => (
+          {post.media.map(media => (
             <View key={media.url} style={styles.mediaWrapper}>
               <FastImage
                 source={{ uri: media.url }}
                 style={styles.media}
                 resizeMode={FastImage.resizeMode.cover}
-                onLoadStart={() => setMediaLoading((prev) => ({ ...prev, [media.url]: true }))}
-                onLoad={() => setMediaLoading((prev) => ({ ...prev, [media.url]: false }))}
+                onLoadStart={() =>
+                  setMediaLoading(prev => ({ ...prev, [media.url]: true }))
+                }
+                onLoad={() =>
+                  setMediaLoading(prev => ({ ...prev, [media.url]: false }))
+                }
               />
               {mediaLoading[media.url] && (
-                <ActivityIndicator style={styles.mediaLoader} size='large' color='#0000ff' />
+                <ActivityIndicator
+                  style={styles.mediaLoader}
+                  size="large"
+                  color="#0000ff"
+                />
               )}
             </View>
           ))}
@@ -118,15 +139,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, onRepost, onEr
           style={[styles.actionButton, isLiking && styles.actionButtonDisabled]}
           disabled={isLiking}
         >
-          {isLiking ? <ActivityIndicator size='small' color='#999' /> : <Text>❤️ {localLikes}</Text>}
+          {isLiking ? (
+            <ActivityIndicator size="small" color="#999" />
+          ) : (
+            <Text>❤️ {localLikes}</Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
           onPress={handleRepost}
-          style={[styles.actionButton, isReposting && styles.actionButtonDisabled]}
+          style={[
+            styles.actionButton,
+            isReposting && styles.actionButtonDisabled,
+          ]}
           disabled={isReposting}
         >
           {isReposting ? (
-            <ActivityIndicator size='small' color='#999' />
+            <ActivityIndicator size="small" color="#999" />
           ) : (
             <Text>🔄 {localReposts}</Text>
           )}

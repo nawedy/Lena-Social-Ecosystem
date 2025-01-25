@@ -3,7 +3,13 @@ import { Camera } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
 
 import { useAuth } from '../../hooks/useAuth';
 import { RootStackParamList } from '../../navigation/types';
@@ -12,7 +18,9 @@ interface CreatePostScreenProps {
   navigation: NativeStackNavigationProp<RootStackParamList, 'CreatePost'>;
 }
 
-export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
+export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
+  navigation,
+}) => {
   const [text, setText] = useState('');
   const [media, setMedia] = useState<string[]>([]);
   const { user } = useAuth();
@@ -20,7 +28,10 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission required', 'Sorry, we need camera roll permissions to make this work!');
+      Alert.alert(
+        'Permission required',
+        'Sorry, we need camera roll permissions to make this work!'
+      );
       return;
     }
 
@@ -39,7 +50,10 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }
   const takePicture = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission required', 'Sorry, we need camera permissions to make this work!');
+      Alert.alert(
+        'Permission required',
+        'Sorry, we need camera permissions to make this work!'
+      );
       return;
     }
 
@@ -86,19 +100,28 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={pickImage} style={styles.button}>
-          <LinearGradient colors={['#FF4B2B', '#FF416C']} style={styles.gradient}>
+          <LinearGradient
+            colors={['#FF4B2B', '#FF416C']}
+            style={styles.gradient}
+          >
             <Text style={styles.buttonText}>Pick Image</Text>
           </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={takePicture} style={styles.button}>
-          <LinearGradient colors={['#FF4B2B', '#FF416C']} style={styles.gradient}>
+          <LinearGradient
+            colors={['#FF4B2B', '#FF416C']}
+            style={styles.gradient}
+          >
             <Text style={styles.buttonText}>Take Picture</Text>
           </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={createPost} style={styles.button}>
-          <LinearGradient colors={['#FF4B2B', '#FF416C']} style={styles.gradient}>
+          <LinearGradient
+            colors={['#FF4B2B', '#FF416C']}
+            style={styles.gradient}
+          >
             <Text style={styles.buttonText}>Create Post</Text>
           </LinearGradient>
         </TouchableOpacity>

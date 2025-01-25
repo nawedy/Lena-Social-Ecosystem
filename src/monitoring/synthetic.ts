@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-
 import { DatabaseService } from '../services/database';
 import { MetricsService } from '../services/metrics';
 import { RedisService } from '../services/redis';
@@ -103,7 +102,10 @@ export class SyntheticMonitoringService {
 
   public async runChecks(): Promise<CheckResult[]> {
     const results: CheckResult[] = [];
-    const transaction = this.apm.startTransaction('synthetic-monitoring', 'monitoring');
+    const transaction = this.apm.startTransaction(
+      'synthetic-monitoring',
+      'monitoring'
+    );
 
     try {
       for (const check of this.checks) {
@@ -111,15 +113,30 @@ export class SyntheticMonitoringService {
         results.push(result);
 
         // Record metrics
-        this.metrics.recordSyntheticCheck(check.name, result.success, result.duration);
+        this.metrics.recordSyntheticCheck(
+          check.name,
+          result.success,
+          result.duration
+        );
 
         // Store result in Redis for quick access
-        await this.redis.set(`synthetic:${check.name}:latest`, JSON.stringify(result), 'EX', 3600);
+        await this.redis.set(
+          `synthetic:${check.name}:latest`,
+          JSON.stringify(result),
+          'EX',
+          3600
+        );
 
         // Store in database for historical analysis
         await this.db.query(
           'INSERT INTO synthetic_checks (name, success, duration, error, timestamp) VALUES ($1, $2, $3, $4, $5)',
-          [check.name, result.success, result.duration, result.error, result.timestamp]
+          [
+            check.name,
+            result.success,
+            result.duration,
+            result.error,
+            result.timestamp,
+          ]
         );
       }
     } catch (error) {
@@ -147,7 +164,10 @@ export class SyntheticMonitoringService {
 
       const success = response.status === check.expectedStatus;
       if (check.expectedResponse) {
-        const responseMatch = this.compareResponse(response.data, check.expectedResponse);
+        const responseMatch = this.compareResponse(
+          response.data,
+          check.expectedResponse
+        );
         if (!responseMatch) {
           throw new Error('Response did not match expected format');
         }
@@ -172,7 +192,9 @@ export class SyntheticMonitoringService {
     }
   }
 
-  private async prepareHeaders(headers?: Record<string, string>): Promise<Record<string, string>> {
+  private async prepareHeaders(
+    headers?: Record<string, string>
+  ): Promise<Record<string, string>> {
     if (!headers) return {};
 
     const preparedHeaders: Record<string, string> = {};
@@ -201,13 +223,18 @@ export class SyntheticMonitoringService {
     }
 
     if (typeof expected === 'object') {
-      return Object.keys(expected).every((key) => this.compareResponse(actual[key], expected[key]));
+      return Object.keys(expected).every(key =>
+        this.compareResponse(actual[key], expected[key])
+      );
     }
 
     return actual === expected;
   }
 
-  public async getCheckHistory(checkName: string, limit = 100): Promise<CheckResult[]> {
+  public async getCheckHistory(
+    checkName: string,
+    limit = 100
+  ): Promise<CheckResult[]> {
     const results = await this.db.query(
       'SELECT * FROM synthetic_checks WHERE name = $1 ORDER BY timestamp DESC LIMIT $2',
       [checkName, limit]
@@ -239,11 +266,14 @@ export class SyntheticMonitoringService {
   }
 
   public removeCheck(checkName: string): void {
-    this.checks = this.checks.filter((check) => check.name !== checkName);
+    this.checks = this.checks.filter(check => check.name !== checkName);
   }
 
-  public updateCheck(checkName: string, updates: Partial<SyntheticCheck>): void {
-    const index = this.checks.findIndex((check) => check.name === checkName);
+  public updateCheck(
+    checkName: string,
+    updates: Partial<SyntheticCheck>
+  ): void {
+    const index = this.checks.findIndex(check => check.name === checkName);
     if (index !== -1) {
       this.checks[index] = { ...this.checks[index], ...updates };
     }

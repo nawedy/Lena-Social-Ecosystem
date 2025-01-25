@@ -54,7 +54,10 @@ export class AnalyticsService {
     return this.initialized;
   }
 
-  async trackEvent(eventName: string, metadata: Record<string, any> = {}): Promise<void> {
+  async trackEvent(
+    eventName: string,
+    metadata: Record<string, any> = {}
+  ): Promise<void> {
     const log = this.logging.log('tiktoktoe-events');
     await log.write({
       severity: 'INFO',
@@ -102,7 +105,10 @@ export class AnalyticsService {
     });
   }
 
-  async trackError(error: Error, metadata: Record<string, any> = {}): Promise<void> {
+  async trackError(
+    error: Error,
+    metadata: Record<string, any> = {}
+  ): Promise<void> {
     // Report to Error Reporting
     this.errorReporting.report(error);
 

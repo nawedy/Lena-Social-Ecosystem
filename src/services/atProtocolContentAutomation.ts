@@ -110,7 +110,9 @@ export class ATProtocolContentAutomation {
 
   public async updateTemplate(params: {
     uri: string;
-    updates: Partial<Omit<ContentTemplate, 'uri' | 'cid' | 'createdAt' | 'updatedAt'>>;
+    updates: Partial<
+      Omit<ContentTemplate, 'uri' | 'cid' | 'createdAt' | 'updatedAt'>
+    >;
   }): Promise<ContentTemplate> {
     const current = await this.getTemplate(params.uri);
     if (!current) throw new Error('Template not found');
@@ -216,7 +218,9 @@ export class ATProtocolContentAutomation {
 
     // Optimize content if requested
     if (params.optimize) {
-      const optimization = await this.getContentOptimization(params.templateUri);
+      const optimization = await this.getContentOptimization(
+        params.templateUri
+      );
       content = await this.applyOptimizations(content, optimization);
     }
 
@@ -238,19 +242,24 @@ export class ATProtocolContentAutomation {
       end: string;
     };
   }): Promise<ContentAnalytics> {
-    const response = await this.agent.api.app.bsky.commerce.getContentAnalytics({
-      templateUri: params.templateUri,
-      period: params.period,
-    });
+    const response = await this.agent.api.app.bsky.commerce.getContentAnalytics(
+      {
+        templateUri: params.templateUri,
+        period: params.period,
+      }
+    );
 
     return response.data;
   }
 
   // Optimization
-  public async getContentOptimization(templateUri: string): Promise<ContentOptimization> {
-    const response = await this.agent.api.app.bsky.commerce.getContentOptimization({
-      templateUri,
-    });
+  public async getContentOptimization(
+    templateUri: string
+  ): Promise<ContentOptimization> {
+    const response =
+      await this.agent.api.app.bsky.commerce.getContentOptimization({
+        templateUri,
+      });
 
     return response.data;
   }
@@ -318,12 +327,12 @@ export class ATProtocolContentAutomation {
     variables: Record<string, unknown>
   ): void {
     const missingRequired = template.variables
-      .filter((v) => v.required)
-      .filter((v) => !(v.name in variables));
+      .filter(v => v.required)
+      .filter(v => !(v.name in variables));
 
     if (missingRequired.length > 0) {
       throw new Error(
-        `Missing required variables: ${missingRequired.map((v) => v.name).join(', ')}`
+        `Missing required variables: ${missingRequired.map(v => v.name).join(', ')}`
       );
     }
 
@@ -332,7 +341,9 @@ export class ATProtocolContentAutomation {
       if (variable.name in variables) {
         const value = variables[variable.name];
         if (!this.validateVariableType(value, variable.type)) {
-          throw new Error(`Invalid type for variable ${variable.name}. Expected ${variable.type}`);
+          throw new Error(
+            `Invalid type for variable ${variable.name}. Expected ${variable.type}`
+          );
         }
       }
     }
@@ -417,8 +428,9 @@ export class ATProtocolContentAutomation {
     const today = from.getDay();
 
     // Find next day in the current week
-    const nextDay = sorted.find((day) => day > today);
-    const daysToAdd = nextDay !== undefined ? nextDay - today : 7 - today + sorted[0];
+    const nextDay = sorted.find(day => day > today);
+    const daysToAdd =
+      nextDay !== undefined ? nextDay - today : 7 - today + sorted[0];
 
     const result = new Date(from);
     result.setDate(result.getDate() + daysToAdd);
@@ -430,7 +442,7 @@ export class ATProtocolContentAutomation {
     const today = from.getDate();
 
     // Find next day in the current month
-    const nextDay = sorted.find((day) => day > today);
+    const nextDay = sorted.find(day => day > today);
     if (nextDay !== undefined) {
       const result = new Date(from);
       result.setDate(nextDay);
@@ -452,7 +464,7 @@ export class ATProtocolContentAutomation {
 
     // Apply high-priority recommendations first
     const highPriorityRecs = optimization.recommendations.filter(
-      (rec) => rec.priority === 'high' && rec.type === 'content'
+      rec => rec.priority === 'high' && rec.type === 'content'
     );
 
     for (const rec of highPriorityRecs) {
@@ -462,7 +474,8 @@ export class ATProtocolContentAutomation {
       switch (rec.type) {
         case 'content':
           // Apply content-specific optimizations
-          optimizedContent = await this.optimizeContentStructure(optimizedContent);
+          optimizedContent =
+            await this.optimizeContentStructure(optimizedContent);
           break;
       }
     }

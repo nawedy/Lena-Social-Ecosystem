@@ -248,10 +248,11 @@ export class ATProtocolAdvancedAffiliate {
     };
     granularity: 'day' | 'week' | 'month';
   }): Promise<AdvancedAnalytics> {
-    const response = await this.agent.api.app.bsky.commerce.getAdvancedAnalytics({
-      affiliate: this.agent.session?.did ?? '',
-      ...params,
-    });
+    const response =
+      await this.agent.api.app.bsky.commerce.getAdvancedAnalytics({
+        affiliate: this.agent.session?.did ?? '',
+        ...params,
+      });
 
     return response.data;
   }

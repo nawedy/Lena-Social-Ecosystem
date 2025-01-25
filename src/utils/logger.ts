@@ -1,10 +1,18 @@
 import { ErrorReporting } from '@google-cloud/error-reporting';
 
-// Initialize Google Cloud Error Reporting
-const errorReporting = new ErrorReporting({
-  projectId: process.env.GOOGLE_CLOUD_PROJECT,
-  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-});
+let errorReporting: ErrorReporting | null = null;
+
+if (process.env.GOOGLE_CLOUD_PROJECT) {
+  try {
+    errorReporting = new ErrorReporting({
+      projectId: process.env.GOOGLE_CLOUD_PROJECT,
+      keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    });
+    console.log('Google Cloud Error Reporting initialized.');
+  } catch (error) {
+    console.error('Failed to initialize Google Cloud Error Reporting:', error);
+  }
+}
 
 class Logger {
   private static instance: Logger;
@@ -34,9 +42,9 @@ class Logger {
   public error(error: Error | string, ...args: any[]): void {
     console.error(error, ...args);
     if (error instanceof Error) {
-      errorReporting.report(error);
-    } else {
-      errorReporting.report(new Error(error));
+      errorReporting?.report(error);
+    } else if (typeof error === 'string') {
+      errorReporting?.report(new Error(error));
     }
   }
 

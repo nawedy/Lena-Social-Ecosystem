@@ -8,7 +8,10 @@ interface UseInfiniteScrollOptions<T> {
   threshold?: number;
 }
 
-export function useInfiniteScroll<T>({ fetchData, threshold = 0.8 }: UseInfiniteScrollOptions<T>) {
+export function useInfiniteScroll<T>({
+  fetchData,
+  threshold = 0.8,
+}: UseInfiniteScrollOptions<T>) {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -25,18 +28,20 @@ export function useInfiniteScroll<T>({ fetchData, threshold = 0.8 }: UseInfinite
       }
 
       observer.current = new IntersectionObserver(
-        async (entries) => {
+        async entries => {
           if (entries[0].isIntersecting && hasMore) {
             try {
               setLoading(true);
               setError(null);
               const response = await fetchData(cursor.current);
 
-              setItems((prev) => [...prev, ...response.data]);
+              setItems(prev => [...prev, ...response.data]);
               cursor.current = response.cursor;
               setHasMore(!!response.cursor);
             } catch (err) {
-              setError(err instanceof Error ? err : new Error('Failed to fetch data'));
+              setError(
+                err instanceof Error ? err : new Error('Failed to fetch data')
+              );
             } finally {
               setLoading(false);
             }

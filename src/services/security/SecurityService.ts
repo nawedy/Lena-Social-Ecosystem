@@ -153,7 +153,10 @@ export class SecurityService {
     }
   }
 
-  async validateContentSecurity(content: string | Buffer, contentType: string): Promise<boolean> {
+  async validateContentSecurity(
+    content: string | Buffer,
+    contentType: string
+  ): Promise<boolean> {
     if (!this.config.contentSecurity.enabled) return true;
 
     try {
@@ -285,7 +288,10 @@ export class SecurityService {
     console.error('Security event handler error:', error);
   }
 
-  private async checkRateLimit(_userId: string, _requestType: string): Promise<boolean> {
+  private async checkRateLimit(
+    _userId: string,
+    _requestType: string
+  ): Promise<boolean> {
     // Implement rate limiting using Redis or similar
     // This is a placeholder implementation
     return false;
@@ -303,11 +309,15 @@ export class SecurityService {
 
   private async getEncryptionKey(): Promise<string> {
     // Get or create encryption key
-    const keyName = 'projects/your-project/locations/global/keyRings/app-keys/cryptoKeys/data-key';
+    const keyName =
+      'projects/your-project/locations/global/keyRings/app-keys/cryptoKeys/data-key';
     return keyName;
   }
 
-  private async scanForThreats(_content: string | Buffer, _contentType: string): Promise<string[]> {
+  private async scanForThreats(
+    _content: string | Buffer,
+    _contentType: string
+  ): Promise<string[]> {
     // Implement threat scanning
     // This is a placeholder implementation
     return [];

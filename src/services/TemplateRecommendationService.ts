@@ -58,7 +58,8 @@ export class TemplateRecommendationService {
 
   public static getInstance(): TemplateRecommendationService {
     if (!TemplateRecommendationService.instance) {
-      TemplateRecommendationService.instance = new TemplateRecommendationService();
+      TemplateRecommendationService.instance =
+        new TemplateRecommendationService();
     }
     return TemplateRecommendationService.instance;
   }
@@ -72,12 +73,19 @@ export class TemplateRecommendationService {
       this.getRelevantTemplates(context),
     ]);
 
-    const scoredTemplates = await this.scoreTemplates(templates, userPrefs, context);
+    const scoredTemplates = await this.scoreTemplates(
+      templates,
+      userPrefs,
+      context
+    );
 
     return scoredTemplates.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
-  async getSimilarTemplates(templateId: string, limit = 5): Promise<TemplateRecommendation[]> {
+  async getSimilarTemplates(
+    templateId: string,
+    limit = 5
+  ): Promise<TemplateRecommendation[]> {
     const template = await this.getTemplate(templateId);
     if (!template) {
       throw new Error('Template not found');
@@ -92,9 +100,9 @@ export class TemplateRecommendationService {
 
     const scored = await Promise.all(
       similarTemplates.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() }))
-        .filter((t) => t.id !== templateId)
-        .map(async (t) => ({
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(t => t.id !== templateId)
+        .map(async t => ({
           templateId: t.id,
           score: await this.calculateSimilarity(template, t),
           reasons: this.getSimilarityReasons(template, t),
@@ -105,7 +113,7 @@ export class TemplateRecommendationService {
     );
 
     return scored
-      .filter((s) => s.score >= this.SIMILARITY_THRESHOLD)
+      .filter(s => s.score >= this.SIMILARITY_THRESHOLD)
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
   }
@@ -120,7 +128,10 @@ export class TemplateRecommendationService {
     const timeframe = options.timeframe || 'week';
     const startDate = this.getStartDate(timeframe);
 
-    const queryConstraints = [where('isActive', '==', true), where('lastUsed', '>=', startDate)];
+    const queryConstraints = [
+      where('isActive', '==', true),
+      where('lastUsed', '>=', startDate),
+    ];
 
     if (options.category) {
       queryConstraints.push(where('categoryId', '==', options.category));
@@ -133,7 +144,7 @@ export class TemplateRecommendationService {
     const q = query(collection(this.db, 'templates'), ...queryConstraints);
     const templates = await getDocs(q);
 
-    const scored = templates.docs.map((doc) => {
+    const scored = templates.docs.map(doc => {
       const data = doc.data();
       const score = this.calculateTrendingScore(data, startDate);
       return {
@@ -146,7 +157,9 @@ export class TemplateRecommendationService {
       };
     });
 
-    return scored.sort((a, b) => b.score - a.score).slice(0, this.MAX_RECOMMENDATIONS);
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, this.MAX_RECOMMENDATIONS);
   }
 
   async getPersonalizedRecommendations(
@@ -167,14 +180,16 @@ export class TemplateRecommendationService {
       const categoryTemplates = await getDocs(categoryQuery);
 
       recommendations.push(
-        ...categoryTemplates.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-          templateId: doc.id,
-          score: this.calculatePersonalizedScore(doc.data(), userPrefs),
-          reasons: ['Based on your favorite categories'],
-          confidence: 0.8,
-          category: doc.data().categoryId,
-          tags: doc.data().tags || [],
-        }))
+        ...categoryTemplates.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => ({
+            templateId: doc.id,
+            score: this.calculatePersonalizedScore(doc.data(), userPrefs),
+            reasons: ['Based on your favorite categories'],
+            confidence: 0.8,
+            category: doc.data().categoryId,
+            tags: doc.data().tags || [],
+          })
+        )
       );
     }
 
@@ -189,14 +204,16 @@ export class TemplateRecommendationService {
       const tagTemplates = await getDocs(tagQuery);
 
       recommendations.push(
-        ...tagTemplates.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
-          templateId: doc.id,
-          score: this.calculatePersonalizedScore(doc.data(), userPrefs),
-          reasons: ['Based on your favorite tags'],
-          confidence: 0.7,
-          category: doc.data().categoryId,
-          tags: doc.data().tags || [],
-        }))
+        ...tagTemplates.docs.map(
+          (doc: QueryDocumentSnapshot<DocumentData>) => ({
+            templateId: doc.id,
+            score: this.calculatePersonalizedScore(doc.data(), userPrefs),
+            reasons: ['Based on your favorite tags'],
+            confidence: 0.7,
+            category: doc.data().categoryId,
+            tags: doc.data().tags || [],
+          })
+        )
       );
     }
 
@@ -207,10 +224,17 @@ export class TemplateRecommendationService {
     userId: string,
     preferences: Partial<UserPreferences>
   ): Promise<void> {
-    await this.db.collection('userPreferences').doc(userId).set(preferences, { merge: true });
+    await this.db
+      .collection('userPreferences')
+      .doc(userId)
+      .set(preferences, { merge: true });
   }
 
-  async trackTemplateUsage(userId: string, templateId: string, success: boolean): Promise<void> {
+  async trackTemplateUsage(
+    userId: string,
+    templateId: string,
+    success: boolean
+  ): Promise<void> {
     const usage = {
       templateId,
       timestamp: new Date(),
@@ -238,10 +262,14 @@ export class TemplateRecommendationService {
     ]);
   }
 
-  private async getTemplate(templateId: string): Promise<ContentTemplate | null> {
+  private async getTemplate(
+    templateId: string
+  ): Promise<ContentTemplate | null> {
     const docRef = doc(this.db, 'templates', templateId);
     const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as ContentTemplate) : null;
+    return docSnap.exists()
+      ? ({ id: docSnap.id, ...docSnap.data() } as ContentTemplate)
+      : null;
   }
 
   private async getUserPreferences(userId: string): Promise<UserPreferences> {
@@ -262,7 +290,9 @@ export class TemplateRecommendationService {
     return docSnap.data() as UserPreferences;
   }
 
-  private async getRelevantTemplates(context: RecommendationContext): Promise<ContentTemplate[]> {
+  private async getRelevantTemplates(
+    context: RecommendationContext
+  ): Promise<ContentTemplate[]> {
     const queryConstraints = [where('isActive', '==', true)];
 
     if (context.currentCategory) {
@@ -280,7 +310,7 @@ export class TemplateRecommendationService {
     const q = query(collection(this.db, 'templates'), ...queryConstraints);
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => ({
+    return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     })) as ContentTemplate[];
@@ -291,7 +321,7 @@ export class TemplateRecommendationService {
     userPrefs: UserPreferences,
     context: RecommendationContext
   ): Promise<TemplateRecommendation[]> {
-    return templates.map((template) => {
+    return templates.map(template => {
       const score = this.calculateScore(template, userPrefs, context);
       return {
         templateId: template.id,
@@ -317,13 +347,15 @@ export class TemplateRecommendationService {
     }
 
     // Tag matches
-    const tagMatches = (template.tags || []).filter((tag) =>
+    const tagMatches = (template.tags || []).filter(tag =>
       userPrefs.favoriteTags.includes(tag)
     ).length;
     score += tagMatches * 0.1;
 
     // Usage history
-    const usageCount = userPrefs.usageHistory.filter((u) => u.templateId === template.id).length;
+    const usageCount = userPrefs.usageHistory.filter(
+      u => u.templateId === template.id
+    ).length;
     score += Math.min(usageCount * 0.05, 0.2);
 
     // Success rate
@@ -348,12 +380,16 @@ export class TemplateRecommendationService {
       reasons.push('Matches your favorite category');
     }
 
-    const tagMatches = (template.tags || []).filter((tag) => userPrefs.favoriteTags.includes(tag));
+    const tagMatches = (template.tags || []).filter(tag =>
+      userPrefs.favoriteTags.includes(tag)
+    );
     if (tagMatches.length > 0) {
       reasons.push(`Matches ${tagMatches.length} of your favorite tags`);
     }
 
-    const usageCount = userPrefs.usageHistory.filter((u) => u.templateId === template.id).length;
+    const usageCount = userPrefs.usageHistory.filter(
+      u => u.templateId === template.id
+    ).length;
     if (usageCount > 0) {
       reasons.push(`You've used this template ${usageCount} times`);
     }
@@ -365,7 +401,10 @@ export class TemplateRecommendationService {
     return reasons;
   }
 
-  private calculateConfidence(template: any, _userPrefs: UserPreferences): number {
+  private calculateConfidence(
+    template: any,
+    _userPrefs: UserPreferences
+  ): number {
     let confidence = 0.5;
 
     // More usage = higher confidence
@@ -378,7 +417,10 @@ export class TemplateRecommendationService {
     return Math.min(confidence, 1);
   }
 
-  private async calculateSimilarity(template1: any, template2: any): Promise<number> {
+  private async calculateSimilarity(
+    template1: any,
+    template2: any
+  ): Promise<number> {
     let similarity = 0;
 
     // Category match
@@ -389,7 +431,7 @@ export class TemplateRecommendationService {
     // Tag similarity
     const tags1 = new Set(template1.tags || []);
     const tags2 = new Set(template2.tags || []);
-    const commonTags = new Set([...tags1].filter((tag) => tags2.has(tag)));
+    const commonTags = new Set([...tags1].filter(tag => tags2.has(tag)));
     similarity += (commonTags.size / Math.max(tags1.size, tags2.size)) * 0.3;
 
     // Content type match
@@ -414,7 +456,7 @@ export class TemplateRecommendationService {
 
     const tags1 = new Set(template1.tags || []);
     const tags2 = new Set(template2.tags || []);
-    const commonTags = new Set([...tags1].filter((tag) => tags2.has(tag)));
+    const commonTags = new Set([...tags1].filter(tag => tags2.has(tag)));
     if (commonTags.size > 0) {
       reasons.push(`${commonTags.size} common tags`);
     }
@@ -474,7 +516,9 @@ export class TemplateRecommendationService {
   }
 
   private getDaysSince(date: Date): number {
-    return Math.floor((new Date().getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.floor(
+      (new Date().getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+    );
   }
 
   private getStartDate(timeframe: 'day' | 'week' | 'month'): Date {
@@ -493,7 +537,10 @@ export class TemplateRecommendationService {
     return date;
   }
 
-  private calculatePersonalizedScore(template: any, userPrefs: UserPreferences): number {
+  private calculatePersonalizedScore(
+    template: any,
+    userPrefs: UserPreferences
+  ): number {
     let score = 0;
 
     // Category match
@@ -502,7 +549,7 @@ export class TemplateRecommendationService {
     }
 
     // Tag matches
-    const tagMatches = (template.tags || []).filter((tag) =>
+    const tagMatches = (template.tags || []).filter(tag =>
       userPrefs.favoriteTags.includes(tag)
     ).length;
     score += tagMatches * 0.1;

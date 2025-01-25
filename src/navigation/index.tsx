@@ -60,8 +60,8 @@ export const Navigation = () => {
   return (
     <NavigationContainer>
       <RootStack.Navigator>
-        <RootStack.Screen name='Auth' component={AuthNavigator} />
-        <RootStack.Screen name='Main' component={MainNavigator} />
+        <RootStack.Screen name="Auth" component={AuthNavigator} />
+        <RootStack.Screen name="Main" component={MainNavigator} />
       </RootStack.Navigator>
     </NavigationContainer>
   );
@@ -70,9 +70,12 @@ export const Navigation = () => {
 const AuthNavigator = () => {
   return (
     <AuthStack.Navigator>
-      <AuthStack.Screen name='SignIn' component={SignInScreen} />
-      <AuthStack.Screen name='SignUp' component={SignUpScreen} />
-      <AuthStack.Screen name='ForgotPassword' component={ForgotPasswordScreen} />
+      <AuthStack.Screen name="SignIn" component={SignInScreen} />
+      <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+      <AuthStack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+      />
     </AuthStack.Navigator>
   );
 };
@@ -80,15 +83,15 @@ const AuthNavigator = () => {
 const MainNavigator = () => {
   return (
     <MainStack.Navigator>
-      <MainStack.Screen name='Tabs' component={TabNavigator} />
-      <MainStack.Screen name='Profile' component={ProfileScreen} />
-      <MainStack.Screen name='Post' component={PostScreen} />
-      <MainStack.Screen name='Settings' component={SettingsScreen} />
-      <MainStack.Screen name='EditProfile' component={EditProfileScreen} />
-      <MainStack.Screen name='Comments' component={CommentsScreen} />
-      <MainStack.Screen name='UserList' component={UserListScreen} />
-      <MainStack.Screen name='Chat' component={ChatScreen} />
-      <MainStack.Screen name='Messages' component={MessagesScreen} />
+      <MainStack.Screen name="Tabs" component={TabNavigator} />
+      <MainStack.Screen name="Profile" component={ProfileScreen} />
+      <MainStack.Screen name="Post" component={PostScreen} />
+      <MainStack.Screen name="Settings" component={SettingsScreen} />
+      <MainStack.Screen name="EditProfile" component={EditProfileScreen} />
+      <MainStack.Screen name="Comments" component={CommentsScreen} />
+      <MainStack.Screen name="UserList" component={UserListScreen} />
+      <MainStack.Screen name="Chat" component={ChatScreen} />
+      <MainStack.Screen name="Messages" component={MessagesScreen} />
     </MainStack.Navigator>
   );
 };
@@ -96,11 +99,14 @@ const MainNavigator = () => {
 const TabNavigator = () => {
   return (
     <BottomTab.Navigator>
-      <BottomTab.Screen name='HomeTab' component={HomeScreen} />
-      <BottomTab.Screen name='SearchTab' component={SearchScreen} />
-      <BottomTab.Screen name='CreateTab' component={CreatePostScreen} />
-      <BottomTab.Screen name='NotificationsTab' component={NotificationsScreen} />
-      <BottomTab.Screen name='ProfileTab' component={ProfileScreen} />
+      <BottomTab.Screen name="HomeTab" component={HomeScreen} />
+      <BottomTab.Screen name="SearchTab" component={SearchScreen} />
+      <BottomTab.Screen name="CreateTab" component={CreatePostScreen} />
+      <BottomTab.Screen
+        name="NotificationsTab"
+        component={NotificationsScreen}
+      />
+      <BottomTab.Screen name="ProfileTab" component={ProfileScreen} />
     </BottomTab.Navigator>
   );
 };

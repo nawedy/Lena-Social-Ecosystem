@@ -72,7 +72,11 @@ export class ATProtocolCache {
     return data;
   }
 
-  public setCached<T>(key: string, data: T, options: Partial<CacheConfig> = {}): void {
+  public setCached<T>(
+    key: string,
+    data: T,
+    options: Partial<CacheConfig> = {}
+  ): void {
     const cacheKey = this.generateCacheKey(key);
     const now = Date.now();
     const ttl = options.ttl || this.cacheConfig.ttl;
@@ -118,7 +122,9 @@ export class ATProtocolCache {
 
     if (entry.count >= this.rateLimitConfig.maxRequests) {
       const waitTime = entry.windowStart + this.rateLimitConfig.windowMs - now;
-      throw new Error(`Rate limit exceeded. Please wait ${Math.ceil(waitTime / 1000)} seconds.`);
+      throw new Error(
+        `Rate limit exceeded. Please wait ${Math.ceil(waitTime / 1000)} seconds.`
+      );
     }
 
     // Increment counter
@@ -127,7 +133,10 @@ export class ATProtocolCache {
   }
 
   // Offline Support
-  public async getOfflineData<T>(key: string, fetchFn: () => Promise<T>): Promise<T> {
+  public async getOfflineData<T>(
+    key: string,
+    fetchFn: () => Promise<T>
+  ): Promise<T> {
     const cacheKey = this.generateCacheKey(key);
     const cached = this.cache.get(cacheKey);
 
@@ -143,13 +152,16 @@ export class ATProtocolCache {
   }
 
   // Real-time Updates
-  public async subscribeToUpdates(key: string, callback: (data: any) => void): Promise<() => void> {
+  public async subscribeToUpdates(
+    key: string,
+    callback: (data: any) => void
+  ): Promise<() => void> {
     // Subscribe to real-time updates using AT Protocol's subscription mechanism
     const subscription = await this.agent.api.app.bsky.feed.subscribeToUpdates({
       filter: { key },
     });
 
-    subscription.on('update', (data) => {
+    subscription.on('update', data => {
       // Update cache
       this.setCached(key, data);
       // Notify callback

@@ -21,7 +21,9 @@ export class AutoReplyService {
   }
 
   // Store auto-reply rules using AT Protocol's repo
-  public async saveRule(rule: Omit<AutoReplyRule, 'id'>): Promise<AutoReplyRule> {
+  public async saveRule(
+    rule: Omit<AutoReplyRule, 'id'>
+  ): Promise<AutoReplyRule> {
     const ruleWithId = {
       ...rule,
       id: crypto.randomUUID(),
@@ -44,13 +46,13 @@ export class AutoReplyService {
       collection: 'app.bsky.actor.autoReply',
     });
 
-    return response.data.records.map((record) => record.value as AutoReplyRule);
+    return response.data.records.map(record => record.value as AutoReplyRule);
   }
 
   // Process incoming post for auto-replies
   public async processPost(post: AppBskyFeedDefs.FeedViewPost): Promise<void> {
     const rules = await this.getRules();
-    const enabledRules = rules.filter((rule) => rule.isEnabled);
+    const enabledRules = rules.filter(rule => rule.isEnabled);
 
     for (const rule of enabledRules) {
       if (await this.shouldTriggerRule(rule, post)) {
@@ -72,19 +74,20 @@ export class AutoReplyService {
 
       case 'mention':
         return (
-          post.post.record.facets?.some((facet) =>
+          post.post.record.facets?.some(facet =>
             facet.features?.some(
-              (feature) =>
-                feature.$type === 'app.bsky.richtext.facet#mention' && feature.did === trigger
+              feature =>
+                feature.$type === 'app.bsky.richtext.facet#mention' &&
+                feature.did === trigger
             )
           ) ?? false
         );
 
       case 'hashtag':
         return (
-          post.post.record.facets?.some((facet) =>
+          post.post.record.facets?.some(facet =>
             facet.features?.some(
-              (feature) =>
+              feature =>
                 feature.$type === 'app.bsky.richtext.facet#tag' &&
                 feature.tag.toLowerCase() === trigger
             )
@@ -94,7 +97,7 @@ export class AutoReplyService {
       case 'userGroup': {
         // Check if the post author is in the specified user group
         const userGroups = await this.getUserGroups();
-        const group = userGroups.find((g) => g.id === trigger);
+        const group = userGroups.find(g => g.id === trigger);
         return group?.members.includes(post.post.author.did) ?? false;
       }
 
@@ -138,7 +141,7 @@ export class AutoReplyService {
       collection: 'app.bsky.graph.list',
     });
 
-    return response.data.records.map((record) => ({
+    return response.data.records.map(record => ({
       id: record.value.id,
       members: record.value.members,
     }));

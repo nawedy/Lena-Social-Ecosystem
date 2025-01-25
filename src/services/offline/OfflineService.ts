@@ -81,7 +81,7 @@ export class OfflineService {
   }
 
   private setupNetworkMonitoring(): void {
-    NetInfo.addEventListener((state) => {
+    NetInfo.addEventListener(state => {
       const wasOffline = !this.isOnline;
       this.isOnline = state.isConnected;
 
@@ -107,7 +107,10 @@ export class OfflineService {
     }
   }
 
-  public async queueAction(type: string, payload: Record<string, unknown>): Promise<void> {
+  public async queueAction(
+    type: string,
+    payload: Record<string, unknown>
+  ): Promise<void> {
     const trace = await performanceMonitor.startTrace('offline_queue_action');
     try {
       const action: OfflineAction = {
@@ -155,10 +158,10 @@ export class OfflineService {
           this.actionQueue.dequeue();
 
           // Remove from SQLite
-          await this.db.executeSql('DELETE FROM offline_actions WHERE type = ? AND timestamp = ?', [
-            action.type,
-            action.timestamp,
-          ]);
+          await this.db.executeSql(
+            'DELETE FROM offline_actions WHERE type = ? AND timestamp = ?',
+            [action.type, action.timestamp]
+          );
         } catch (_error) {
           action.retryCount++;
 
@@ -210,7 +213,10 @@ export class OfflineService {
     console.error('Action failed after max retries:', action);
   }
 
-  public async saveOfflineData(key: string, value: Record<string, unknown>): Promise<void> {
+  public async saveOfflineData(
+    key: string,
+    value: Record<string, unknown>
+  ): Promise<void> {
     const trace = await performanceMonitor.startTrace('offline_save_data');
     try {
       const timestamp = Date.now();
@@ -248,9 +254,10 @@ export class OfflineService {
       }
 
       // Try SQLite
-      const [results] = await this.db.executeSql('SELECT value FROM offline_data WHERE key = ?', [
-        key,
-      ]);
+      const [results] = await this.db.executeSql(
+        'SELECT value FROM offline_data WHERE key = ?',
+        [key]
+      );
 
       if (results.rows.length > 0) {
         const data = JSON.parse(results.rows.item(0).value);

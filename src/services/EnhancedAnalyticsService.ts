@@ -147,29 +147,41 @@ export class EnhancedAnalyticsService {
     predictions: PredictiveInsight[];
   }> {
     // Validate access
-    await this.rbac.validateAccess(userId, 'system', Permission.VIEW_CONSOLIDATED_ANALYTICS);
+    await this.rbac.validateAccess(
+      userId,
+      'system',
+      Permission.VIEW_CONSOLIDATED_ANALYTICS
+    );
 
     // Get accessible accounts
-    const accounts = await this.rbac.getAccessibleAccounts(userId, Permission.VIEW_ANALYTICS);
+    const accounts = await this.rbac.getAccessibleAccounts(
+      userId,
+      Permission.VIEW_ANALYTICS
+    );
 
     if (filter?.accounts) {
       // Validate user has access to filtered accounts
-      const invalidAccounts = filter.accounts.filter((account) => !accounts.includes(account));
+      const invalidAccounts = filter.accounts.filter(
+        account => !accounts.includes(account)
+      );
       if (invalidAccounts.length > 0) {
-        throw new Error(`User does not have access to accounts: ${invalidAccounts.join(', ')}`);
+        throw new Error(
+          `User does not have access to accounts: ${invalidAccounts.join(', ')}`
+        );
       }
     }
 
     const targetAccounts = filter?.accounts || accounts;
 
     // Fetch data for all accounts in parallel
-    const [metrics, content, audience, competitors, predictions] = await Promise.all([
-      this.getConsolidatedMetrics(targetAccounts, timeframe, filter),
-      this.getConsolidatedContent(targetAccounts, timeframe, filter),
-      this.getAudienceInsights(targetAccounts, timeframe, filter),
-      this.getCompetitorAnalysis(targetAccounts, timeframe, filter),
-      this.getPredictiveInsights(targetAccounts, timeframe, filter),
-    ]);
+    const [metrics, content, audience, competitors, predictions] =
+      await Promise.all([
+        this.getConsolidatedMetrics(targetAccounts, timeframe, filter),
+        this.getConsolidatedContent(targetAccounts, timeframe, filter),
+        this.getAudienceInsights(targetAccounts, timeframe, filter),
+        this.getCompetitorAnalysis(targetAccounts, timeframe, filter),
+        this.getPredictiveInsights(targetAccounts, timeframe, filter),
+      ]);
 
     return {
       metrics,
@@ -186,7 +198,9 @@ export class EnhancedAnalyticsService {
     filter?: AnalyticsFilter
   ): Promise<AnalyticsMetric[]> {
     const metrics = await Promise.all(
-      accounts.map((account) => this.analytics.getMetrics(account, timeframe, filter))
+      accounts.map(account =>
+        this.analytics.getMetrics(account, timeframe, filter)
+      )
     );
 
     // Aggregate metrics across accounts
@@ -202,7 +216,9 @@ export class EnhancedAnalyticsService {
     filter?: AnalyticsFilter
   ): Promise<ContentPerformance[]> {
     const content = await Promise.all(
-      accounts.map((account) => this.analytics.getContentPerformance(account, timeframe, filter))
+      accounts.map(account =>
+        this.analytics.getContentPerformance(account, timeframe, filter)
+      )
     );
 
     // Merge content from all accounts
@@ -218,7 +234,9 @@ export class EnhancedAnalyticsService {
     filter?: AnalyticsFilter
   ): Promise<AudienceInsight[]> {
     const audiences = await Promise.all(
-      accounts.map((account) => this.analytics.getAudienceInsights(account, timeframe, filter))
+      accounts.map(account =>
+        this.analytics.getAudienceInsights(account, timeframe, filter)
+      )
     );
 
     // Aggregate audience data
@@ -234,7 +252,9 @@ export class EnhancedAnalyticsService {
     filter?: AnalyticsFilter
   ): Promise<CompetitorAnalysis[]> {
     const competitors = await Promise.all(
-      accounts.map((account) => this.analytics.getCompetitorAnalysis(account, timeframe, filter))
+      accounts.map(account =>
+        this.analytics.getCompetitorAnalysis(account, timeframe, filter)
+      )
     );
 
     // Merge competitor data
@@ -250,7 +270,9 @@ export class EnhancedAnalyticsService {
     filter?: AnalyticsFilter
   ): Promise<PredictiveInsight[]> {
     const predictions = await Promise.all(
-      accounts.map((account) => this.analytics.getPredictiveInsights(account, timeframe, filter))
+      accounts.map(account =>
+        this.analytics.getPredictiveInsights(account, timeframe, filter)
+      )
     );
 
     // Aggregate predictions
@@ -266,7 +288,10 @@ export class EnhancedAnalyticsService {
     return [];
   }
 
-  private enrichMetrics(_metrics: any[], _timeframe: AnalyticsTimeframe): AnalyticsMetric[] {
+  private enrichMetrics(
+    _metrics: any[],
+    _timeframe: AnalyticsTimeframe
+  ): AnalyticsMetric[] {
     // Implementation
     return [];
   }

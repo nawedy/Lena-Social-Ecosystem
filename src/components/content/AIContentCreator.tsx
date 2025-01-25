@@ -40,21 +40,30 @@ interface QuotaCheckResult {
   error?: string;
 }
 
-export function AIContentCreator({ userId, onContentGenerated }: AIContentCreatorProps) {
+export function AIContentCreator({
+  userId,
+  onContentGenerated,
+}: AIContentCreatorProps) {
   const { t } = useTranslation();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ContentType>('text');
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [generatedContent, setGeneratedContent] =
+    useState<GeneratedContent | null>(null);
   const [contentStyle, setContentStyle] = useState('');
   const [error, setError] = useState<ContentGenerationError | null>(null);
 
   const _contentGenService = ContentGenerationService.getInstance();
   const _apiUsageService = APIUsageService.getInstance();
 
-  const _checkQuota = async (provider: AIProvider): Promise<QuotaCheckResult> => {
+  const _checkQuota = async (
+    provider: AIProvider
+  ): Promise<QuotaCheckResult> => {
     try {
-      const quota: UsageQuota = await apiUsageService.checkQuota(userId, provider);
+      const quota: UsageQuota = await apiUsageService.checkQuota(
+        userId,
+        provider
+      );
       if (!quota.hasQuota) {
         Alert.window.alert(t('error'), t('errors.quotaExceeded'), [
           {
@@ -69,7 +78,8 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       }
       return { hasQuota: true, remainingQuota: quota.remaining };
     } catch (err) {
-      const _error = err instanceof Error ? err : new Error('Failed to check quota');
+      const _error =
+        err instanceof Error ? err : new Error('Failed to check quota');
       console.error('Error checking quota:', error);
       return { hasQuota: false, error: error.message };
     }
@@ -82,7 +92,13 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
     cost: number
   ): Promise<void> => {
     try {
-      await apiUsageService.trackUsage(userId, provider, operation, units, cost);
+      await apiUsageService.trackUsage(
+        userId,
+        provider,
+        operation,
+        units,
+        cost
+      );
     } catch (err) {
       console.error('Error tracking usage:', err);
       // Don't throw here, just log the error as this is not critical
@@ -112,8 +128,16 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       let content: GeneratedContent;
       switch (activeTab) {
         case 'text':
-          content = await contentGenService.generateCaption(prompt, contentStyle);
-          await trackUsage(provider, 'generateCaption', prompt.length, 0.002 * prompt.length);
+          content = await contentGenService.generateCaption(
+            prompt,
+            contentStyle
+          );
+          await trackUsage(
+            provider,
+            'generateCaption',
+            prompt.length,
+            0.002 * prompt.length
+          );
           break;
 
         case 'image':
@@ -123,7 +147,12 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
 
         case 'video':
           content = await contentGenService.generateVideoIdeas(prompt);
-          await trackUsage(provider, 'generateVideoIdeas', prompt.length, 0.002 * prompt.length);
+          await trackUsage(
+            provider,
+            'generateVideoIdeas',
+            prompt.length,
+            0.002 * prompt.length
+          );
           break;
 
         default:
@@ -167,7 +196,7 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
               /* Copy to clipboard */
             }}
           >
-            <Ionicons name='copy-outline' size={20} color='#007AFF' />
+            <Ionicons name="copy-outline" size={20} color="#007AFF" />
           </TouchableOpacity>
         </View>
       )}
@@ -187,7 +216,7 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
           <Image
             source={{ uri: generatedContent.image }}
             style={styles.generatedImage}
-            resizeMode='contain'
+            resizeMode="contain"
           />
           <TouchableOpacity
             style={styles.downloadButton}
@@ -195,8 +224,10 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
               /* Download image */
             }}
           >
-            <Ionicons name='download-outline' size={20} color='#fff' />
-            <Text style={styles.downloadButtonText}>{t('contentCreator.download')}</Text>
+            <Ionicons name="download-outline" size={20} color="#fff" />
+            <Text style={styles.downloadButtonText}>
+              {t('contentCreator.download')}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -215,7 +246,7 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
                 onPress={() => onContentGenerated({ videoIdeas: [idea] })}
               >
                 <Text style={styles.ideaText}>{idea}</Text>
-                <Ionicons name='chevron-forward' size={20} color='#666' />
+                <Ionicons name="chevron-forward" size={20} color="#666" />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -231,19 +262,31 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
           style={[styles.tab, activeTab === 'text' && styles.activeTab]}
           onPress={() => setActiveTab('text')}
         >
-          <Ionicons name='text' size={24} color={activeTab === 'text' ? '#007AFF' : '#666'} />
+          <Ionicons
+            name="text"
+            size={24}
+            color={activeTab === 'text' ? '#007AFF' : '#666'}
+          />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'image' && styles.activeTab]}
           onPress={() => setActiveTab('image')}
         >
-          <Ionicons name='image' size={24} color={activeTab === 'image' ? '#007AFF' : '#666'} />
+          <Ionicons
+            name="image"
+            size={24}
+            color={activeTab === 'image' ? '#007AFF' : '#666'}
+          />
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'video' && styles.activeTab]}
           onPress={() => setActiveTab('video')}
         >
-          <Ionicons name='videocam' size={24} color={activeTab === 'video' ? '#007AFF' : '#666'} />
+          <Ionicons
+            name="videocam"
+            size={24}
+            color={activeTab === 'video' ? '#007AFF' : '#666'}
+          />
         </TouchableOpacity>
       </View>
 
@@ -256,16 +299,21 @@ export function AIContentCreator({ userId, onContentGenerated }: AIContentCreato
       />
 
       <TouchableOpacity
-        style={[styles.generateButton, loading && styles.generateButtonDisabled]}
+        style={[
+          styles.generateButton,
+          loading && styles.generateButtonDisabled,
+        ]}
         onPress={debouncedGenerate}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color='#fff' />
+          <ActivityIndicator color="#fff" />
         ) : (
           <>
-            <Ionicons name='flash' size={20} color='#fff' />
-            <Text style={styles.generateButtonText}>{t('contentCreator.generate')}</Text>
+            <Ionicons name="flash" size={20} color="#fff" />
+            <Text style={styles.generateButtonText}>
+              {t('contentCreator.generate')}
+            </Text>
           </>
         )}
       </TouchableOpacity>

@@ -16,7 +16,11 @@ const bucket = storage.bucket(config.gcp.storageBucket);
 const multerStorage = multer.memoryStorage();
 
 // Configure file filter for video uploads
-const fileFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+const fileFilter = (
+  _req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+) => {
   // Accept video files only
   if (file.mimetype.startsWith('video/')) {
     cb(null, true);
@@ -35,7 +39,11 @@ const upload = multer({
 });
 
 // Middleware to handle file upload to Google Cloud Storage
-export const uploadToGCS = async (req: Request, _res: Response, next: NextFunction) => {
+export const uploadToGCS = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
   try {
     if (!req.file) {
       throw new Error('No file uploaded');
@@ -49,7 +57,7 @@ export const uploadToGCS = async (req: Request, _res: Response, next: NextFuncti
       },
     });
 
-    blobStream.on('error', (err) => {
+    blobStream.on('error', err => {
       next(err);
     });
 

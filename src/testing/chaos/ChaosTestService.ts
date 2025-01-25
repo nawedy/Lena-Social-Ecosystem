@@ -116,7 +116,10 @@ export class ChaosTestService {
       await this.scheduleCPUStress(duration, intensity);
 
       // Schedule service failures
-      if (targetServices.includes('all') || targetServices.includes('services')) {
+      if (
+        targetServices.includes('all') ||
+        targetServices.includes('services')
+      ) {
         await this.scheduleServiceFailures(duration, intensity);
       }
 
@@ -130,7 +133,10 @@ export class ChaosTestService {
     }
   }
 
-  private async scheduleNetworkChaos(_duration: number, intensity: string): Promise<void> {
+  private async scheduleNetworkChaos(
+    _duration: number,
+    intensity: string
+  ): Promise<void> {
     const event: ChaosEvent = {
       type: 'NETWORK_CHAOS',
       target: 'network',
@@ -147,7 +153,10 @@ export class ChaosTestService {
     // - Simulate bandwidth constraints
   }
 
-  private async scheduleMemoryPressure(_duration: number, intensity: string): Promise<void> {
+  private async scheduleMemoryPressure(
+    _duration: number,
+    intensity: string
+  ): Promise<void> {
     const event: ChaosEvent = {
       type: 'MEMORY_PRESSURE',
       target: 'memory',
@@ -164,7 +173,10 @@ export class ChaosTestService {
     // - Force garbage collection
   }
 
-  private async scheduleCPUStress(_duration: number, intensity: string): Promise<void> {
+  private async scheduleCPUStress(
+    _duration: number,
+    intensity: string
+  ): Promise<void> {
     const event: ChaosEvent = {
       type: 'CPU_STRESS',
       target: 'cpu',
@@ -181,7 +193,10 @@ export class ChaosTestService {
     // - Create infinite loops
   }
 
-  private async scheduleServiceFailures(_duration: number, intensity: string): Promise<void> {
+  private async scheduleServiceFailures(
+    _duration: number,
+    intensity: string
+  ): Promise<void> {
     const event: ChaosEvent = {
       type: 'SERVICE_FAILURE',
       target: 'services',
@@ -308,7 +323,7 @@ export class ChaosTestService {
         testDuration: experiments[0]?.duration || 0,
         totalExperiments: experiments.length,
         metrics,
-        experiments: experiments.map((exp) => ({
+        experiments: experiments.map(exp => ({
           ...exp,
           status: exp.recovery ? 'recovered' : 'active',
         })),

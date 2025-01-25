@@ -36,7 +36,9 @@ class AdminService {
     return AdminService.instance;
   }
 
-  async getBetaStats(timeRange: 'day' | 'week' | 'month' = 'day'): Promise<BetaStats> {
+  async getBetaStats(
+    timeRange: 'day' | 'week' | 'month' = 'day'
+  ): Promise<BetaStats> {
     const timeFilter = {
       day: "interval '24 hours'",
       week: "interval '7 days'",
@@ -44,25 +46,26 @@ class AdminService {
     }[timeRange];
 
     try {
-      const [userStats, postStats, feedbackStats, featureStats] = await Promise.all([
-        query(`
+      const [userStats, postStats, feedbackStats, featureStats] =
+        await Promise.all([
+          query(`
           SELECT 
             COUNT(DISTINCT did) as active_users
           FROM beta_users
           WHERE last_active_at > NOW() - ${timeFilter}
         `),
-        query(`
+          query(`
           SELECT COUNT(*) as total_posts
           FROM at_protocol_analytics
           WHERE event_type = 'post_created'
           AND server_timestamp > NOW() - ${timeFilter}
         `),
-        query(`
+          query(`
           SELECT COUNT(*) as total_feedback
           FROM beta_feedback
           WHERE created_at > NOW() - ${timeFilter}
         `),
-        query(`
+          query(`
           SELECT 
             event_data->>'feature' as feature_name,
             COUNT(*) as usage_count
@@ -73,7 +76,7 @@ class AdminService {
           ORDER BY usage_count DESC
           LIMIT 5
         `),
-      ]);
+        ]);
 
       const activeUsers = parseInt(userStats.rows[0].active_users);
       const totalPosts = parseInt(postStats.rows[0].total_posts);
@@ -83,7 +86,7 @@ class AdminService {
         totalPosts,
         totalFeedback: parseInt(feedbackStats.rows[0].total_feedback),
         engagementRate: activeUsers ? totalPosts / activeUsers : 0,
-        topFeatures: featureStats.rows.map((row) => ({
+        topFeatures: featureStats.rows.map(row => ({
           name: row.feature_name,
           usage: parseInt(row.usage_count),
         })),
@@ -120,7 +123,7 @@ class AdminService {
 
   async takeModAction(action: ModAction) {
     try {
-      await transaction(async (client) => {
+      await transaction(async client => {
         // Record the action in our database
         await client.query(
           `
@@ -128,7 +131,13 @@ class AdminService {
           (type, target_did, reason, duration, evidence, created_at)
           VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
         `,
-          [action.type, action.targetDid, action.reason, action.duration, action.evidence]
+          [
+            action.type,
+            action.targetDid,
+            action.reason,
+            action.duration,
+            action.evidence,
+          ]
         );
 
         // Take action on AT Protocol

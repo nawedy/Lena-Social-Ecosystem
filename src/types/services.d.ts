@@ -17,23 +17,43 @@ declare module '*/services/AnalyticsService' {
 
 declare module '*/services/metrics' {
   export interface MetricsService {
-    recordMetric(name: string, value: number, labels?: Record<string, string>): void;
+    recordMetric(
+      name: string,
+      value: number,
+      labels?: Record<string, string>
+    ): void;
     getMetric(name: string): Promise<number>;
   }
 }
 
 declare module '*/services/logger' {
   export interface LoggerService {
-    info(message: string, context?: Record<string, string | number | boolean | Date>): void;
-    error(message: string, error?: Error, context?: Record<string, string | number | boolean | Date>): void;
-    warn(message: string, context?: Record<string, string | number | boolean | Date>): void;
-    debug(message: string, context?: Record<string, string | number | boolean | Date>): void;
+    info(
+      message: string,
+      context?: Record<string, string | number | boolean | Date>
+    ): void;
+    error(
+      message: string,
+      error?: Error,
+      context?: Record<string, string | number | boolean | Date>
+    ): void;
+    warn(
+      message: string,
+      context?: Record<string, string | number | boolean | Date>
+    ): void;
+    debug(
+      message: string,
+      context?: Record<string, string | number | boolean | Date>
+    ): void;
   }
 }
 
 declare module '*/services/database' {
   export type QueryParams = string | number | boolean | Date | null;
-  export type QueryResult = Record<string, string | number | boolean | Date | null>;
+  export type QueryResult = Record<
+    string,
+    string | number | boolean | Date | null
+  >;
 
   export interface DatabaseService {
     query(sql: string, params?: QueryParams[]): Promise<QueryResult[]>;
@@ -191,7 +211,10 @@ declare module '@sentry/node' {
     sampleRate?: number;
     tracesSampleRate?: number;
     maxValueLength?: number;
-    beforeSend?: (event: Event, hint?: EventHint) => Promise<Event | null> | Event | null;
+    beforeSend?: (
+      event: Event,
+      hint?: EventHint
+    ) => Promise<Event | null> | Event | null;
   }
 
   export interface Event {
@@ -249,7 +272,9 @@ declare module '@sentry/node' {
   export function init(options: SentryNodeConfig): void;
   export function captureException(error: Error): string;
   export function captureMessage(message: string): string;
-  export function setUser(user: { id: string; email?: string; username?: string } | null): void;
+  export function setUser(
+    user: { id: string; email?: string; username?: string } | null
+  ): void;
   export function setTag(key: string, value: string): void;
 }
 
@@ -369,8 +394,16 @@ declare module '*/services/event-bus' {
   }
 
   export interface EventBusService {
-    publish(event: string, data: Record<string, string | number | boolean | Date>): Promise<void>;
-    subscribe(event: string, handler: (data: Record<string, string | number | boolean | Date>) => Promise<void>): Promise<void>;
+    publish(
+      event: string,
+      data: Record<string, string | number | boolean | Date>
+    ): Promise<void>;
+    subscribe(
+      event: string,
+      handler: (
+        data: Record<string, string | number | boolean | Date>
+      ) => Promise<void>
+    ): Promise<void>;
     unsubscribe(event: string): Promise<void>;
   }
 }
@@ -392,10 +425,23 @@ declare module '*/services/cache' {
 
 declare module '*/services/logger' {
   export interface LoggerService {
-    info(message: string, context?: Record<string, string | number | boolean | Date>): void;
-    error(message: string, error?: Error, context?: Record<string, string | number | boolean | Date>): void;
-    warn(message: string, context?: Record<string, string | number | boolean | Date>): void;
-    debug(message: string, context?: Record<string, string | number | boolean | Date>): void;
+    info(
+      message: string,
+      context?: Record<string, string | number | boolean | Date>
+    ): void;
+    error(
+      message: string,
+      error?: Error,
+      context?: Record<string, string | number | boolean | Date>
+    ): void;
+    warn(
+      message: string,
+      context?: Record<string, string | number | boolean | Date>
+    ): void;
+    debug(
+      message: string,
+      context?: Record<string, string | number | boolean | Date>
+    ): void;
   }
 }
 
@@ -410,7 +456,11 @@ declare module '*/services/metrics' {
     increment(name: string, labels?: Record<string, string>): void;
     decrement(name: string, labels?: Record<string, string>): void;
     gauge(name: string, value: number, labels?: Record<string, string>): void;
-    histogram(name: string, value: number, labels?: Record<string, string>): void;
+    histogram(
+      name: string,
+      value: number,
+      labels?: Record<string, string>
+    ): void;
     summary(name: string, value: number, labels?: Record<string, string>): void;
   }
 }
@@ -424,7 +474,10 @@ declare module '*/services/tracing' {
   }
 
   export interface TracingService {
-    startSpan(name: string, options?: Record<string, string | number | boolean | Date>): TracingSpan;
+    startSpan(
+      name: string,
+      options?: Record<string, string | number | boolean | Date>
+    ): TracingSpan;
     getCurrentSpan(): TracingSpan | null;
     setCurrentSpan(span: TracingSpan): void;
   }
@@ -445,6 +498,9 @@ declare module '*/services/tracing' {
     status: 'unset' | 'ok' | 'error';
     end(endTime?: Date): void;
     setAttribute(key: string, value: string | number | boolean | Date): void;
-    addEvent(name: string, attributes?: Record<string, string | number | boolean | Date>): void;
+    addEvent(
+      name: string,
+      attributes?: Record<string, string | number | boolean | Date>
+    ): void;
   }
 }

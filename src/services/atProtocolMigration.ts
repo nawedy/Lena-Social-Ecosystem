@@ -1,6 +1,8 @@
 import { BskyAgent } from '@atproto/api';
 import { RichText } from '@atproto/api';
 
+import { config } from '../config';
+
 import { ATProtoService } from './atProtocolIntegration';
 
 export interface MigrationRecord {
@@ -34,6 +36,39 @@ export interface MigrationRecord {
   startedAt: string;
   completedAt?: string;
 }
+
+export class MigrationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MigrationError';
+  }
+}
+
+export class NetworkError extends Error {
+  constructor(
+    message: string,
+    public statusCode?: number
+  ) {
+    super(message);
+    this.name = 'NetworkError';
+  }
+}
+
+export class AuthenticationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthenticationError';
+  }
+}
+
+export class InvalidURLError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidURLError';
+  }
+}
+
+const MIGRATION_COLLECTION = 'app.bsky.migration.record';
 
 export class ATProtocolMigrationService {
   private atProto: ATProtoService;
@@ -75,8 +110,9 @@ export class ATProtocolMigrationService {
         cid: response.cid,
       };
     } catch (error) {
-      console.error('Failed to start migration:', error);
-      throw error;
+      const errorMessage = `Failed to start migration for user ${params.sourceUsername}: ${(error as Error).message}`;
+      console.error(errorMessage, error);
+      throw new MigrationError(errorMessage);
     }
   }
 
@@ -85,25 +121,33 @@ export class ATProtocolMigrationService {
   ): Promise<{ uri: string; cid: string }> {
     const session = this.atProto.getSession();
     if (!session) {
-      throw new Error('Not logged in');
+      throw new AuthenticationError('Not logged in');
     }
 
     try {
-      const response = await fetch('https://bsky.social/xrpc/com.atproto.repo.createRecord', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.accessJwt}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          repo: session.did,
-          collection: 'app.bsky.migration.record',
-          record,
-        }),
-      });
+      const response = await fetch(
+        `${config.atProtocol.server}/xrpc/com.atproto.repo.createRecord`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.accessJwt}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            repo: session.did,
+            collection: MIGRATION_COLLECTION,
+            record,
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Failed to create migration record: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorDetails = JSON.stringify(errorData);
+        throw new NetworkError(
+          `Failed to create migration record. Status: ${response.status}. Details: ${errorDetails}`,
+          response.status
+        );
       }
 
       const data = await response.json();
@@ -112,8 +156,9 @@ export class ATProtocolMigrationService {
         cid: data.cid,
       };
     } catch (error) {
-      console.error('Failed to create migration record:', error);
-      throw error;
+      const errorMessage = `Failed to create migration record: ${(error as Error).message}`;
+      console.error(errorMessage, error);
+      throw new MigrationError(errorMessage);
     }
   }
 
@@ -123,48 +168,66 @@ export class ATProtocolMigrationService {
   ): Promise<void> {
     const session = this.atProto.getSession();
     if (!session) {
-      throw new Error('Not logged in');
+      throw new AuthenticationError('Not logged in');
     }
 
     try {
       const rkey = migrationUri.split('/').pop();
       if (!rkey) {
-        throw new Error('Invalid migration URI');
+        throw new InvalidURLError('Invalid migration URI');
       }
-
-      const response = await fetch('https://bsky.social/xrpc/com.atproto.repo.putRecord', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.accessJwt}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          repo: session.did,
-          collection: 'app.bsky.migration.record',
-          rkey,
-          record: update,
-        }),
-      });
+      const response = await fetch(
+        `${config.atProtocol.server}/xrpc/com.atproto.repo.putRecord`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.accessJwt}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            repo: session.did,
+            collection: MIGRATION_COLLECTION,
+            rkey,
+            record: update,
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`Failed to update migration record: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorDetails = JSON.stringify(errorData);
+        throw new NetworkError(
+          `Failed to update migration record. Status: ${response.status}. Details: ${errorDetails}`,
+          response.status
+        );
       }
     } catch (error) {
-      console.error('Failed to update migration progress:', error);
-      throw error;
+      const errorMessage = `Failed to update migration progress for URI ${migrationUri}: ${(error as Error).message}`;
+      console.error(errorMessage, error);
+      throw new MigrationError(errorMessage);
     }
   }
 
   async getMigrationStatus(migrationUri: string): Promise<MigrationRecord> {
     try {
+      const parts = migrationUri.split('/');
+      if (parts.length < 2) {
+        throw new InvalidURLError(
+          `Invalid migration URI format: ${migrationUri}`
+        );
+      }
+      const repo = parts[0];
+      const rkey = parts.pop();
+      if (!rkey) {
+        throw new InvalidURLError('Invalid migration URI');
+      }
       const response = await fetch(
-        `https://bsky.social/xrpc/com.atproto.repo.getRecord?repo=${
-          migrationUri.split('/')[0]
-        }&collection=app.bsky.migration.record&rkey=${migrationUri.split('/').pop()}`
+        `${config.atProtocol.server}/xrpc/com.atproto.repo.getRecord?repo=${repo}&collection=${MIGRATION_COLLECTION}&rkey=${rkey}`
       );
-
       if (!response.ok) {
-        throw new Error(`Failed to get migration status: ${response.statusText}`);
+        throw new Error(
+          `Failed to get migration status: ${response.statusText}`
+        );
       }
 
       const data = await response.json();

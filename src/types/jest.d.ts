@@ -18,7 +18,7 @@ declare namespace jest {
       calls: Y[];
       instances: T[];
       invocationCallOrder: number[];
-      results: { type: "return" | "throw"; value: unknown }[];
+      results: { type: 'return' | 'throw'; value: unknown }[];
     };
   }
 
@@ -34,7 +34,10 @@ declare namespace jest {
   function spyOn<T extends {}, M extends keyof T>(
     object: T,
     method: M
-  ): Mock<T[M], T[M] extends (...args: unknown[]) => unknown ? Parameters<T[M]> : unknown[]>;
+  ): Mock<
+    T[M],
+    T[M] extends (...args: unknown[]) => unknown ? Parameters<T[M]> : unknown[]
+  >;
   function mock(moduleName: string): void;
 }
 
@@ -45,7 +48,9 @@ declare global {
   const afterEach: (fn: () => void | Promise<void>) => void;
   const it: (name: string, fn: () => void | Promise<void>) => void;
   const expect: {
-    <T = unknown>(actual: T): {
+    <T = unknown>(
+      actual: T
+    ): {
       toBe(expected: T): void;
       toEqual(expected: T): void;
       toBeNull(): void;

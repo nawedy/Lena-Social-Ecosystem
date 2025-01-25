@@ -122,7 +122,10 @@ export class TemplateSharingService {
       settings: shareData.settings,
     };
 
-    await setDoc(doc(this.db, 'templates', templateId, 'shares', shareId), share);
+    await setDoc(
+      doc(this.db, 'templates', templateId, 'shares', shareId),
+      share
+    );
 
     return share;
   }
@@ -212,12 +215,17 @@ export class TemplateSharingService {
     return docRef.id;
   }
 
-  async listShares(templateId: string): Promise<(TemplateShare & { active: boolean })[]> {
+  async listShares(
+    templateId: string
+  ): Promise<(TemplateShare & { active: boolean })[]> {
     const snapshot = await getDocs(
-      query(collection(this.db, 'templates', templateId, 'shares'), orderBy('sharedAt', 'desc'))
+      query(
+        collection(this.db, 'templates', templateId, 'shares'),
+        orderBy('sharedAt', 'desc')
+      )
     );
 
-    return snapshot.docs.map((doc) => {
+    return snapshot.docs.map(doc => {
       const share = { id: doc.id, ...doc.data() } as TemplateShare;
       return {
         ...share,
@@ -242,7 +250,10 @@ export class TemplateSharingService {
     });
   }
 
-  async trackSharedTemplateUsage(shareId: string, userId: string): Promise<void> {
+  async trackSharedTemplateUsage(
+    shareId: string,
+    userId: string
+  ): Promise<void> {
     const sharedRef = doc(this.db, 'sharedTemplates', shareId);
     const shared = await getDoc(sharedRef);
 
@@ -290,13 +301,13 @@ export class TemplateSharingService {
       query(collection(sharedRef, 'usage'), orderBy('timestamp', 'desc'))
     );
 
-    const usage = usageSnapshot.docs.map((doc) => ({
+    const usage = usageSnapshot.docs.map(doc => ({
       userId: doc.data().userId,
       timestamp: doc.data().timestamp.toDate(),
     }));
 
     // Calculate metrics
-    const uniqueUsers = new Set(usage.map((u) => u.userId)).size;
+    const uniqueUsers = new Set(usage.map(u => u.userId)).size;
     const usageByDay = this.aggregateUsageByDay(usage);
 
     return {
@@ -308,12 +319,17 @@ export class TemplateSharingService {
     };
   }
 
-  private aggregateUsageByDay(usage: { timestamp: Date }[]): { date: string; count: number }[] {
-    const byDay = usage.reduce((acc, curr) => {
-      const date = curr.timestamp.toISOString().split('T')[0];
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+  private aggregateUsageByDay(
+    usage: { timestamp: Date }[]
+  ): { date: string; count: number }[] {
+    const byDay = usage.reduce(
+      (acc, curr) => {
+        const date = curr.timestamp.toISOString().split('T')[0];
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return Object.entries(byDay).map(([date, count]) => ({
       date,

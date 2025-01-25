@@ -65,7 +65,8 @@ export class PerformanceMonitoringService {
 
   public static getInstance(): PerformanceMonitoringService {
     if (!PerformanceMonitoringService.instance) {
-      PerformanceMonitoringService.instance = new PerformanceMonitoringService();
+      PerformanceMonitoringService.instance =
+        new PerformanceMonitoringService();
     }
     return PerformanceMonitoringService.instance;
   }
@@ -99,7 +100,10 @@ export class PerformanceMonitoringService {
   }
 
   // Error Rate Monitoring
-  async recordError(error: Error, context?: Record<string, any>): Promise<void> {
+  async recordError(
+    error: Error,
+    context?: Record<string, any>
+  ): Promise<void> {
     // Report error to Error Reporting
     this.errorReporting.report(error, context);
 
@@ -224,7 +228,8 @@ export class PerformanceMonitoringService {
           displayName: `${params.metricName} ${params.condition} ${params.threshold}`,
           conditionThreshold: {
             filter: `metric.type = "custom.googleapis.com/${params.metricName}"`,
-            comparison: params.condition === 'above' ? 'COMPARISON_GT' : 'COMPARISON_LT',
+            comparison:
+              params.condition === 'above' ? 'COMPARISON_GT' : 'COMPARISON_LT',
             threshold: params.threshold,
             duration: params.duration,
             trigger: {
@@ -255,7 +260,7 @@ export class PerformanceMonitoringService {
     if (this.metricsBuffer.length === 0) return;
 
     const projectPath = this.monitoringClient.projectPath(config.gcp.projectId);
-    const timeSeries = this.metricsBuffer.map((metric) => ({
+    const timeSeries = this.metricsBuffer.map(metric => ({
       metric: {
         type: `custom.googleapis.com/${metric.name}`,
         labels: metric.labels || {},

@@ -62,7 +62,10 @@ export class SecurityAuditService {
     }
   }
 
-  public async logEvent(event: AuditEvent, _options: AuditOptions = {}): Promise<void> {
+  public async logEvent(
+    event: AuditEvent,
+    _options: AuditOptions = {}
+  ): Promise<void> {
     const trace = await performanceMonitor.startTrace('security_audit_log');
     try {
       // Enrich event with metadata
@@ -207,7 +210,9 @@ export class SecurityAuditService {
     endTime: number,
     filter?: any
   ): Promise<AuditEvent[]> {
-    const trace = await performanceMonitor.startTrace('security_audit_get_logs');
+    const trace = await performanceMonitor.startTrace(
+      'security_audit_get_logs'
+    );
     try {
       const [files] = await this.storage.bucket(this.bucketName).getFiles({
         prefix: startTime.toString(),
@@ -241,7 +246,10 @@ export class SecurityAuditService {
     });
   }
 
-  public async setAlertThreshold(eventType: string, threshold: number): Promise<void> {
+  public async setAlertThreshold(
+    eventType: string,
+    threshold: number
+  ): Promise<void> {
     this.alertThresholds.set(eventType, threshold);
   }
 

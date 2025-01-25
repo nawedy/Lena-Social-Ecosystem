@@ -183,7 +183,10 @@ declare module '@sentry/browser' {
   ): string;
   export function setUser(user: SentryUser | null): void;
   export function setTag(key: string, value: string): void;
-  export function setExtra(key: string, value: string | number | boolean | null): void;
+  export function setExtra(
+    key: string,
+    value: string | number | boolean | null
+  ): void;
   export function setContext(name: string, context: SentryContext | null): void;
   export function addBreadcrumb(breadcrumb: SentryBreadcrumb): void;
   export function configureScope(callback: (scope: SentryScope) => void): void;
@@ -201,8 +204,14 @@ declare module '@sentry/react-native' {
     enableAutoSessionTracking?: boolean;
     sessionTrackingIntervalMillis?: number;
     integrations?: any[];
-    beforeSend?: (event: Event, hint?: EventHint) => Promise<Event | null> | Event | null;
-    beforeBreadcrumb?: (breadcrumb: Breadcrumb, hint?: BreadcrumbHint) => Breadcrumb | null;
+    beforeSend?: (
+      event: Event,
+      hint?: EventHint
+    ) => Promise<Event | null> | Event | null;
+    beforeBreadcrumb?: (
+      breadcrumb: Breadcrumb,
+      hint?: BreadcrumbHint
+    ) => Breadcrumb | null;
   }
 
   export interface Event {
@@ -283,7 +292,11 @@ declare module '@sentry/react-native' {
 
   export interface Integration {
     name: string;
-    setupOnce(addGlobalEventProcessor: (callback: (event: Event) => Event | null) => void): void;
+    setupOnce(
+      addGlobalEventProcessor: (
+        callback: (event: Event) => Event | null
+      ) => void
+    ): void;
   }
 
   export interface Hub {
@@ -306,7 +319,10 @@ declare module '@sentry/react-native' {
   export function setUser(user: Record<string, unknown> | null): void;
   export function setTag(key: string, value: string): void;
   export function setExtra(key: string, extra: unknown): void;
-  export function setContext(name: string, context: Record<string, unknown> | null): void;
+  export function setContext(
+    name: string,
+    context: Record<string, unknown> | null
+  ): void;
   export function addBreadcrumb(breadcrumb: Record<string, unknown>): void;
   export function configureScope(callback: (scope: Hub) => void): void;
 }
@@ -393,9 +409,15 @@ declare module '@elastic/apm-rum' {
   }
 
   export function init(config: APMConfig): void;
-  export function setUserContext(user: Record<string, string | number | boolean>): void;
-  export function setCustomContext(context: Record<string, string | number | boolean>): void;
-  export function addLabels(labels: Record<string, string | number | boolean>): void;
+  export function setUserContext(
+    user: Record<string, string | number | boolean>
+  ): void;
+  export function setCustomContext(
+    context: Record<string, string | number | boolean>
+  ): void;
+  export function addLabels(
+    labels: Record<string, string | number | boolean>
+  ): void;
   export function startTransaction(name: string, type: string): Transaction;
   export function startSpan(name: string, type: string): Span;
   export function getCurrentTransaction(): Transaction | null;
@@ -461,7 +483,10 @@ declare module '@sentry/node' {
   export function setUser(user: Record<string, any> | null): void;
   export function setTag(key: string, value: string): void;
   export function setExtra(key: string, extra: any): void;
-  export function setContext(name: string, context: Record<string, any> | null): void;
+  export function setContext(
+    name: string,
+    context: Record<string, any> | null
+  ): void;
   export function addBreadcrumb(breadcrumb: Record<string, any>): void;
   export function configureScope(callback: (scope: any) => void): void;
 }
@@ -485,8 +510,14 @@ declare module '@sentry/browser' {
     enableAutoSessionTracking?: boolean;
     sessionTrackingIntervalMillis?: number;
     integrations?: SentryIntegration[];
-    beforeSend?: (event: Event, hint?: EventHint) => Promise<Event | null> | Event | null;
-    beforeBreadcrumb?: (breadcrumb: Breadcrumb, hint?: BreadcrumbHint) => Breadcrumb | null;
+    beforeSend?: (
+      event: Event,
+      hint?: EventHint
+    ) => Promise<Event | null> | Event | null;
+    beforeBreadcrumb?: (
+      breadcrumb: Breadcrumb,
+      hint?: BreadcrumbHint
+    ) => Breadcrumb | null;
   }
 
   interface SentryError {
@@ -535,8 +566,13 @@ declare module '@sentry/browser' {
     export function setUser(user: SentryUser | null): void;
     export function setTag(key: string, value: string): void;
     export function setExtra(key: string, value: unknown): void;
-    export function setContext(name: string, context: SentryContext | null): void;
+    export function setContext(
+      name: string,
+      context: SentryContext | null
+    ): void;
     export function addBreadcrumb(breadcrumb: SentryBreadcrumb): void;
-    export function configureScope(callback: (scope: SentryScope) => void): void;
+    export function configureScope(
+      callback: (scope: SentryScope) => void
+    ): void;
   }
 }

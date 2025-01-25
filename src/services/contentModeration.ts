@@ -64,7 +64,7 @@ export class ContentModerationService {
   private async loadModerationRules(): Promise<void> {
     try {
       const response = await this.agent.api.app.bsky.moderation.getRules();
-      response.rules.forEach((rule) => {
+      response.rules.forEach(rule => {
         this.moderationRules.set(rule.id, rule);
       });
     } catch (error) {
@@ -121,12 +121,15 @@ export class ContentModerationService {
         if (!rule.enabled) continue;
 
         if (rule.type === params.type) {
-          if (rule.pattern && new RegExp(rule.pattern, 'i').test(params.content)) {
+          if (
+            rule.pattern &&
+            new RegExp(rule.pattern, 'i').test(params.content)
+          ) {
             flags.push(`pattern_match:${rule.id}`);
           }
 
           if (
-            rule.keywords?.some((keyword) =>
+            rule.keywords?.some(keyword =>
               params.content.toLowerCase().includes(keyword.toLowerCase())
             )
           ) {
@@ -165,7 +168,9 @@ export class ContentModerationService {
     }
   }
 
-  private async analyzeText(_text: string): Promise<ContentAnalysis['analysis']> {
+  private async analyzeText(
+    _text: string
+  ): Promise<ContentAnalysis['analysis']> {
     // Implement text analysis using a content moderation API or ML model
     // This is a placeholder implementation
     return {
@@ -175,7 +180,9 @@ export class ContentModerationService {
     };
   }
 
-  private async analyzeImage(_imageUrl: string): Promise<ContentAnalysis['analysis']> {
+  private async analyzeImage(
+    _imageUrl: string
+  ): Promise<ContentAnalysis['analysis']> {
     // Implement image analysis using a computer vision API
     // This is a placeholder implementation
     return {
@@ -184,7 +191,9 @@ export class ContentModerationService {
     };
   }
 
-  private async analyzeVideo(_videoUrl: string): Promise<ContentAnalysis['analysis']> {
+  private async analyzeVideo(
+    _videoUrl: string
+  ): Promise<ContentAnalysis['analysis']> {
     // Implement video analysis using a video processing API
     // This is a placeholder implementation
     return {

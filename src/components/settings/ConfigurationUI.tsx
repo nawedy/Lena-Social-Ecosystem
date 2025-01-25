@@ -221,13 +221,13 @@ export function ConfigurationUI() {
           key: 'MAX_DAILY_COST',
           label: t('config.ai.maxDailyCost'),
           type: 'number',
-          validation: (value) => Number(value) > 0,
+          validation: value => Number(value) > 0,
         },
         {
           key: 'COST_ALERT_THRESHOLD',
           label: t('config.ai.costThreshold'),
           type: 'number',
-          validation: (value) => Number(value) > 0 && Number(value) <= 1,
+          validation: value => Number(value) > 0 && Number(value) <= 1,
         },
         {
           key: 'ENABLE_CONTENT_FILTERING',
@@ -238,7 +238,7 @@ export function ConfigurationUI() {
           key: 'FILTER_THRESHOLD',
           label: t('config.ai.filterThreshold'),
           type: 'number',
-          validation: (value) => Number(value) > 0 && Number(value) <= 1,
+          validation: value => Number(value) > 0 && Number(value) <= 1,
         },
       ],
     },
@@ -290,8 +290,8 @@ export function ConfigurationUI() {
       // Separate secure and non-secure configs
       Object.entries(config).forEach(([key, value]) => {
         const _field = configSections
-          .flatMap((section) => section.fields)
-          .find((f) => f.key === key);
+          .flatMap(section => section.fields)
+          .find(f => f.key === key);
 
         if (field?.secure) {
           secureConfig[key] = value;
@@ -340,21 +340,23 @@ export function ConfigurationUI() {
 
   const _handleFieldChange = (key: string, value: any, field: ConfigField) => {
     const _error = validateField(field, value);
-    setErrors((prev) => ({
+    setErrors(prev => ({
       ...prev,
       [key]: error || '',
     }));
 
-    setConfig((prev) => ({
+    setConfig(prev => ({
       ...prev,
       [key]: value,
     }));
   };
 
   const _filteredSections = configSections.filter(
-    (section) =>
+    section =>
       section.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      section.fields.some((field) => field.label.toLowerCase().includes(searchQuery.toLowerCase()))
+      section.fields.some(field =>
+        field.label.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
   const _renderField = (field: ConfigField) => {
@@ -364,19 +366,28 @@ export function ConfigurationUI() {
     switch (field.type) {
       case 'boolean':
         return (
-          <Switch value={value} onValueChange={(v) => handleFieldChange(field.key, v, field)} />
+          <Switch
+            value={value}
+            onValueChange={v => handleFieldChange(field.key, v, field)}
+          />
         );
       case 'select':
         return (
           <View style={styles.selectContainer}>
-            {field.options?.map((option) => (
+            {field.options?.map(option => (
               <TouchableOpacity
                 key={option}
-                style={[styles.selectOption, value === option && styles.selectedOption]}
+                style={[
+                  styles.selectOption,
+                  value === option && styles.selectedOption,
+                ]}
                 onPress={() => handleFieldChange(field.key, option, field)}
               >
                 <Text
-                  style={[styles.selectOptionText, value === option && styles.selectedOptionText]}
+                  style={[
+                    styles.selectOptionText,
+                    value === option && styles.selectedOptionText,
+                  ]}
                 >
                   {option}
                 </Text>
@@ -389,7 +400,7 @@ export function ConfigurationUI() {
           <TextInput
             style={[styles.input, error && styles.inputError]}
             value={value?.toString()}
-            onChangeText={(v) => handleFieldChange(field.key, v, field)}
+            onChangeText={v => handleFieldChange(field.key, v, field)}
             secureTextEntry={field.type === 'password'}
             keyboardType={field.type === 'number' ? 'numeric' : 'default'}
             placeholder={field.placeholder}
@@ -402,7 +413,9 @@ export function ConfigurationUI() {
     <View style={styles.metricsContainer}>
       <View style={styles.metricCard}>
         <Text style={styles.metricLabel}>{t('config.ai.dailyCost')}</Text>
-        <Text style={styles.metricValue}>${(metrics?.dailyAICost || 0).toFixed(2)}</Text>
+        <Text style={styles.metricValue}>
+          ${(metrics?.dailyAICost || 0).toFixed(2)}
+        </Text>
         <ProgressBar
           progress={metrics?.costUsagePercent || 0}
           color={getCostColor(metrics?.costUsagePercent || 0)}
@@ -410,7 +423,9 @@ export function ConfigurationUI() {
       </View>
       <View style={styles.metricCard}>
         <Text style={styles.metricLabel}>{t('config.ai.successRate')}</Text>
-        <Text style={styles.metricValue}>{(metrics?.aiSuccessRate || 0).toFixed(1)}%</Text>
+        <Text style={styles.metricValue}>
+          {(metrics?.aiSuccessRate || 0).toFixed(1)}%
+        </Text>
         <ProgressBar
           progress={metrics?.aiSuccessRate || 0}
           color={getSuccessColor(metrics?.aiSuccessRate || 0)}
@@ -421,20 +436,27 @@ export function ConfigurationUI() {
 
   const _renderProviderStatus = () => (
     <View style={styles.statusContainer}>
-      {Object.entries(metrics?.providerStatus || {}).map(([provider, status]) => (
-        <View key={provider} style={styles.statusItem}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor(status) }]} />
-          <Text style={styles.statusLabel}>{provider}</Text>
-          <Text style={styles.statusValue}>{getStatusText(status)}</Text>
-        </View>
-      ))}
+      {Object.entries(metrics?.providerStatus || {}).map(
+        ([provider, status]) => (
+          <View key={provider} style={styles.statusItem}>
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: getStatusColor(status) },
+              ]}
+            />
+            <Text style={styles.statusLabel}>{provider}</Text>
+            <Text style={styles.statusValue}>{getStatusText(status)}</Text>
+          </View>
+        )
+      )}
     </View>
   );
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' color='#007AFF' />
+        <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
   }
@@ -452,30 +474,40 @@ export function ConfigurationUI() {
       </View>
 
       <ScrollView style={styles.content}>
-        {filteredSections.map((section) => (
+        {filteredSections.map(section => (
           <View key={section.id} style={styles.section}>
             <TouchableOpacity
               style={styles.sectionHeader}
-              onPress={() => setActiveSection(activeSection === section.id ? null : section.id)}
+              onPress={() =>
+                setActiveSection(
+                  activeSection === section.id ? null : section.id
+                )
+              }
             >
               <Text style={styles.sectionTitle}>{section.title}</Text>
               <Ionicons
-                name={activeSection === section.id ? 'chevron-up' : 'chevron-down'}
+                name={
+                  activeSection === section.id ? 'chevron-up' : 'chevron-down'
+                }
                 size={24}
-                color='#666'
+                color="#666"
               />
             </TouchableOpacity>
 
             {activeSection === section.id && (
               <View style={styles.sectionContent}>
-                {section.fields.map((field) => (
+                {section.fields.map(field => (
                   <View key={field.key} style={styles.fieldContainer}>
                     <Text style={styles.fieldLabel}>{field.label}</Text>
                     {renderField(field)}
                     {field.description && (
-                      <Text style={styles.fieldDescription}>{field.description}</Text>
+                      <Text style={styles.fieldDescription}>
+                        {field.description}
+                      </Text>
                     )}
-                    {errors[field.key] && <Text style={styles.errorText}>{errors[field.key]}</Text>}
+                    {errors[field.key] && (
+                      <Text style={styles.errorText}>{errors[field.key]}</Text>
+                    )}
                   </View>
                 ))}
               </View>
@@ -497,10 +529,10 @@ export function ConfigurationUI() {
         <TouchableOpacity
           style={[styles.button, styles.saveButton]}
           onPress={saveConfiguration}
-          disabled={saving || Object.keys(errors).some((key) => errors[key])}
+          disabled={saving || Object.keys(errors).some(key => errors[key])}
         >
           {saving ? (
-            <ActivityIndicator color='#fff' />
+            <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.buttonText}>{t('config.save')}</Text>
           )}

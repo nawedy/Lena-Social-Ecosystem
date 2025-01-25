@@ -14,9 +14,18 @@ const router = express.Router();
 
 // Search validation
 const searchValidation = [
-  query('q').trim().isLength({ min: 1 }).withMessage('Search query is required'),
-  query('type').optional().isIn(['users', 'videos', 'hashtags']).withMessage('Invalid search type'),
-  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+  query('q')
+    .trim()
+    .isLength({ min: 1 })
+    .withMessage('Search query is required'),
+  query('type')
+    .optional()
+    .isIn(['users', 'videos', 'hashtags'])
+    .withMessage('Invalid search type'),
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Page must be a positive integer'),
   query('limit')
     .optional()
     .isInt({ min: 1, max: 50 })

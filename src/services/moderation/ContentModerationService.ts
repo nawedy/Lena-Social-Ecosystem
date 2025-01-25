@@ -1,7 +1,12 @@
 import { BskyAgent } from '@atproto/api';
 
 import { moderationConfig } from '../../config/moderation';
-import { ModerationAction, ModerationReason, ModerationResult, ModeratedContent } from '../../types/moderation';
+import {
+  ModerationAction,
+  ModerationReason,
+  ModerationResult,
+  ModeratedContent,
+} from '../../types/moderation';
 import { logger } from '../../utils/logger';
 
 export class ContentModerationService {
@@ -59,7 +64,9 @@ export class ContentModerationService {
   /**
    * Apply moderation rules to content
    */
-  private async applyModerationRules(content: ModeratedContent): Promise<ModerationResult> {
+  private async applyModerationRules(
+    content: ModeratedContent
+  ): Promise<ModerationResult> {
     const violations: ModerationReason[] = [];
     let action: ModerationAction = 'allow';
     let confidence = 1.0;
@@ -83,7 +90,7 @@ export class ContentModerationService {
       if (await this.containsHarassment(content)) {
         violations.push('harassment');
         action = action === 'block' ? 'block' : 'flag';
-        confidence = Math.min(confidence, 0.90);
+        confidence = Math.min(confidence, 0.9);
       }
 
       // Check rate limits
@@ -115,12 +122,16 @@ export class ContentModerationService {
   /**
    * Check if content contains prohibited material
    */
-  private async containsProhibitedContent(content: ModeratedContent): Promise<boolean> {
+  private async containsProhibitedContent(
+    content: ModeratedContent
+  ): Promise<boolean> {
     try {
       const text = this.extractText(content);
       const prohibitedPatterns = moderationConfig.prohibitedPatterns || [];
 
-      return prohibitedPatterns.some((pattern) => new RegExp(pattern, 'i').test(text));
+      return prohibitedPatterns.some(pattern =>
+        new RegExp(pattern, 'i').test(text)
+      );
     } catch (error) {
       logger.error('Prohibited content check failed', { error });
       return false;
@@ -136,7 +147,9 @@ export class ContentModerationService {
       const spamPatterns = moderationConfig.spamPatterns || [];
 
       // Check for spam indicators
-      const hasSpamPattern = spamPatterns.some((pattern) => new RegExp(pattern, 'i').test(text));
+      const hasSpamPattern = spamPatterns.some(pattern =>
+        new RegExp(pattern, 'i').test(text)
+      );
 
       // Check for repetitive content
       const isRepetitive = this.isRepetitiveContent(text);
@@ -151,12 +164,16 @@ export class ContentModerationService {
   /**
    * Check if content contains harassment
    */
-  private async containsHarassment(content: ModeratedContent): Promise<boolean> {
+  private async containsHarassment(
+    content: ModeratedContent
+  ): Promise<boolean> {
     try {
       const text = this.extractText(content);
       const harassmentPatterns = moderationConfig.harassmentPatterns || [];
 
-      return harassmentPatterns.some((pattern) => new RegExp(pattern, 'i').test(text));
+      return harassmentPatterns.some(pattern =>
+        new RegExp(pattern, 'i').test(text)
+      );
     } catch (error) {
       logger.error('Harassment check failed', { error });
       return false;
@@ -179,7 +196,7 @@ export class ContentModerationService {
       if (!recentPosts.success) return false;
 
       const posts = recentPosts.data.feed;
-      const recentPostCount = posts.filter((post) => {
+      const recentPostCount = posts.filter(post => {
         const postTime = new Date(post.post.indexedAt).getTime();
         const hourAgo = Date.now() - 3600000;
         return postTime > hourAgo;

@@ -14,7 +14,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
     return <div>Loading...</div>;
   }
 
-  return currentUser ? <>{children}</> : <Navigate to='/login' />;
+  return currentUser ? <>{children}</> : <Navigate to="/login" />;
 };
 
 export default PrivateRoute;

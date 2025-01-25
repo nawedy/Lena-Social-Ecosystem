@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-
 import { useATProto } from '../../contexts/ATProtoContext';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 
@@ -47,7 +46,7 @@ export function FeedScreen() {
 
       try {
         const response = await agent.getTimeline({ cursor, limit: 20 });
-        const posts = response.data.feed.map((item) => ({
+        const posts = response.data.feed.map(item => ({
           uri: item.post.uri,
           cid: item.post.cid,
           author: item.post.author,
@@ -96,7 +95,7 @@ export function FeedScreen() {
 
     return (
       <View style={styles.footer}>
-        <ActivityIndicator size='large' color='#0000ff' />
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }, [loading]);
@@ -122,7 +121,10 @@ export function FeedScreen() {
         onEndReached={lastElementRef}
         ListFooterComponent={renderFooter}
         refreshControl={
-          <RefreshControl refreshing={loading && posts.length === 0} onRefresh={refresh} />
+          <RefreshControl
+            refreshing={loading && posts.length === 0}
+            onRefresh={refresh}
+          />
         }
       />
     </View>

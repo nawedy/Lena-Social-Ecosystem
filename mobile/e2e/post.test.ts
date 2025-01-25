@@ -1,19 +1,15 @@
 import { device, element, by, expect } from 'detox';
 
 describe('Post Creation Flow', () => {
-  beforeAll(async () => {
-    await device.launchApp();
-    // Login before running tests
-    await element(by.id('username-input')).typeText('test@example.com');
-    await element(by.id('password-input')).typeText('Test123!@#');
-    await element(by.id('login-button')).tap();
-  });
-
   beforeEach(async () => {
-    await device.reloadReactNative();
+        await device.launchApp();
+        await element(by.id('username-input')).typeText('test@example.com');
+        await element(by.id('password-input')).typeText('Test123!@#');
+        await element(by.id('login-button')).tap();
   });
 
   it('should open compose screen', async () => {
+    
     await element(by.id('compose-tab')).tap();
     await expect(element(by.id('compose-screen'))).toBeVisible();
     await expect(element(by.id('compose-title'))).toHaveText('Create Post');
@@ -122,4 +118,5 @@ describe('Post Creation Flow', () => {
     await element(by.id('save-draft-button')).tap();
     await expect(element(by.text('Draft saved'))).toBeVisible();
   });
+
 });

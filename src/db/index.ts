@@ -1,5 +1,7 @@
-import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { Pool } from 'pg';
+
+import { logger } from '../utils/logger';
 
 let pool: Pool;
 
@@ -21,8 +23,8 @@ export async function initializeDatabase() {
     logger.info('Database connection successful');
     client.release();
   } catch (err) {
-    console.error('Failed to connect to database:', err);
-    throw err;
+    logger.error(`Failed to connect to database: ${err.message}`, err);
+    throw new Error(`Failed to connect to database: ${err.message}`);
   }
 
   return pool;
@@ -30,14 +32,35 @@ export async function initializeDatabase() {
 
 async function getDatabaseConfig() {
   if (process.env.NODE_ENV === 'production') {
-    // In production, get credentials from Secret Manager
-    const client = new SecretsManagerClient({ region: 'us-central1' });
-    const command = new GetSecretValueCommand({
-      SecretId: process.env.DB_SECRET_NAME,
+    const gcpProjectId = process.env.GCP_PROJECT_ID;
+    const secretName = process.env.DB_SECRET_NAME;
+    const gcpRegion = process.env.GCP_REGION;
+
+    if (!gcpProjectId || !secretName || !gcpRegion) {
+      throw new Error(
+        'GCP_PROJECT_ID, DB_SECRET_NAME, and GCP_REGION environment variables must be set.'
+      );
+    }
+
+    const client = new SecretManagerServiceClient({
+      apiEndpoint: `${gcpRegion}-secretmanager.googleapis.com`,
     });
 
-    const response = await client.send(command);
-    const secret = JSON.parse(response.SecretString || '{}');
+    try {
+      const [version] = await client.accessSecretVersion({
+        name: `projects/${gcpProjectId}/secrets/${secretName}/versions/latest`,
+      });
+
+      if (!version.payload?.data) {
+        throw new Error('Secret data is not available.');
+      }
+      const secret = JSON.parse(version.payload.data.toString());
+    } catch (error) {
+      throw new Error(
+        `Failed to access secret from GCP Secret Manager: ${error.message}`
+      );
+    }
+    const secret = JSON.parse(response.SecretString);
 
     return {
       host: secret.host,
@@ -61,18 +84,29 @@ async function getDatabaseConfig() {
   }
 }
 
-export async function query(text: string, params?: any[]) {
-  const client = await pool.connect();
+export async function query(text: string, params?: any[]): Promise<any> {
+  let client;
   try {
+    client = await pool.connect();
     const result = await client.query(text, params);
     return result;
+  } catch (error) {
+    logger.error(`Database query failed: ${error.message}`, error);
+    throw new Error(`Database query failed: ${error.message}`);
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 
 export async function transaction<T>(callback: (client: any) => Promise<T>) {
-  const client = await pool.connect();
+  let client;
+  try {
+    client = await pool.connect();
+  } catch (error) {
+    throw new Error(
+      `Failed to connect to database in transaction: ${error.message}`
+    );
+  }
   try {
     await client.query('BEGIN');
     const result = await callback(client);
@@ -80,7 +114,8 @@ export async function transaction<T>(callback: (client: any) => Promise<T>) {
     return result;
   } catch (e) {
     await client.query('ROLLBACK');
-    throw e;
+    logger.error(`Database transaction failed: ${e.message}`, e);
+    throw new Error(`Database transaction failed: ${e.message}`);
   } finally {
     client.release();
   }

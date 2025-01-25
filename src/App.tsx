@@ -1,3 +1,4 @@
+// @ts-ignore
 import React from 'react';
 import { Platform } from 'react-native';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -9,7 +10,7 @@ import Home from './components/pages/Home';
 import Notifications from './components/pages/Notifications';
 import Profile from './components/pages/Profile';
 import Search from './components/pages/Search';
-import Settings from './components/pages/Settings';
+// import Settings from './components/pages/Settings';
 import { ATProtoProvider } from './contexts/ATProtoContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -32,7 +33,7 @@ const App: React.FC = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/profile/:userId" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
+                {/* <Route path="/settings" element={<Settings />} /> */}
                 <Route path="/create" element={<CreatePost />} />
                 <Route path="/notifications" element={<Notifications />} />
               </Routes>

@@ -19,12 +19,21 @@ const router = express.Router();
 const profileValidation = [
   body('displayName').optional().trim(),
   body('bio').optional().trim(),
-  body('profilePictureUrl').optional().isURL().withMessage('Must be a valid URL'),
+  body('profilePictureUrl')
+    .optional()
+    .isURL()
+    .withMessage('Must be a valid URL'),
 ];
 
 // User routes
 router.get('/profile/:username', getProfile);
-router.put('/profile', requireAuth, profileValidation, validateRequest, updateProfile);
+router.put(
+  '/profile',
+  requireAuth,
+  profileValidation,
+  validateRequest,
+  updateProfile
+);
 router.post('/:id/follow', requireAuth, followUser);
 router.delete('/:id/follow', requireAuth, unfollowUser);
 router.get('/:id/followers', getFollowers);

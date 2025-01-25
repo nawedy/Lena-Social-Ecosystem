@@ -15,7 +15,6 @@ import { LineChart, BarChart } from 'react-native-chart-kit';
 
 import { _admin } from '../../services/admin';
 
-
 interface FeedbackData {
   date: string;
   counts: Record<string, number>;

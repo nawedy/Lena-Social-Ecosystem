@@ -21,7 +21,9 @@ export class PushNotificationService {
 
   public async initialize(): Promise<void> {
     try {
-      const trace = await performanceMonitor.startTrace('push_notification_init');
+      const trace = await performanceMonitor.startTrace(
+        'push_notification_init'
+      );
 
       // Request permission
       const authStatus = await this.messaging.requestPermission();
@@ -35,7 +37,7 @@ export class PushNotificationService {
         await this.saveFCMToken(fcmToken);
 
         // Listen for token refresh
-        this.messaging.onTokenRefresh(async (token) => {
+        this.messaging.onTokenRefresh(async token => {
           await this.saveFCMToken(token);
         });
 
@@ -58,25 +60,25 @@ export class PushNotificationService {
 
   private setupNotificationHandlers(): void {
     // Handle background messages
-    this.messaging.setBackgroundMessageHandler(async (remoteMessage) => {
+    this.messaging.setBackgroundMessageHandler(async remoteMessage => {
       logger.info('Background message:', remoteMessage);
       await this.handleNotification(remoteMessage);
     });
 
     // Handle foreground messages
-    this.messaging.onMessage(async (remoteMessage) => {
+    this.messaging.onMessage(async remoteMessage => {
       logger.info('Foreground message:', remoteMessage);
       await this.handleNotification(remoteMessage);
     });
 
     // Handle notification open
-    this.messaging.onNotificationOpenedApp(async (remoteMessage) => {
+    this.messaging.onNotificationOpenedApp(async remoteMessage => {
       logger.info('Notification opened app:', remoteMessage);
       await this.handleNotificationOpen(remoteMessage);
     });
 
     // Handle initial notification
-    this.messaging.getInitialNotification().then(async (remoteMessage) => {
+    this.messaging.getInitialNotification().then(async remoteMessage => {
       if (remoteMessage) {
         logger.info('Initial notification:', remoteMessage);
         await this.handleNotificationOpen(remoteMessage);

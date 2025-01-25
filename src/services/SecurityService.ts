@@ -208,7 +208,10 @@ export class SecurityService {
 
   public async validateToken(token: string): Promise<TokenPayload> {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload;
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET!
+      ) as TokenPayload;
       const session = this.sessions.get(decoded.sessionId);
 
       if (!session) {
@@ -221,7 +224,9 @@ export class SecurityService {
 
       if (this.config.session.extendOnActivity) {
         session.lastActivity = new Date();
-        session.expiresAt = new Date(Date.now() + this.config.session.duration * 1000);
+        session.expiresAt = new Date(
+          Date.now() + this.config.session.duration * 1000
+        );
       }
 
       return decoded;
@@ -232,7 +237,10 @@ export class SecurityService {
 
   public async refreshToken(refreshToken: string): Promise<string> {
     try {
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as TokenPayload;
+      const decoded = jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET!
+      ) as TokenPayload;
 
       const session = this.sessions.get(decoded.sessionId);
       if (!session || session.refreshToken !== refreshToken) {
@@ -262,7 +270,9 @@ export class SecurityService {
     }
   }
 
-  public async logSecurityEvent(event: Omit<SecurityEvent, 'id' | 'timestamp'>): Promise<void> {
+  public async logSecurityEvent(
+    event: Omit<SecurityEvent, 'id' | 'timestamp'>
+  ): Promise<void> {
     const securityEvent: SecurityEvent = {
       id: crypto.randomUUID(),
       timestamp: new Date(),
@@ -279,12 +289,19 @@ export class SecurityService {
     }
   }
 
-  private async verifyCredentials(_username: string, _password: string): Promise<User> {
+  private async verifyCredentials(
+    _username: string,
+    _password: string
+  ): Promise<User> {
     // Implementation would verify against user service/database
     throw new Error('Not implemented');
   }
 
-  private async createSession(userId: string, ip: string, userAgent: string): Promise<Session> {
+  private async createSession(
+    userId: string,
+    ip: string,
+    userAgent: string
+  ): Promise<Session> {
     if (this.config.session.singleSession) {
       // Remove existing sessions for user
       for (const [id, session] of this.sessions.entries()) {

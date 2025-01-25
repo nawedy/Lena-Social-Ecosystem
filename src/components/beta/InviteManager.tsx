@@ -120,24 +120,24 @@ export function InviteManager() {
 
         <TextInput
           style={styles.input}
-          placeholder='Email address'
+          placeholder="Email address"
           value={email}
           onChangeText={setEmail}
-          keyboardType='email-address'
-          autoCapitalize='none'
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
 
         <TextInput
           style={styles.input}
-          placeholder='AT Protocol handle (optional)'
+          placeholder="AT Protocol handle (optional)"
           value={handle}
           onChangeText={setHandle}
-          autoCapitalize='none'
+          autoCapitalize="none"
         />
 
         <TextInput
           style={[styles.input, styles.messageInput]}
-          placeholder='Personal message (optional)'
+          placeholder="Personal message (optional)"
           value={message}
           onChangeText={setMessage}
           multiline
@@ -145,15 +145,20 @@ export function InviteManager() {
         />
 
         <TouchableOpacity
-          style={[styles.button, (isLoading || remainingInvites <= 0) && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            (isLoading || remainingInvites <= 0) && styles.buttonDisabled,
+          ]}
           onPress={handleInvite}
           disabled={isLoading || remainingInvites <= 0}
         >
           {isLoading ? (
-            <ActivityIndicator color='#fff' />
+            <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.buttonText}>
-              {remainingInvites <= 0 ? 'No Invitations Left' : 'Send Invitation'}
+              {remainingInvites <= 0
+                ? 'No Invitations Left'
+                : 'Send Invitation'}
             </Text>
           )}
         </TouchableOpacity>

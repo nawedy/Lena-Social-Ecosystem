@@ -58,10 +58,16 @@ export class TemplateVersioningService {
     template: Partial<ContentTemplate>,
     userId: string
   ): Promise<string> {
-    const versionsRef = this.db.collection('templates').doc(templateId).collection('versions');
+    const versionsRef = this.db
+      .collection('templates')
+      .doc(templateId)
+      .collection('versions');
 
     // Get current version number
-    const versions = await versionsRef.orderBy('version', 'desc').limit(1).get();
+    const versions = await versionsRef
+      .orderBy('version', 'desc')
+      .limit(1)
+      .get();
     const currentVersion = versions.empty ? 0 : versions.docs[0].data().version;
 
     const newVersion: Omit<TemplateVersion, 'id'> = {
@@ -85,7 +91,10 @@ export class TemplateVersioningService {
     return doc.id;
   }
 
-  async getVersion(templateId: string, versionId: string): Promise<TemplateVersion | null> {
+  async getVersion(
+    templateId: string,
+    versionId: string
+  ): Promise<TemplateVersion | null> {
     const doc = await this.db
       .collection('templates')
       .doc(templateId)
@@ -93,7 +102,9 @@ export class TemplateVersioningService {
       .doc(versionId)
       .get();
 
-    return doc.exists ? ({ id: doc.id, ...doc.data() } as TemplateVersion) : null;
+    return doc.exists
+      ? ({ id: doc.id, ...doc.data() } as TemplateVersion)
+      : null;
   }
 
   async listVersions(
@@ -118,7 +129,7 @@ export class TemplateVersioningService {
     }
 
     const snapshot = await query.get();
-    return snapshot.docs.map((doc) => ({
+    return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     })) as TemplateVersion[];
@@ -144,23 +155,32 @@ export class TemplateVersioningService {
       changes: {
         prompt: oldVersion.prompt !== newVersion.prompt,
         style: oldVersion.style !== newVersion.style,
-        parameters: JSON.stringify(oldVersion.parameters) !== JSON.stringify(newVersion.parameters),
+        parameters:
+          JSON.stringify(oldVersion.parameters) !==
+          JSON.stringify(newVersion.parameters),
         performanceDiff: {
           usageCount:
-            (newVersion.performance?.usageCount || 0) - (oldVersion.performance?.usageCount || 0),
+            (newVersion.performance?.usageCount || 0) -
+            (oldVersion.performance?.usageCount || 0),
           successRate:
-            (newVersion.performance?.successRate || 0) - (oldVersion.performance?.successRate || 0),
+            (newVersion.performance?.successRate || 0) -
+            (oldVersion.performance?.successRate || 0),
           averageRating:
             (newVersion.performance?.averageRating || 0) -
             (oldVersion.performance?.averageRating || 0),
           engagement:
-            (newVersion.performance?.engagement || 0) - (oldVersion.performance?.engagement || 0),
+            (newVersion.performance?.engagement || 0) -
+            (oldVersion.performance?.engagement || 0),
         },
       },
     };
   }
 
-  async rollbackToVersion(templateId: string, versionId: string, userId: string): Promise<void> {
+  async rollbackToVersion(
+    templateId: string,
+    versionId: string,
+    userId: string
+  ): Promise<void> {
     const version = await this.getVersion(templateId, versionId);
     if (!version) {
       throw new Error('Version not found');
@@ -243,12 +263,12 @@ export class TemplateVersioningService {
     }
 
     const snapshot = await query.get();
-    const versions = snapshot.docs.map((doc) => ({
+    const versions = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     })) as TemplateVersion[];
 
-    const performanceOverTime = versions.map((version) => ({
+    const performanceOverTime = versions.map(version => ({
       version: version.version,
       performance: version.performance!,
       timestamp: version.createdAt,
@@ -267,7 +287,7 @@ export class TemplateVersioningService {
     const performances: Record<string, TemplateVersion['performance']> = {};
 
     await Promise.all(
-      versionIds.map(async (versionId) => {
+      versionIds.map(async versionId => {
         const version = await this.getVersion(templateId, versionId);
         if (version?.performance) {
           performances[versionId] = version.performance;
@@ -287,7 +307,9 @@ export class TemplateVersioningService {
 
     return versions.reduce((best, current) => {
       if (!best.performance || !current.performance) return best;
-      return best.performance[metric] > current.performance[metric] ? best : current;
+      return best.performance[metric] > current.performance[metric]
+        ? best
+        : current;
     });
   }
 

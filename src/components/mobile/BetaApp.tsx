@@ -71,7 +71,9 @@ export function BetaApp() {
   const _HomeScreen = () => (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadBetaStats} />}
+      refreshControl={
+        <RefreshControl refreshing={isLoading} onRefresh={loadBetaStats} />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.title}>Beta Testing Hub</Text>
@@ -82,7 +84,9 @@ export function BetaApp() {
               <Text style={styles.statLabel}>Active Testers</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{stats.users.accepted_invitations}</Text>
+              <Text style={styles.statValue}>
+                {stats.users.accepted_invitations}
+              </Text>
               <Text style={styles.statLabel}>Invites Accepted</Text>
             </View>
             <View style={styles.statCard}>
@@ -99,14 +103,14 @@ export function BetaApp() {
             style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
             onPress={() => navigation.navigate('Invite')}
           >
-            <Icon name='account-plus' size={24} color='#fff' />
+            <Icon name="account-plus" size={24} color="#fff" />
             <Text style={styles.buttonText}>Invite Friends</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: '#2196F3' }]}
             onPress={() => navigation.navigate('Feedback')}
           >
-            <Icon name='message-draw' size={24} color='#fff' />
+            <Icon name="message-draw" size={24} color="#fff" />
             <Text style={styles.buttonText}>Submit Feedback</Text>
           </TouchableOpacity>
         </View>
@@ -115,7 +119,7 @@ export function BetaApp() {
       {stats && (
         <View style={styles.feedbackSummary}>
           <Text style={styles.sectionTitle}>Feedback Summary</Text>
-          {stats.feedback.map((item) => (
+          {stats.feedback.map(item => (
             <View key={item.type} style={styles.feedbackItem}>
               <View style={styles.feedbackType}>
                 <Icon
@@ -123,11 +127,11 @@ export function BetaApp() {
                     item.type === 'bug'
                       ? 'bug'
                       : item.type === 'feature'
-                      ? 'lightbulb'
-                      : 'message-text'
+                        ? 'lightbulb'
+                        : 'message-text'
                   }
                   size={24}
-                  color='#666'
+                  color="#666"
                 />
                 <Text style={styles.feedbackTypeText}>
                   {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
@@ -136,7 +140,9 @@ export function BetaApp() {
               <View style={styles.feedbackStats}>
                 <Text style={styles.feedbackCount}>{item.count}</Text>
                 {item.avg_rating && (
-                  <Text style={styles.feedbackRating}>⭐️ {item.avg_rating.toFixed(1)}</Text>
+                  <Text style={styles.feedbackRating}>
+                    ⭐️ {item.avg_rating.toFixed(1)}
+                  </Text>
                 )}
               </View>
             </View>
@@ -167,10 +173,10 @@ export function BetaApp() {
                       tabBarShowLabel: Platform.OS === 'ios',
                     }}
                   >
-                    <Tab.Screen name='Home' component={_HomeScreen} />
-                    <Tab.Screen name='Invite' component={InviteScreen} />
-                    <Tab.Screen name='Feedback' component={FeedbackForm} />
-                    <Tab.Screen name='Profile' component={BetaProfile} />
+                    <Tab.Screen name="Home" component={_HomeScreen} />
+                    <Tab.Screen name="Invite" component={InviteScreen} />
+                    <Tab.Screen name="Feedback" component={FeedbackForm} />
+                    <Tab.Screen name="Profile" component={BetaProfile} />
                   </Tab.Navigator>
                 </View>
               </ThemeProvider>

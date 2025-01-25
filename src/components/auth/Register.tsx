@@ -78,30 +78,34 @@ export function Register() {
   );
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gray-50'>
-      <div className='w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md'>
-        <h2 className='text-center text-3xl font-bold text-gray-900'>Create your account</h2>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-md">
+        <h2 className="text-center text-3xl font-bold text-gray-900">
+          Create your account
+        </h2>
 
         {!showMFASetup ? (
-          <Form onFinish={handleRegister} className='mt-8 space-y-6'>
-            {error && <Alert message={error} type='error' showIcon className='mb-4' />}
+          <Form onFinish={handleRegister} className="mt-8 space-y-6">
+            {error && (
+              <Alert message={error} type="error" showIcon className="mb-4" />
+            )}
             <Form.Item
-              name='email'
+              name="email"
               rules={[
                 { required: true, message: 'Please enter your email' },
                 { type: 'email', message: 'Please enter a valid email' },
               ]}
             >
               <Input
-                type='email'
+                type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder='Email'
-                className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Email"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
             </Form.Item>
             <Form.Item
-              name='handle'
+              name="handle"
               rules={[
                 { required: true, message: 'Please enter your handle' },
                 {
@@ -112,15 +116,15 @@ export function Register() {
               ]}
             >
               <Input
-                type='text'
+                type="text"
                 value={handle}
-                onChange={(e) => setHandle(e.target.value)}
-                placeholder='Handle'
-                className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                onChange={e => setHandle(e.target.value)}
+                placeholder="Handle"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
             </Form.Item>
             <Form.Item
-              name='password'
+              name="password"
               rules={[
                 { required: true, message: 'Please enter your password' },
                 { min: 8, message: 'Password must be at least 8 characters' },
@@ -128,13 +132,13 @@ export function Register() {
             >
               <Input.Password
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder='Password'
-                className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Password"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
             </Form.Item>
             <Form.Item
-              name='confirmPassword'
+              name="confirmPassword"
               rules={[
                 { required: true, message: 'Please confirm your password' },
                 ({ getFieldValue }) => ({
@@ -149,36 +153,44 @@ export function Register() {
             >
               <Input.Password
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder='Confirm Password'
-                className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Confirm Password"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
             </Form.Item>
-            <Button type='primary' htmlType='submit' loading={loading} className='w-full'>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              className="w-full"
+            >
               {loading ? 'Creating account...' : 'Create account'}
             </Button>
           </Form>
         ) : (
           <Modal
-            title='Set up Two-Factor Authentication'
+            title="Set up Two-Factor Authentication"
             open={showMFASetup}
             footer={null}
             closable={false}
           >
-            <div className='space-y-4'>
-              <p className='text-sm text-gray-600'>
-                Scan this QR code with your authenticator app to set up two-factor authentication.
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Scan this QR code with your authenticator app to set up
+                two-factor authentication.
               </p>
-              <div className='flex justify-center'>
+              <div className="flex justify-center">
                 <QRCode value={mfaQRCode} />
               </div>
-              <p className='text-sm text-gray-600'>
+              <p className="text-sm text-gray-600">
                 Or enter this code manually:{' '}
-                <code className='bg-gray-100 px-2 py-1 rounded'>{mfaSecret}</code>
+                <code className="bg-gray-100 px-2 py-1 rounded">
+                  {mfaSecret}
+                </code>
               </p>
               <Form onFinish={handleVerifyMFA}>
                 <Form.Item
-                  name='mfaCode'
+                  name="mfaCode"
                   rules={[
                     {
                       required: true,
@@ -187,15 +199,20 @@ export function Register() {
                   ]}
                 >
                   <Input
-                    type='text'
+                    type="text"
                     value={mfaCode}
-                    onChange={(e) => setMFACode(e.target.value)}
-                    placeholder='Enter verification code'
+                    onChange={e => setMFACode(e.target.value)}
+                    placeholder="Enter verification code"
                     maxLength={6}
-                    className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   />
                 </Form.Item>
-                <Button type='primary' htmlType='submit' loading={loading} className='w-full'>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  className="w-full"
+                >
                   {loading ? 'Verifying...' : 'Complete Setup'}
                 </Button>
               </Form>

@@ -76,7 +76,9 @@ export class MessagingService {
     for (const participant of participants) {
       const isBlocked = await this.blockingService.isUserBlocked(participant);
       if (isBlocked) {
-        throw new Error('Unable to create conversation due to blocking restrictions');
+        throw new Error(
+          'Unable to create conversation due to blocking restrictions'
+        );
       }
     }
 
@@ -98,7 +100,9 @@ export class MessagingService {
   }
 
   async getConversation(conversationId: string): Promise<Conversation> {
-    const conversationDoc = await getDoc(doc(this.db, 'conversations', conversationId));
+    const conversationDoc = await getDoc(
+      doc(this.db, 'conversations', conversationId)
+    );
     if (!conversationDoc.exists()) {
       throw new Error('Conversation not found');
     }
@@ -113,10 +117,13 @@ export class MessagingService {
     );
 
     const snapshot = await getDocs(conversationsQuery);
-    return snapshot.docs.map((doc) => doc.data() as Conversation);
+    return snapshot.docs.map(doc => doc.data() as Conversation);
   }
 
-  async getConversationMessages(conversationId: string, messageLimit = 50): Promise<Message[]> {
+  async getConversationMessages(
+    conversationId: string,
+    messageLimit = 50
+  ): Promise<Message[]> {
     const messagesQuery = query(
       collection(this.db, 'messages'),
       where('conversationId', '==', conversationId),
@@ -125,7 +132,7 @@ export class MessagingService {
     );
 
     const snapshot = await getDocs(messagesQuery);
-    return snapshot.docs.map((doc) => doc.data() as Message);
+    return snapshot.docs.map(doc => doc.data() as Message);
   }
 
   async markMessageAsRead(messageId: string, userId: string): Promise<void> {
@@ -174,13 +181,16 @@ export class MessagingService {
     message: Message
   ): Promise<void> {
     const conversation = await this.getConversation(conversationId);
-    const recipients = conversation.participants.filter((id) => id !== senderId);
+    const recipients = conversation.participants.filter(id => id !== senderId);
 
     for (const recipientId of recipients) {
       await this.notificationService.sendNotification(recipientId, {
         type: 'new_message',
         title: 'New Message',
-        body: message.type === 'text' ? message.content : `Sent you a ${message.type}`,
+        body:
+          message.type === 'text'
+            ? message.content
+            : `Sent you a ${message.type}`,
         data: {
           conversationId,
           messageId: message.id,
@@ -189,9 +199,14 @@ export class MessagingService {
     }
   }
 
-  async searchMessages(userId: string, searchQuery: string): Promise<Message[]> {
+  async searchMessages(
+    userId: string,
+    searchQuery: string
+  ): Promise<Message[]> {
     const userConversations = await this.getUserConversations(userId);
-    const conversationIds = userConversations.map((conversation) => conversation.id);
+    const conversationIds = userConversations.map(
+      conversation => conversation.id
+    );
 
     const messagesQuery = query(
       collection(this.db, 'messages'),
@@ -202,6 +217,6 @@ export class MessagingService {
     );
 
     const snapshot = await getDocs(messagesQuery);
-    return snapshot.docs.map((doc) => doc.data() as Message);
+    return snapshot.docs.map(doc => doc.data() as Message);
   }
 }

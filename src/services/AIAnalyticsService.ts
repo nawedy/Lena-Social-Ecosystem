@@ -216,13 +216,14 @@ export class AIAnalyticsService {
     const insights: AIInsight[] = [];
 
     // Run analysis in parallel
-    const [trends, anomalies, clusters, segments, strategies] = await Promise.all([
-      this.analyzeTrends(accountIds, options),
-      this.detectAnomalies(accountIds, options),
-      this.clusterContent(accountIds, options),
-      this.segmentAudience(accountIds, options),
-      this.generateOptimizationStrategies(accountIds, options),
-    ]);
+    const [trends, anomalies, clusters, segments, strategies] =
+      await Promise.all([
+        this.analyzeTrends(accountIds, options),
+        this.detectAnomalies(accountIds, options),
+        this.clusterContent(accountIds, options),
+        this.segmentAudience(accountIds, options),
+        this.generateOptimizationStrategies(accountIds, options),
+      ]);
 
     // Process trend insights
     for (const trend of trends) {
@@ -282,7 +283,11 @@ export class AIAnalyticsService {
 
     // Process strategy insights
     for (const strategy of strategies) {
-      if (strategy.recommendations.some((r) => r.confidence > (options.threshold || 0.8))) {
+      if (
+        strategy.recommendations.some(
+          r => r.confidence > (options.threshold || 0.8)
+        )
+      ) {
         insights.push({
           type: 'strategy',
           confidence: this.calculateStrategyConfidence(strategy),
@@ -307,22 +312,34 @@ export class AIAnalyticsService {
     return insights;
   }
 
-  private async analyzeTrends(_accountIds: string[], _options: any): Promise<TrendAnalysis[]> {
+  private async analyzeTrends(
+    _accountIds: string[],
+    _options: any
+  ): Promise<TrendAnalysis[]> {
     // Implementation for trend analysis
     return [];
   }
 
-  private async detectAnomalies(_accountIds: string[], _options: any): Promise<AnomalyDetection> {
+  private async detectAnomalies(
+    _accountIds: string[],
+    _options: any
+  ): Promise<AnomalyDetection> {
     // Implementation for anomaly detection
     return {} as AnomalyDetection;
   }
 
-  private async clusterContent(_accountIds: string[], _options: any): Promise<ContentCluster[]> {
+  private async clusterContent(
+    _accountIds: string[],
+    _options: any
+  ): Promise<ContentCluster[]> {
     // Implementation for content clustering
     return [];
   }
 
-  private async segmentAudience(_accountIds: string[], _options: any): Promise<AudienceSegment[]> {
+  private async segmentAudience(
+    _accountIds: string[],
+    _options: any
+  ): Promise<AudienceSegment[]> {
     // Implementation for audience segmentation
     return [];
   }
@@ -341,7 +358,7 @@ export class AIAnalyticsService {
     insights: AIInsight[]
   ): Promise<void> {
     const highImpactInsights = insights.filter(
-      (insight) => insight.impact * insight.confidence > 0.9
+      insight => insight.impact * insight.confidence > 0.9
     );
 
     if (highImpactInsights.length > 0) {
@@ -450,7 +467,9 @@ export class AIAnalyticsService {
     return '';
   }
 
-  private generateStrategyRecommendations(_strategy: OptimizationStrategy): any[] {
+  private generateStrategyRecommendations(
+    _strategy: OptimizationStrategy
+  ): any[] {
     // Implementation
     return [];
   }
@@ -460,7 +479,11 @@ export class AIAnalyticsService {
     return '';
   }
 
-  static trackModelPerformance(modelName: string, latency: number, success: boolean) {
+  static trackModelPerformance(
+    modelName: string,
+    latency: number,
+    success: boolean
+  ) {
     AnalyticsService.trackMetric('ai_model_latency', latency, {
       model: modelName,
     });
@@ -485,7 +508,11 @@ export class AIAnalyticsService {
     });
   }
 
-  static trackTrainingProgress(modelName: string, progress: number, epoch: number) {
+  static trackTrainingProgress(
+    modelName: string,
+    progress: number,
+    epoch: number
+  ) {
     AnalyticsService.trackMetric('model_training_progress', progress, {
       model: modelName,
       epoch: epoch.toString(),

@@ -137,12 +137,12 @@ export class PerformanceOptimizer {
     try {
       // Implement network monitoring
       fetch('https://www.google.com')
-        .then((response) => {
+        .then(response => {
           const latency = Date.now() - response.headers.get('date');
           this.metrics.networkLatency = latency;
           trace.putMetric('latency', latency);
         })
-        .catch((error) => {
+        .catch(error => {
           console.error('Network monitoring failed:', error);
           trace.putMetric('error', 1);
         });
