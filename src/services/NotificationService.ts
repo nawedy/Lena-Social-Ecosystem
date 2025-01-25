@@ -1,5 +1,6 @@
+ 
 import { AnalyticsService } from './AnalyticsService';
-import { RBACService, Permission } from './RBACService';
+import { RBACService } from './RBACService';
 
 interface NotificationChannel {
   type: 'email' | 'slack' | 'webhook' | 'push' | 'sms' | 'in_app';
@@ -58,7 +59,7 @@ interface Notification {
     rule?: string;
     trigger?: string;
     account?: string;
-    data?: any;
+    data?: any; // TODO: Define a more specific type if possible
   };
   status: 'pending' | 'sent' | 'failed' | 'delivered' | 'read';
   createdAt: Date;

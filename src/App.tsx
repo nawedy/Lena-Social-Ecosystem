@@ -1,4 +1,4 @@
-// @ts-ignore
+/* eslint-disable no-console */
 import React from 'react';
 import { Platform } from 'react-native';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -16,10 +16,15 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 // Use appropriate router based on platform
-const Router = Platform.select({
-  web: BrowserRouter,
-  default: NativeRouter,
-});
+const Router: React.FC = Platform.select({
+  web: BrowserRouter as any, // Suppress type error for BrowserRouter
+  android: NativeRouter as any,
+  ios: NativeRouter as any,
+  default: () => {
+    console.error('Unsupported platform for routing.');
+    return null; // Or a component that displays an error message
+  },
+})!;
 
 const App: React.FC = () => {
   return (

@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext"
+  },
+  "exclude": [
+    "node_modules",
+    "src/App.tsx"
+  ]
+}
