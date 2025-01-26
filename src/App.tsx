@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import React from 'react';
 import { Platform } from 'react-native';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';

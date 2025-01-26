@@ -6,6 +6,7 @@ import {
   UserInfo,
   UserMetadata,
 } from 'firebase/auth';
+import type { UserCredential } from 'firebase/auth';
 import {
   DocumentData,
   DocumentReference,
@@ -18,7 +19,6 @@ import {
   QueryDocumentSnapshot,
   QueryConstraint,
 } from 'firebase/firestore';
-import type { UserCredential } from 'firebase/auth';
 
 declare module 'firebase/firestore' {
   export interface CollectionReference<T = DocumentData> extends Query<T> {

@@ -1,4 +1,4 @@
-/* eslint-disable no-restricted-globals */
+ 
 
 // Cache name for the app shell
 const CACHE_NAME = 'tiktok-toe-cache-v1';
