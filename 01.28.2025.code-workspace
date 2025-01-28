@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"IDX.aI.enableInlineCompletion": true,
+		"IDX.aI.enableCodebaseIndexing": true,
+		"IDX.aI.geminiApiKey": "AIzaSyD2wobDwAHjBcivF_4Z3YCV9vU-123TnuA",
+		"IDX.aI.modelProvider": "gemini-api",
+		"IDX.aI.geminiModel": "gemini-1.5-pro",
+		"workbench.editor.preferHistoryBasedLanguageDetection": true
+	}
+}
