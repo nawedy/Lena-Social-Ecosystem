@@ -1,4 +1,15 @@
-declare module '@google-cloud/bigquery' {
+import {
+  BigQuery as GoogleBigQuery,
+  BigQueryOptions as GoogleBigQueryOptions,
+  Dataset as GoogleDataset,
+  DatasetMetadata as GoogleDatasetMetadata,
+  Job as GoogleJob,
+  JobMetadata as GoogleJobMetadata,
+  Query as GoogleQuery,
+  QueryOptions as GoogleQueryOptions,
+  Table as GoogleTable,
+  TableMetadata as GoogleTableMetadata,
+} from '@google-cloud/bigquery';
   export interface BigQueryOptions {
     projectId?: string;
     keyFilename?: string;
@@ -12,14 +23,14 @@ declare module '@google-cloud/bigquery' {
     query: string;
     location?: string;
     useLegacySql?: boolean;
-    params?: Record<string, unknown>;
+    params?: GoogleQuery['parameterValues'];
     maxResults?: number;
   }
 
-  export interface QueryResultsOptions {
-    maxResults?: number;
+  export interface QueryResults {
+    metadata: GoogleJobMetadata;
+    rows: GoogleQuery['rows'];
   }
-
   export interface JobMetadata {
     id: string;
     user_email: string;
@@ -39,7 +50,7 @@ declare module '@google-cloud/bigquery' {
       endTime?: string;
       totalBytesProcessed?: string;
       totalSlotMs?: string;
-    };
+    }
     status?: {
       state: string;
       errorResult?: {
@@ -50,13 +61,13 @@ declare module '@google-cloud/bigquery' {
     };
   }
 
-  export interface Job {
+  export interface Job extends GoogleJob{
     id: string;
-    metadata: JobMetadata;
-    getMetadata(): Promise<[JobMetadata]>;
+    metadata: GoogleJobMetadata;
+    getMetadata(): Promise<[GoogleJobMetadata]>;
   }
 
-  export interface TableMetadata {
+  export interface TableMetadata extends GoogleTableMetadata {
     id: string;
     kind: string;
     tableReference: {
@@ -77,27 +88,35 @@ declare module '@google-cloud/bigquery' {
     lastModifiedTime?: string;
   }
 
-  export interface Table {
-    id: string;
-    metadata: TableMetadata;
+  export interface Table extends GoogleTable{
+    id: string
+    metadata: GoogleTableMetadata;
     exists(): Promise<[boolean]>;
-    get(): Promise<[Table]>;
-    insert(rows: Record<string, unknown>[]): Promise<void>;
+    get(): Promise<[GoogleTableMetadata]>;
+    insert(rows: GoogleQuery['rows'][]): Promise<void>;
   }
 
-  export interface Dataset {
+  export interface Dataset extends GoogleDataset{
     id: string;
-    table(tableId: string): Table;
+    table(tableId: string): GoogleTable;
   }
 
-  export default class BigQuery {
-    constructor(options?: BigQueryOptions);
+  export default class BigQuery extends GoogleBigQuery {
+    constructor(options?: GoogleBigQueryOptions);
 
-    createQueryJob(options: QueryOptions): Promise<[Job]>;
-    query(
-      options: QueryOptions
-    ): Promise<[Record<string, unknown>[], JobMetadata]>;
-    dataset(datasetId: string): Dataset;
-    table(tableId: string): Table;
+    createQueryJob(options: GoogleQueryOptions): Promise<[GoogleJob]>;
+    query(options: GoogleQueryOptions): Promise<[GoogleQuery['rows'], GoogleJobMetadata]>;
+    dataset(datasetId: string): GoogleDataset;
+    table(tableId: string): GoogleTable;
+  }
+  
+  export {
+    GoogleBigQueryOptions,
+    GoogleDataset,
+    GoogleDatasetMetadata,
+    GoogleJob,
+    GoogleJobMetadata,
+    GoogleTable,
+    GoogleTableMetadata
   }
 }

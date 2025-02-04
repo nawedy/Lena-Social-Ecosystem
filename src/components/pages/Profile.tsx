@@ -77,12 +77,12 @@ const Profile: React.FC = () => {
     }
   }, [subscriptionService, profile, isSubscribed]);
 
-  const _fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async () => {
     if (!handle) return;
 
     try {
       setLoading(true);
-      const _response = await getProfile(handle);
+      const response = await getProfile(handle);
       setProfile(response.data);
 
       // Fetch initial posts
@@ -98,11 +98,11 @@ const Profile: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [handle, getProfile, getAuthorFeed]);
+  }, [handle, getProfile, getAuthorFeed,setProfile, setLoading, setPosts, setCursor, setHasMore, setError]);
 
-  const _loadMorePosts = useCallback(async () => {
+  const loadMorePosts = useCallback(async () => {
     if (!profile?.did || !cursor || !hasMore) return;
-
+    
     try {
       const _response = await getAuthorFeed(profile.did, {
         cursor,
@@ -114,7 +114,7 @@ const Profile: React.FC = () => {
     } catch (err) {
       console.error('Error loading more posts:', err);
     }
-  }, [profile?.did, cursor, hasMore, getAuthorFeed]);
+  }, [profile?.did, cursor, hasMore, getAuthorFeed, setPosts, setCursor, setHasMore]);
 
   useEffect(() => {
     fetchProfile();
@@ -152,7 +152,7 @@ const Profile: React.FC = () => {
     }
   };
 
-  const _handleShare = async () => {
+  const handleShare = async () => {
     if (!profile) return;
 
     try {
@@ -166,14 +166,14 @@ const Profile: React.FC = () => {
     }
   };
 
-  const _handleReport = async () => {
+  const handleReport = async () => {
     if (!profile) return;
     // Implement AT Protocol's reporting mechanism
     // This would typically involve creating a com.atproto.moderation.create record
     logger.info('Reporting profile:', profile.did);
   };
 
-  const _handleMute = async () => {
+  const handleMute = async () => {
     if (!profile) return;
     // Implement AT Protocol's muting mechanism
     // This would typically involve creating a app.bsky.graph.mute record
@@ -181,8 +181,8 @@ const Profile: React.FC = () => {
   };
 
   const _renderPostText = (post: AppBskyFeedDefs.FeedViewPost) => {
-    const _record = post.post.record as AppBskyFeedPost.Record;
-    const _rt = new RichText({ text: record.text, facets: record.facets });
+    const record = post.post.record as AppBskyFeedPost.Record;
+    const rt = new RichText({ text: record.text, facets: record.facets });
 
     return (
       <div className="whitespace-pre-wrap">

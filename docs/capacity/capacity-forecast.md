@@ -1,5 +1,7 @@
 # Capacity Planning and Forecasting
 
+This document outlines the capacity planning and forecasting for our services, based on the updated strategy for a rapid, large-scale launch.
+
 ## Current Resource Utilization
 
 ### Application Tier

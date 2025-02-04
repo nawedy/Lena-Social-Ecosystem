@@ -56,3 +56,50 @@
 - Run `npm run format` to automatically fix formatting issues
 - All new code should follow the established linting rules
 - Pre-commit hooks will prevent commits with linting errors
+- Make sure to review `docs/capacity/capacity-forecast.md`
+
+## Upcoming Releases
+2. **Migration**: Prepare for TikTok user migration, refine the process.
+3. **Performance**: Conduct load testing, optimize performance, set up monitoring.
+4. **Security**: Perform security penetration testing, audit security implementations and best practices.
+5. **Core Features**: Finalize and polish core features.
+6. **Launch Plan**: Plan marketing strategy and final launch plan.
+7. **Capacity Plan**: Review the capacity plan document.
+
+## Go-to-Market Priorities
+
+This section outlines the key priorities for a rapid go-to-market strategy.
+
+*   **Robustness and Scalability**
+    *   **Extensive Load Testing:** We need to push our load testing to the extreme to ensure the infrastructure can handle the expected load and potential spikes.
+    *   **Scalability Review:** We need to review and potentially enhance our scaling policies and mechanisms.
+    *   **Performance Optimization:** Every bit of performance improvement will count when dealing with a large user base.
+    *   **Capacity Plan Review**: We should be reviewing the document docs/capacity/capacity-forecast.md to make sure it is in line with our current ambitions.
+
+*   **Security Hardening**
+    *   **Comprehensive Penetration Testing:** We need to do more than just basic security checks.
+    *   **Security Audits:** Ensure that our security implementations and best practices are solid.
+    *   **Incident Response Plan:** A well-defined plan for handling security incidents is crucial.
+
+*   **Feature Completeness**
+    *   **Core Feature Review:** Ensure all core features are fully functional and polished.
+    *   **User Experience (UX) Polish:** The UX needs to be as intuitive and bug-free as possible for a positive first impression.
+
+*   **Marketing and Communication**
+    *   **Launch Campaign:** A comprehensive marketing campaign is crucial for a successful big launch.
+    *   **Public Relations (PR):** We need to manage the public perception of the launch effectively.
+    *   **Community Building:** Start building a community around the game as early as possible.
+
+* **User Migration**
+    * Make sure the migration is ready to accept users. Since the beta program is being cancelled, we need to be ready for all users.
+
+*   **Prepare for Migration**
+    *   **Refine Migration Process:** The TikTok migration process needs to be as smooth as possible.
+    *   **Communicate with Users:** Plan how you will communicate the migration process to users.
+
+*   **Performance and Stability**
+    *   **Load Testing:** Conduct rigorous load testing to ensure the app can handle a large influx of users.
+    *   **Optimize:** Address any performance bottlenecks discovered during load testing.    
+*   **Monitoring and Analytics**
+    *   **Real-Time Monitoring:** Set up extensive monitoring to catch any issues as they happen during the launch.
+    *   **Analytics Tracking:** Track key metrics to assess the success of the launch and inform future development.

@@ -1,26 +1,22 @@
-import { Storage } from '@google-cloud/storage';
-import { Request, Response, NextFunction } from 'express';
-import multer, { FileFilterCallback } from 'multer';
+import { Bucket, Storage } from '@google-cloud/storage';
+import { NextFunction, Request } from 'express';
+import multer, { FileFilterCallback, Multer } from 'multer';
 
 import { config } from '../config';
 
 // Initialize Google Cloud Storage
-const storage = new Storage({
+const storage: Storage = new Storage({
   projectId: config.gcp.projectId,
   keyFilename: config.gcp.keyFilePath,
 });
 
-const bucket = storage.bucket(config.gcp.storageBucket);
+const bucket: Bucket = storage.bucket(config.gcp.storageBucket);
 
-// Configure multer storage
-const multerStorage = multer.memoryStorage();
+// Configure multer storage as a constant
+const multerStorage: multer.StorageEngine = multer.memoryStorage();
 
-// Configure file filter for video uploads
-const fileFilter = (
-  _req: Request,
-  file: Express.Multer.File,
-  cb: FileFilterCallback
-) => {
+// Configure file filter for video uploads, we need to check the types
+const fileFilter = (file: Express.Multer.File, cb: FileFilterCallback) => {
   // Accept video files only
   if (file.mimetype.startsWith('video/')) {
     cb(null, true);
@@ -30,8 +26,8 @@ const fileFilter = (
 };
 
 // Configure upload middleware
-const upload = multer({
-  storage: multerStorage,
+const upload: Multer = multer({
+  storage: multerStorage, // Correctly using the constant
   fileFilter: fileFilter,
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB max file size
@@ -40,9 +36,7 @@ const upload = multer({
 
 // Middleware to handle file upload to Google Cloud Storage
 export const uploadToGCS = async (
-  req: Request,
-  _res: Response,
-  next: NextFunction
+  req: Request, next: NextFunction
 ) => {
   try {
     if (!req.file) {

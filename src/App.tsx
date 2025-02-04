@@ -1,7 +1,6 @@
 import React from 'react';
 import { Platform, View, Text, StyleProp, ViewStyle } from 'react-native';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { NativeRouter } from 'react-router-native';
+import { BrowserRouter, Routes, Route,  } from 'react-router-dom';
 
 import Navbar from './components/layout/Navbar';
 import CreatePost from './components/pages/CreatePost';
@@ -12,7 +11,8 @@ import Search from './components/pages/Search';
 // import Settings from './components/pages/Settings';
 import { ATProtoProvider } from './contexts/ATProtoContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider } from './contexts/ThemeContext'; 
+import { NativeRouter } from 'react-router-native';
 
 
 const UnsupportedPlatform: React.FC = () => {
@@ -39,10 +39,10 @@ const Router = (
     web: BrowserRouter,
     android: NativeRouter,
     ios: NativeRouter,
-    default: () => UnsupportedPlatform,
+    default: UnsupportedPlatform,
   })! as React.ComponentType<{ children?: React.ReactNode; }>;
 
-const App: React.FC = () => {
+const App: React.FC = (): JSX.Element => {
   return (
     <ThemeProvider>
       <AuthProvider>
