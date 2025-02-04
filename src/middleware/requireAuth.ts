@@ -16,6 +16,9 @@ declare global {
   }
 }
 
+// Ensure JWT secret is defined
+if (!config.jwt.secret) throw new Error("JWT secret must be defined in configuration.");
+  
 export const requireAuth = async (
   req: Request,
   res: Response,

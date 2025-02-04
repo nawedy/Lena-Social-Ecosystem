@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "npm run --workspaces test",
+    "test": "npm run test -w frontend -w mobile -w src",
     "lint": "eslint src/**/*.{js,ts,tsx}",
     "lint:fix": "eslint src/**/*.{js,ts,tsx} --fix",
     "typecheck": "tsc --noEmit",
@@ -42,8 +42,8 @@
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.14",
     "@types/node": "^20.17.14",
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
     "@types/react-native": "^0.73.0",
     "@types/react-native-autocomplete-input": "^5.1.4",
     "@types/react-native-calendars": "^1.1264.7",
@@ -80,5 +80,10 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     }
-  }
+  },
+  "workspaces": [
+    "frontend",
+    "mobile",
+    "src"
+  ]
 }

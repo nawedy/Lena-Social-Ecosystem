@@ -48,7 +48,7 @@ class EmailService {
     subject: string,
     text: string,
     html?: string
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       const mailOptions = {
         from: config.email.senderEmail,
@@ -60,9 +60,10 @@ class EmailService {
 
       await this.transporter.sendMail(mailOptions);
       this.logger.info(`Email sent successfully to ${to}`);
+      return true
     } catch (error) {
       this.logger.error('Failed to send email:', error);
-      throw error;
+      return false;
     }
   }
 

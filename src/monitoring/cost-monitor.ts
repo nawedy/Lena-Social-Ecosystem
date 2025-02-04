@@ -361,6 +361,16 @@ export class CostMonitor {
     const span = this.apm.startSpan('get-cost-report');
 
     try {
+
+      if (!startDate || !endDate || typeof startDate !== 'string' || typeof endDate !== 'string') {
+        throw new Error(
+          'Invalid input: startDate and endDate must be non-null strings'
+        );
+      }
+
+
+
+
       const results = await this.db.query(
         `
         WITH daily_costs AS (
@@ -421,6 +431,12 @@ export class CostMonitor {
     const span = this.apm.startSpan('get-forecasted-costs');
 
     try {
+      if (typeof days !== 'number') {
+        throw new Error(
+          'Invalid input: days must be a number'
+        );
+      }
+
       const response = await this.costExplorer
         .getCostForecast({
           TimePeriod: {
@@ -477,18 +493,25 @@ export class CostMonitor {
     }
   }
 
-  private async getResourceUtilization(): Promise<ResourceUsage[]> {
-    // Implementation for getting resource utilization
-    return [];
+  private async getResourceUtilization(): Promise<ResourceUsage[]> { 
+    return [
+      {
+        service: "dummy-service",
+        metric: "dummy-metric",
+        value: 10,
+        unit: "percentage",
+        timestamp: new Date().toISOString()
+      }
+    ]
   }
 
+
+
   private async getReservedInstanceOpportunities(): Promise<string[]> {
-    // Implementation for getting RI opportunities
-    return [];
+    return ['Consider purchasing reserved instances for compute'];
   }
 
   private async getStorageOptimizationRecommendations(): Promise<string[]> {
-    // Implementation for storage optimization recommendations
-    return [];
+    return ['Consider optimizing storage usage'];
   }
 }

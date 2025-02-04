@@ -79,11 +79,15 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    updateUser: (state, action) => {
+    updateUser: (state, action) => {      
+      if(action.payload.isAuthenticated !== undefined){
+        state.isAuthenticated = action.payload.isAuthenticated;
+      }
       state.user = {
         ...state.user,
         ...action.payload,
       };
+      
     },
     clearError: state => {
       state.error = null;

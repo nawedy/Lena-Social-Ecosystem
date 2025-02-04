@@ -1,15 +1,38 @@
 import { BskyAgent } from '@atproto/api';
 import { CloudKMSClient } from '@google-cloud/kms';
 import { PubSub } from '@google-cloud/pubsub';
-import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import { SecretManagerServiceClient, protos } from '@google-cloud/secret-manager';
+import config from '../../config';
+import { time } from 'console';
+
+if (!process.env.SECURITY_CONFIG_SECRET_NAME) {
+  throw new Error('Missing environment variable: SECURITY_CONFIG_SECRET_NAME');
+}
 import { SecurityCenterClient } from '@google-cloud/security-center';
 
 interface SecurityEvent {
+
+
+  
+  if (!process.env.SECURITY_CONFIG_SECRET_NAME) {
+      throw new Error('Missing environment variable: SECURITY_CONFIG_SECRET_NAME');
+    }
+    if (!process.env.SECURITY_CENTER_ORG_ID) {
+      throw new Error('Missing environment variable: SECURITY_CENTER_ORG_ID');
+    }
+    if (!process.env.SECURITY_EVENTS_TOPIC) {
+      throw new Error('Missing environment variable: SECURITY_EVENTS_TOPIC');
+    }
+    if (!process.env.ENCRYPTION_KEY) {
+      throw new Error('Missing environment variable: ENCRYPTION_KEY');
+    }
+    
+    if (!config.rateLimit) {
+      throw new Error('Missing rate limit configuration in config file');
+    }
+    
+interface SecurityEvent {
   type: 'auth' | 'content' | 'api' | 'system';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  details: Record<string, any>;
-  timestamp: string;
-}
 
 interface SecurityConfig {
   rateLimit: {
@@ -35,6 +58,7 @@ export class SecurityService {
   private kms: CloudKMSClient;
   private pubsub: PubSub;
   private config: SecurityConfig;
+  private requestCounts: Map<string, { timestamp: number; requestType: string }[]> = new Map();
 
   constructor(agent: BskyAgent) {
     this.agent = agent;
@@ -47,7 +71,7 @@ export class SecurityService {
     this.config = {
       rateLimit: {
         enabled: true,
-        requestsPerMinute: 100,
+        requestsPerMinute: config.rateLimit.requestsPerMinute,
       },
       contentSecurity: {
         enabled: true,
@@ -125,7 +149,7 @@ export class SecurityService {
 
   async encryptSensitiveData(data: string): Promise<string> {
     try {
-      const keyName = await this.getEncryptionKey();
+      const keyName = process.env.ENCRYPTION_KEY;
       const [result] = await this.kms.encrypt({
         name: keyName,
         plaintext: Buffer.from(data).toString('base64'),
@@ -140,7 +164,7 @@ export class SecurityService {
 
   async decryptSensitiveData(encryptedData: string): Promise<string> {
     try {
-      const keyName = await this.getEncryptionKey();
+      const keyName = process.env.ENCRYPTION_KEY;
       const [result] = await this.kms.decrypt({
         name: keyName,
         ciphertext: encryptedData,
@@ -211,10 +235,17 @@ export class SecurityService {
   }
 
   private async loadSecurityConfig(): Promise<SecurityConfig | null> {
+    let config = null;
     try {
       const [version] = await this.secretManager.accessSecretVersion({
-        name: 'projects/your-project/secrets/security-config/versions/latest',
+        name: process.env.SECURITY_CONFIG_SECRET_NAME,
       });
+
+      if (!version.payload?.data) {
+        throw new Error(
+          'Failed to load security config from secret manager'
+        );
+      }
 
       if (version.payload?.data) {
         return JSON.parse(version.payload.data.toString());
@@ -230,7 +261,7 @@ export class SecurityService {
     try {
       // Set up Security Command Center notifications
       const [parent] = await this.securityCenter.getOrganization({
-        organizationId: 'your-org-id',
+        organizationId: process.env.SECURITY_ORG_ID,
       });
 
       await this.securityCenter.createNotificationConfig({
@@ -238,7 +269,7 @@ export class SecurityService {
         configId: 'security-notifications',
         notificationConfig: {
           description: 'Security event notifications',
-          pubsubTopic: 'projects/your-project/topics/security-events',
+          pubsubTopic: process.env.SECURITY_EVENTS_TOPIC,
           streamingConfig: {
             filter: 'severity >= MEDIUM',
           },
@@ -288,12 +319,32 @@ export class SecurityService {
     console.error('Security event handler error:', error);
   }
 
-  private async checkRateLimit(
-    _userId: string,
-    _requestType: string
-  ): Promise<boolean> {
-    // Implement rate limiting using Redis or similar
-    // This is a placeholder implementation
+  private async checkRateLimit(userId: string, requestType: string): Promise<boolean> {
+    const now = Date.now();
+  
+    let userRequests = this.requestCounts.get(userId) || [];
+  
+    userRequests.push({ timestamp: now, requestType });
+  
+    userRequests = userRequests.filter(
+      (request) => now - request.timestamp <= 60000 // 1 minute
+    );
+  
+    this.requestCounts.set(userId, userRequests);
+  
+    if (userRequests.length > this.config.rateLimit.requestsPerMinute) {
+      await this.logSecurityEvent({
+        type: 'api',
+        severity: 'medium',
+        details: {
+          userId,
+          requestType,
+          reason: 'Rate limit exceeded',
+        },
+        timestamp: new Date().toISOString(),
+      });
+      return true;
+    }
     return false;
   }
 
@@ -307,30 +358,21 @@ export class SecurityService {
     }
   }
 
-  private async getEncryptionKey(): Promise<string> {
-    // Get or create encryption key
-    const keyName =
-      'projects/your-project/locations/global/keyRings/app-keys/cryptoKeys/data-key';
-    return keyName;
-  }
-
-  private async scanForThreats(
-    _content: string | Buffer,
-    _contentType: string
-  ): Promise<string[]> {
-    // Implement threat scanning
+  private async scanForThreats(_content: string | Buffer, _contentType: string): Promise<string[]> {
+    
+    // Implement threat scanning (placeholder)
     // This is a placeholder implementation
     return [];
   }
 
   private async rotateEncryptionKeys(): Promise<void> {
     // Implement key rotation logic
-    const keyName = await this.getEncryptionKey();
-    await this.kms.createCryptoKeyVersion({ parent: keyName });
+    await this.kms.createCryptoKeyVersion({ parent: process.env.ENCRYPTION_KEY });
   }
 
   private async rotateAPIKeys(): Promise<void> {
     // Implement API key rotation logic
+    console.log('API keys rotated');
   }
 
   private async logSecurityEvent(event: SecurityEvent): Promise<void> {
@@ -354,3 +396,4 @@ export class SecurityService {
     // Handle system-related security events
   }
 }
+

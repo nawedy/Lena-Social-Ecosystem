@@ -1,31 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore } from '@reduxjs/toolkit';
-import { combineReducers } from 'redux';
-import { persistStore, persistReducer } from 'redux-persist';
-
+import { persistStore, persistReducer, combineReducers } from 'redux-persist';
 import authReducer from './slices/auth';
-import feedReducer from './slices/feed';
-import mediaReducer from './slices/media';
-import notificationsReducer from './slices/notifications';
-import profileReducer from './slices/profile';
-import settingsReducer from './slices/settings';
+import feedReducer from './slices/feed'; // Import the new feed reducer
 
-const persistConfig = {
+const rootPersistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth', 'settings'],
+  whitelist: ['auth'],
 };
 
 const rootReducer = combineReducers({
   auth: authReducer,
   feed: feedReducer,
-  profile: profileReducer,
-  notifications: notificationsReducer,
-  settings: settingsReducer,
-  media: mediaReducer,
 });
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const persistedReducer = persistReducer(rootPersistConfig, rootReducer);
 
 export const store = configureStore({
   reducer: persistedReducer,

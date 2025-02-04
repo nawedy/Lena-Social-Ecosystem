@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, View, Text, StyleProp, ViewStyle } from 'react-native';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { NativeRouter } from 'react-router-native';
 
@@ -14,16 +14,33 @@ import { ATProtoProvider } from './contexts/ATProtoContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
-// Use appropriate router based on platform
-const Router: React.FC = Platform.select({
-  web: BrowserRouter as any, // Suppress type error for BrowserRouter
-  android: NativeRouter as any,
-  ios: NativeRouter as any,
-  default: () => {
-    console.error('Unsupported platform for routing.');
-    return null; // Or a component that displays an error message
-  },
-})!;
+
+const UnsupportedPlatform: React.FC = () => {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' } as StyleProp<ViewStyle>}>
+    <div>
+        <h1>Unsupported Platform</h1>
+        <p>This platform is not supported.</p>
+      </div>
+    </View>
+  );
+};
+
+const NotFound: React.FC = () => {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>404: Page Not Found</Text>
+    </View>
+  )
+}
+
+const Router = (
+  Platform.select({
+    web: BrowserRouter,
+    android: NativeRouter,
+    ios: NativeRouter,
+    default: () => UnsupportedPlatform,
+  })! as React.ComponentType<{ children?: React.ReactNode; }>;
 
 const App: React.FC = () => {
   return (
@@ -31,7 +48,7 @@ const App: React.FC = () => {
       <AuthProvider>
         <ATProtoProvider>
           <Router>
-            <div className="app">
+           <div className="app">
               <Navbar />
               <Routes>
                 <Route path="/" element={<Home />} />
@@ -40,8 +57,9 @@ const App: React.FC = () => {
                 {/* <Route path="/settings" element={<Settings />} /> */}
                 <Route path="/create" element={<CreatePost />} />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
-            </div>
+             </div>
           </Router>
         </ATProtoProvider>
       </AuthProvider>
