@@ -1,0 +1,41 @@
+{
+  "name": "@lena/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@lena/auth": "workspace:*",
+    "@lena/storage": "workspace:*",
+    "@lena/ui-components": "workspace:*",
+    "three": "^0.161.0",
+    "@threlte/core": "^7.0.12",
+    "@threlte/extras": "^7.0.11",
+    "gsap": "^3.12.5",
+    "d3": "^7.8.5",
+    "plausible-tracker": "^0.3.8",
+    "@fontsource/exo": "^5.0.16",
+    "@fontsource/rajdhani": "^5.0.8"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-vercel": "^4.0.3",
+    "@sveltejs/kit": "^2.0.0",
+    "@types/d3": "^7.4.3",
+    "@types/three": "^0.161.2",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33",
+    "svelte": "^4.2.9",
+    "svelte-check": "^3.6.3",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12"
+  }
+} 

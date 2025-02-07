@@ -1,0 +1,31 @@
+{
+  "name": "@lena/storage",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev",
+    "test": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "ipfs-http-client": "^60.0.1",
+    "web3.storage": "^4.5.5",
+    "multiformats": "^13.0.0",
+    "uint8arrays": "^5.0.1",
+    "@supabase/storage-js": "^2.5.5",
+    "browser-image-compression": "^2.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vitest": "^1.2.1"
+  }
+} 

@@ -1,115 +1,84 @@
-# TikTokToe
+# Lena Ecosystem
 
-A revolutionary social media platform built on the AT Protocol.
+A decentralized social networking ecosystem integrating multiple content-sharing platforms.
 
-## Overview
+## Project Structure
 
-A social media platform for connecting with friends and discovering new content.
-
-## Features
-
-- Real-time social feed
-- User profiles and authentication
-- Content creation and sharing
-- Advanced search capabilities
-- E-commerce integration
-- Affiliate marketing dashboard
-- Real-time notifications
+```
+lena/
+├── apps/                # Platform-specific applications
+│   ├── short-video/    # TikTok-style platform
+│   ├── image-sharing/  # Instagram-style platform
+│   ├── long-video/    # YouTube-style platform
+│   ├── audio/         # Spotify-style platform
+│   ├── discourse/     # Twitter-style debates
+│   ├── creators/      # Patreon-style creator platform
+│   ├── echo/          # Microblogging & news
+│   ├── connect/       # Professional networking
+│   └── agora/         # Marketplace & commerce
+├── packages/           # Shared packages
+│   ├── ui/            # Shared UI components
+│   ├── auth/          # Authentication
+│   ├── storage/       # IPFS integration
+│   ├── blockchain/    # Web3 functionality
+│   ├── feed/          # Shared feed logic
+│   └── shared/        # Common utilities
+└── services/          # Backend services
+    ├── user/          # User management
+    ├── content/       # Content handling
+    └── analytics/     # Privacy-first analytics
+```
 
 ## Tech Stack
 
-- React Native / Expo
-- TypeScript
-- Firebase (Authentication, Realtime Database)
-- Express.js (API Server)
-- Prometheus / Grafana (Monitoring)
-- Docker / Kubernetes (Deployment)
+- **Frontend**: Svelte, Flutter Web
+- **Backend**: Supabase, Hasura (GraphQL)
+- **Authentication**: AT Protocol, Magic.link, Web3
+- **Storage**: IPFS, Fleek
+- **Database**: PostgreSQL (via Supabase)
+- **Analytics**: Privacy-first analytics with Plausible
 
-## Prerequisites
+## Getting Started
 
-- Node.js >= 16
-- npm >= 8
-- Docker
-- Kubernetes (for production deployment)
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/tiktoktoe.git
-   cd tiktoktoe
-   ```
-
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Set up environment variables:
+2. Build all packages:
    ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
+   npm run build
    ```
 
-4. Start the development server:
+3. Start development server:
    ```bash
-   npm start
+   npm run dev
    ```
 
-## Development
+## Development Guidelines
 
-- `npm start` - Start the Expo development server
-- `npm run android` - Run on Android
-- `npm run ios` - Run on iOS
-- `npm run web` - Run on web browser
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
-- `npm test` - Run tests
-- `npm run metrics` - Start the metrics server
+- Follow the Secure AI Developer Guidelines for all implementations
+- Use TypeScript for type safety
+- Write tests for all new features
+- Follow the established design system
+- Ensure privacy-first approach in all features
 
-## Deployment
+## UI Components
 
-### Production Deployment
+The shared UI components package (`@lena/ui-components`) provides a consistent design system across all platforms. To use components in your app:
 
-1. Build the Docker images:
-   ```bash
-   docker-compose build
-   ```
-
-2. Push to container registry:
-   ```bash
-   docker-compose push
-   ```
-
-3. Deploy to Kubernetes:
-   ```bash
-   kubectl apply -f k8s/
-   ```
-
-### Monitoring Setup
-
-1. Deploy monitoring stack:
-   ```bash
-   docker-compose -f docker-compose.monitoring.yml up -d
-   ```
-
-2. Access dashboards:
-   - Grafana: http://localhost:3003
-   - Prometheus: http://localhost:9091
-   - AlertManager: http://localhost:9094
+```typescript
+import { Button } from '@lena/ui-components';
+```
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -am 'Add my feature'`
-4. Push to the branch: `git push origin feature/my-feature`
-5. Submit a pull request
+1. Create a new branch for your feature
+2. Make your changes
+3. Submit a pull request
+4. Ensure all tests pass
+5. Get code review
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-For support, email support@tiktoktoe.com or join our Slack channel.
+MIT
