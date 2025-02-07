@@ -1,0 +1,37 @@
+{
+  "name": "@lena/content",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite dev",
+    "test": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1",
+    "@supabase/storage-js": "^2.5.5",
+    "sharp": "^0.33.2",
+    "web3.storage": "^4.5.5",
+    "ipfs-http-client": "^60.0.1",
+    "browser-image-compression": "^2.0.2",
+    "@tensorflow/tfjs": "^4.17.0",
+    "@tensorflow-models/mobilenet": "^2.1.1",
+    "@lena/moderation": "workspace:*",
+    "@lena/storage": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/sharp": "^0.32.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vitest": "^1.2.1"
+  }
+} 

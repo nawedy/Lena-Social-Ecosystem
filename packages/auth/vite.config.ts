@@ -9,14 +9,22 @@ export default defineConfig({
       fileName: 'index'
     },
     rollupOptions: {
-      external: ['@atproto/api', 'magic-sdk', 'ethers', '@supabase/supabase-js', 'siwe'],
+      external: [
+        '@atproto/api',
+        'magic-sdk',
+        'ethers',
+        '@supabase/supabase-js',
+        'siwe',
+        'svelte'
+      ],
       output: {
         globals: {
           '@atproto/api': 'AtProtoApi',
           'magic-sdk': 'Magic',
           'ethers': 'ethers',
           '@supabase/supabase-js': 'Supabase',
-          'siwe': 'SiweMessage'
+          'siwe': 'SiweMessage',
+          'svelte': 'Svelte'
         }
       }
     }

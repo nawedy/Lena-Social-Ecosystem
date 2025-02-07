@@ -1,0 +1,16 @@
+{
+	"/(protected)": [],
+	"/": [],
+	"/api/debates/[debateId]/metrics": [
+		"src/routes/api/debates/[debateId]/metrics/+server.ts"
+	],
+	"/(protected)/explore": [],
+	"/(protected)/feed": [],
+	"/login": [],
+	"/(protected)/messages": [],
+	"/(protected)/notifications": [],
+	"/(protected)/profile": [],
+	"/(protected)/search": [],
+	"/(protected)/settings": [],
+	"/signup": []
+}
