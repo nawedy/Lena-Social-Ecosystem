@@ -12,11 +12,16 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    alias: {
+      '$lib': path.resolve(__dirname, './src/lib')
+    }
+  },
   build: {
     lib: {
       entry: path.resolve(__dirname, 'src/index.ts'),
-      name: 'LenaUI',
-      fileName: 'index'
+      name: '@lena/ui-core',
+      fileName: (format) => `index.${format}.js`
     },
     rollupOptions: {
       external: [
