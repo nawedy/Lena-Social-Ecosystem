@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
   import { supabase } from '$lib/supabaseClient';
-  import { Button, Input, Alert } from '$lib/components/ui';
+  import { Button, Input, Alert, Select } from '$lib/components/ui';
   import { user } from '$lib/stores/auth';
 
   export let onSuccess: () => void = () => {};
@@ -20,41 +20,92 @@
       min: '',
       max: '',
       currency: 'USD',
-      period: 'yearly'
+      isPublic: true
     },
     requiredSkills: [] as string[],
-    requiredExperience: '',
-    benefits: {
-      healthcare: false,
-      dental: false,
-      vision: false,
-      retirement: false,
-      pto: false,
-      parental: false,
-      remote: false,
-      education: false,
-      other: [] as string[]
+    preferredSkills: [] as string[],
+    experience: {
+      min: 0,
+      max: 0,
+      level: 'entry'
     },
-    applicationUrl: '',
-    tokenRequirements: null
+    benefits: [] as string[],
+    applicationDeadline: '',
+    isConfidential: false,
+    requiresVerification: true
   };
 
-  let newSkill = '';
-  let newBenefit = '';
+  let skillInput = '';
+  let benefitInput = '';
 
   const jobTypes = [
-    { value: 'full-time', label: 'Full-time' },
-    { value: 'part-time', label: 'Part-time' },
+    { value: 'full-time', label: 'Full Time' },
+    { value: 'part-time', label: 'Part Time' },
     { value: 'contract', label: 'Contract' },
-    { value: 'freelance', label: 'Freelance' },
-    { value: 'internship', label: 'Internship' }
+    { value: 'internship', label: 'Internship' },
+    { value: 'temporary', label: 'Temporary' }
   ];
 
   const remotePolicies = [
     { value: 'remote', label: 'Remote' },
     { value: 'hybrid', label: 'Hybrid' },
-    { value: 'on-site', label: 'On-site' }
+    { value: 'onsite', label: 'On-site' }
   ];
+
+  const experienceLevels = [
+    { value: 'entry', label: 'Entry Level' },
+    { value: 'mid', label: 'Mid Level' },
+    { value: 'senior', label: 'Senior Level' },
+    { value: 'lead', label: 'Lead' },
+    { value: 'executive', label: 'Executive' }
+  ];
+
+  const currencies = [
+    { value: 'USD', label: 'USD' },
+    { value: 'EUR', label: 'EUR' },
+    { value: 'GBP', label: 'GBP' },
+    { value: 'CAD', label: 'CAD' }
+  ];
+
+  function handleSkillInput(event: KeyboardEvent, type: 'required' | 'preferred') {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      const skill = skillInput.trim();
+      
+      if (skill && type === 'required' && !formData.requiredSkills.includes(skill)) {
+        formData.requiredSkills = [...formData.requiredSkills, skill];
+      } else if (skill && type === 'preferred' && !formData.preferredSkills.includes(skill)) {
+        formData.preferredSkills = [...formData.preferredSkills, skill];
+      }
+      
+      skillInput = '';
+    }
+  }
+
+  function removeSkill(skill: string, type: 'required' | 'preferred') {
+    if (type === 'required') {
+      formData.requiredSkills = formData.requiredSkills.filter(s => s !== skill);
+    } else {
+      formData.preferredSkills = formData.preferredSkills.filter(s => s !== skill);
+    }
+  }
+
+  function handleBenefitInput(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      const benefit = benefitInput.trim();
+      
+      if (benefit && !formData.benefits.includes(benefit)) {
+        formData.benefits = [...formData.benefits, benefit];
+      }
+      
+      benefitInput = '';
+    }
+  }
+
+  function removeBenefit(benefit: string) {
+    formData.benefits = formData.benefits.filter(b => b !== benefit);
+  }
 
   async function handleSubmit() {
     if (!$user) return;
@@ -63,7 +114,18 @@
       loading = true;
       error = null;
 
-      const { error: submitError } = await supabase
+      // Validate form data
+      if (!formData.title || !formData.company || !formData.description) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      if (formData.salaryRange.isPublic && 
+          (!formData.salaryRange.min || !formData.salaryRange.max)) {
+        throw new Error('Please specify salary range or make it private');
+      }
+
+      // Create job listing
+      const { data: job, error: jobError } = await supabase
         .from('job_listings')
         .insert({
           poster_id: $user.id,
@@ -73,82 +135,37 @@
           location: formData.location,
           type: formData.type,
           remote_policy: formData.remotePolicy,
-          salary_range: formData.salaryRange,
+          salary_min: formData.salaryRange.isPublic ? formData.salaryRange.min : null,
+          salary_max: formData.salaryRange.isPublic ? formData.salaryRange.max : null,
+          salary_currency: formData.salaryRange.currency,
           required_skills: formData.requiredSkills,
-          required_experience: formData.requiredExperience,
+          preferred_skills: formData.preferredSkills,
+          experience_min: formData.experience.min,
+          experience_max: formData.experience.max,
+          experience_level: formData.experience.level,
           benefits: formData.benefits,
-          application_url: formData.applicationUrl,
-          token_requirements: formData.tokenRequirements,
+          application_deadline: formData.applicationDeadline,
+          is_confidential: formData.isConfidential,
+          requires_verification: formData.requiresVerification,
           status: 'active'
-        });
+        })
+        .select()
+        .single();
 
-      if (submitError) throw submitError;
+      if (jobError) throw jobError;
 
       onSuccess();
-      resetForm();
     } catch (e) {
       error = e.message;
     } finally {
       loading = false;
     }
   }
-
-  function addSkill() {
-    if (!newSkill.trim()) return;
-    formData.requiredSkills = [...new Set([...formData.requiredSkills, newSkill.trim()])];
-    newSkill = '';
-  }
-
-  function removeSkill(skill: string) {
-    formData.requiredSkills = formData.requiredSkills.filter(s => s !== skill);
-  }
-
-  function addBenefit() {
-    if (!newBenefit.trim()) return;
-    formData.benefits.other = [...new Set([...formData.benefits.other, newBenefit.trim()])];
-    newBenefit = '';
-  }
-
-  function removeBenefit(benefit: string) {
-    formData.benefits.other = formData.benefits.other.filter(b => b !== benefit);
-  }
-
-  function resetForm() {
-    formData = {
-      title: '',
-      company: '',
-      description: '',
-      location: '',
-      type: 'full-time',
-      remotePolicy: 'hybrid',
-      salaryRange: {
-        min: '',
-        max: '',
-        currency: 'USD',
-        period: 'yearly'
-      },
-      requiredSkills: [],
-      requiredExperience: '',
-      benefits: {
-        healthcare: false,
-        dental: false,
-        vision: false,
-        retirement: false,
-        pto: false,
-        parental: false,
-        remote: false,
-        education: false,
-        other: []
-      },
-      applicationUrl: '',
-      tokenRequirements: null
-    };
-  }
 </script>
 
-<div class="max-w-3xl mx-auto">
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-    <h1 class="text-2xl font-bold mb-6">Post a New Job</h1>
+<div class="max-w-4xl mx-auto">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+    <h2 class="text-2xl font-bold mb-6">Post a Job</h2>
 
     {#if error}
       <Alert variant="error" title="Error" message={error} class="mb-6" />
@@ -156,267 +173,151 @@
 
     <form on:submit|preventDefault={handleSubmit} class="space-y-6">
       <!-- Basic Information -->
-      <div class="space-y-4">
-        <h2 class="text-lg font-semibold">Basic Information</h2>
-
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input
           label="Job Title"
           bind:value={formData.title}
-          placeholder="e.g. Senior Software Engineer"
+          placeholder="e.g., Senior Software Engineer"
           required
         />
 
         <Input
-          label="Company"
+          label="Company Name"
           bind:value={formData.company}
-          placeholder="e.g. Tech Corp"
+          placeholder="Your company name"
           required
         />
-
-        <div>
-          <label class="block text-sm font-medium mb-1">
-            Job Description
-          </label>
-          <textarea
-            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 p-2 h-32"
-            bind:value={formData.description}
-            placeholder="Describe the role, responsibilities, and requirements..."
-            required
-          ></textarea>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1">Job Type</label>
-            <select
-              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 p-2"
-              bind:value={formData.type}
-              required
-            >
-              {#each jobTypes as type}
-                <option value={type.value}>{type.label}</option>
-              {/each}
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1">Work Type</label>
-            <select
-              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 p-2"
-              bind:value={formData.remotePolicy}
-              required
-            >
-              {#each remotePolicies as policy}
-                <option value={policy.value}>{policy.label}</option>
-              {/each}
-            </select>
-          </div>
-        </div>
 
         <Input
           label="Location"
           bind:value={formData.location}
-          placeholder="e.g. San Francisco, CA"
-          required={formData.remotePolicy !== 'remote'}
+          placeholder="e.g., New York, NY or Remote"
         />
+
+        <Select
+          label="Job Type"
+          options={jobTypes}
+          bind:value={formData.type}
+          required
+        />
+
+        <Select
+          label="Remote Policy"
+          options={remotePolicies}
+          bind:value={formData.remotePolicy}
+          required
+        />
+
+        <Select
+          label="Experience Level"
+          options={experienceLevels}
+          bind:value={formData.experience.level}
+          required
+        />
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-sm font-medium mb-2">Job Description</label>
+        <textarea
+          bind:value={formData.description}
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-600 p-3 min-h-[200px]"
+          placeholder="Describe the role, responsibilities, and requirements..."
+          required
+        ></textarea>
       </div>
 
       <!-- Salary Range -->
       <div class="space-y-4">
-        <h2 class="text-lg font-semibold">Salary Range</h2>
-
-        <div class="grid grid-cols-2 gap-4">
-          <Input
-            type="number"
-            label="Minimum"
-            bind:value={formData.salaryRange.min}
-            placeholder="e.g. 80000"
-          />
-
-          <Input
-            type="number"
-            label="Maximum"
-            bind:value={formData.salaryRange.max}
-            placeholder="e.g. 120000"
-          />
+        <h3 class="text-lg font-medium">Salary Range</h3>
+        
+        <div class="flex items-center space-x-4">
+          <label class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              bind:checked={formData.salaryRange.isPublic}
+              class="rounded border-gray-300 dark:border-gray-600"
+            />
+            <span>Display salary range publicly</span>
+          </label>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1">Currency</label>
-            <select
-              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 p-2"
+        {#if formData.salaryRange.isPublic}
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              type="number"
+              label="Minimum Salary"
+              bind:value={formData.salaryRange.min}
+              min="0"
+              step="1000"
+            />
+
+            <Input
+              type="number"
+              label="Maximum Salary"
+              bind:value={formData.salaryRange.max}
+              min="0"
+              step="1000"
+            />
+
+            <Select
+              label="Currency"
+              options={currencies}
               bind:value={formData.salaryRange.currency}
-            >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1">Period</label>
-            <select
-              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 p-2"
-              bind:value={formData.salaryRange.period}
-            >
-              <option value="yearly">Yearly</option>
-              <option value="monthly">Monthly</option>
-              <option value="hourly">Hourly</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Required Skills -->
-      <div class="space-y-4">
-        <h2 class="text-lg font-semibold">Required Skills</h2>
-
-        <div class="flex gap-2">
-          <Input
-            bind:value={newSkill}
-            placeholder="Add a required skill..."
-            class="flex-1"
-          />
-          <Button
-            variant="outline"
-            on:click={addSkill}
-            disabled={!newSkill.trim()}
-          >
-            Add
-          </Button>
-        </div>
-
-        {#if formData.requiredSkills.length > 0}
-          <div class="flex flex-wrap gap-2">
-            {#each formData.requiredSkills as skill}
-              <div class="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 text-sm flex items-center">
-                <span>{skill}</span>
-                <button
-                  class="ml-2 text-gray-500 hover:text-red-500"
-                  on:click={() => removeSkill(skill)}
-                >
-                  ×
-                </button>
-              </div>
-            {/each}
+            />
           </div>
         {/if}
       </div>
 
-      <!-- Required Experience -->
+      <!-- Skills -->
       <div class="space-y-4">
-        <h2 class="text-lg font-semibold">Required Experience</h2>
+        <h3 class="text-lg font-medium">Skills</h3>
 
-        <Input
-          label="Experience Level"
-          bind:value={formData.requiredExperience}
-          placeholder="e.g. 3+ years of experience in software development"
-        />
-      </div>
-
-      <!-- Benefits -->
-      <div class="space-y-4">
-        <h2 class="text-lg font-semibold">Benefits</h2>
-
-        <div class="grid grid-cols-2 gap-4">
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              bind:checked={formData.benefits.healthcare}
-              class="rounded border-gray-300 dark:border-gray-600"
-            />
-            <span>Healthcare</span>
-          </label>
-
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              bind:checked={formData.benefits.dental}
-              class="rounded border-gray-300 dark:border-gray-600"
-            />
-            <span>Dental</span>
-          </label>
-
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              bind:checked={formData.benefits.vision}
-              class="rounded border-gray-300 dark:border-gray-600"
-            />
-            <span>Vision</span>
-          </label>
-
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              bind:checked={formData.benefits.retirement}
-              class="rounded border-gray-300 dark:border-gray-600"
-            />
-            <span>401(k)</span>
-          </label>
-
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              bind:checked={formData.benefits.pto}
-              class="rounded border-gray-300 dark:border-gray-600"
-            />
-            <span>Paid Time Off</span>
-          </label>
-
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              bind:checked={formData.benefits.parental}
-              class="rounded border-gray-300 dark:border-gray-600"
-            />
-            <span>Parental Leave</span>
-          </label>
-
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              bind:checked={formData.benefits.remote}
-              class="rounded border-gray-300 dark:border-gray-600"
-            />
-            <span>Remote Work</span>
-          </label>
-
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              bind:checked={formData.benefits.education}
-              class="rounded border-gray-300 dark:border-gray-600"
-            />
-            <span>Education</span>
-          </label>
+        <!-- Required Skills -->
+        <div>
+          <label class="block text-sm font-medium mb-2">Required Skills</label>
+          <Input
+            bind:value={skillInput}
+            placeholder="Add required skills (press Enter)"
+            on:keydown={(e) => handleSkillInput(e, 'required')}
+          />
+          
+          {#if formData.requiredSkills.length > 0}
+            <div class="flex flex-wrap gap-2 mt-2">
+              {#each formData.requiredSkills as skill}
+                <div class="inline-flex items-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full px-3 py-1">
+                  <span class="text-sm">{skill}</span>
+                  <button
+                    type="button"
+                    class="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                    on:click={() => removeSkill(skill, 'required')}
+                  >
+                    ×
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
         </div>
 
-        <div class="mt-4">
-          <div class="flex gap-2">
-            <Input
-              bind:value={newBenefit}
-              placeholder="Add other benefits..."
-              class="flex-1"
-            />
-            <Button
-              variant="outline"
-              on:click={addBenefit}
-              disabled={!newBenefit.trim()}
-            >
-              Add
-            </Button>
-          </div>
-
-          {#if formData.benefits.other.length > 0}
+        <!-- Preferred Skills -->
+        <div>
+          <label class="block text-sm font-medium mb-2">Preferred Skills</label>
+          <Input
+            bind:value={skillInput}
+            placeholder="Add preferred skills (press Enter)"
+            on:keydown={(e) => handleSkillInput(e, 'preferred')}
+          />
+          
+          {#if formData.preferredSkills.length > 0}
             <div class="flex flex-wrap gap-2 mt-2">
-              {#each formData.benefits.other as benefit}
-                <div class="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1 text-sm flex items-center">
-                  <span>{benefit}</span>
+              {#each formData.preferredSkills as skill}
+                <div class="inline-flex items-center bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full px-3 py-1">
+                  <span class="text-sm">{skill}</span>
                   <button
-                    class="ml-2 text-gray-500 hover:text-red-500"
-                    on:click={() => removeBenefit(benefit)}
+                    type="button"
+                    class="ml-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                    on:click={() => removeSkill(skill, 'preferred')}
                   >
                     ×
                   </button>
@@ -427,27 +328,75 @@
         </div>
       </div>
 
-      <!-- Application URL -->
-      <div>
+      <!-- Benefits -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium">Benefits</h3>
+        
         <Input
-          label="Application URL (Optional)"
-          bind:value={formData.applicationUrl}
-          placeholder="e.g. https://company.com/careers/job-123"
+          bind:value={benefitInput}
+          placeholder="Add benefits (press Enter)"
+          on:keydown={handleBenefitInput}
         />
+        
+        {#if formData.benefits.length > 0}
+          <div class="flex flex-wrap gap-2">
+            {#each formData.benefits as benefit}
+              <div class="inline-flex items-center bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full px-3 py-1">
+                <span class="text-sm">{benefit}</span>
+                <button
+                  type="button"
+                  class="ml-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200"
+                  on:click={() => removeBenefit(benefit)}
+                >
+                  ×
+                </button>
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
 
-      <div class="flex justify-end space-x-4">
+      <!-- Additional Options -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium">Additional Options</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            type="date"
+            label="Application Deadline"
+            bind:value={formData.applicationDeadline}
+            min={new Date().toISOString().split('T')[0]}
+          />
+
+          <div class="space-y-2">
+            <label class="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                bind:checked={formData.isConfidential}
+                class="rounded border-gray-300 dark:border-gray-600"
+              />
+              <span>Confidential Listing</span>
+            </label>
+
+            <label class="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                bind:checked={formData.requiresVerification}
+                class="rounded border-gray-300 dark:border-gray-600"
+              />
+              <span>Require Profile Verification</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex justify-end">
         <Button
-          variant="ghost"
-          on:click={resetForm}
-          type="button"
-        >
-          Reset
-        </Button>
-        <Button
-          variant="primary"
           type="submit"
+          variant="primary"
           loading={loading}
+          disabled={loading}
         >
           Post Job
         </Button>
@@ -458,4 +407,11 @@
 
 <style>
   /* Add any component-specific styles here */
+  textarea {
+    @apply focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white;
+  }
+
+  input[type="checkbox"] {
+    @apply text-blue-500 focus:ring-blue-500;
+  }
 </style> 
