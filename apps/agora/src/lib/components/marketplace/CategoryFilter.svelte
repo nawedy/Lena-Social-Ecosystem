@@ -33,7 +33,7 @@
     >
       <Badge
         variant={selected === category ? 'primary' : 'outline'}
-        class="cursor-pointer transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+        class="cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground"
       >
         {#if category === 'all'}
           All Categories

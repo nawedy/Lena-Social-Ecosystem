@@ -4,13 +4,16 @@ import { supabase } from '$lib/supabaseClient';
 import { magic } from '$lib/magic';
 import type { Web3Provider } from '@ethersproject/providers';
 import { ethers } from 'ethers';
+import { browser } from '$app/environment';
 
 export const user = writable<User | null>(null);
 export const session = writable<Session | null>(null);
 export const isAuthenticated = writable<boolean>(false);
-export const web3Provider = writable<Web3Provider | null>(null);
+export const web3Provider = writable<ethers.BrowserProvider | null>(null);
 export const walletAddress = writable<string | null>(null);
 export const chainId = writable<number | null>(null);
+export const userAddress = writable<string | null>(null);
+export const isConnected = writable<boolean>(false);
 
 class AuthStore {
   async init() {
@@ -29,25 +32,8 @@ class AuthStore {
       });
 
       // Initialize Web3
-      if (window.ethereum) {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        web3Provider.set(provider);
-
-        // Get initial wallet state
-        const accounts = await provider.listAccounts();
-        walletAddress.set(accounts[0]?.address ?? null);
-        const network = await provider.getNetwork();
-        chainId.set(Number(network.chainId));
-
-        // Listen for account changes
-        window.ethereum.on('accountsChanged', (accounts: string[]) => {
-          walletAddress.set(accounts[0] ?? null);
-        });
-
-        // Listen for chain changes
-        window.ethereum.on('chainChanged', (chainId: string) => {
-          chainId.set(Number(chainId));
-        });
+      if (browser) {
+        await initializeWeb3();
       }
     } catch (error) {
       console.error('Failed to initialize auth:', error);
@@ -152,4 +138,84 @@ class AuthStore {
   }
 }
 
-export const auth = new AuthStore(); 
+export const auth = new AuthStore();
+
+// Initialize Web3 provider
+export async function initializeWeb3() {
+  if (!browser) return;
+
+  try {
+    if (window.ethereum) {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      web3Provider.set(provider);
+
+      // Listen for account changes
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      
+      // Listen for chain changes
+      window.ethereum.on('chainChanged', handleChainChanged);
+
+      // Check if already connected
+      const accounts = await provider.listAccounts();
+      if (accounts.length > 0) {
+        handleAccountsChanged(accounts);
+      }
+
+      // Get current chain ID
+      const network = await provider.getNetwork();
+      chainId.set(Number(network.chainId));
+    }
+  } catch (error) {
+    console.error('Failed to initialize Web3:', error);
+    disconnectWallet();
+  }
+}
+
+// Connect wallet
+export async function connectWallet() {
+  if (!browser) return;
+
+  try {
+    if (!window.ethereum) {
+      throw new Error('No Web3 provider available');
+    }
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send('eth_requestAccounts', []);
+    
+    web3Provider.set(provider);
+    handleAccountsChanged(accounts);
+  } catch (error) {
+    console.error('Failed to connect wallet:', error);
+    throw error;
+  }
+}
+
+// Disconnect wallet
+export function disconnectWallet() {
+  web3Provider.set(null);
+  userAddress.set(null);
+  isConnected.set(false);
+  chainId.set(null);
+}
+
+// Handle account changes
+function handleAccountsChanged(accounts: string[]) {
+  if (accounts.length === 0) {
+    disconnectWallet();
+  } else {
+    userAddress.set(accounts[0]);
+    isConnected.set(true);
+  }
+}
+
+// Handle chain changes
+function handleChainChanged(newChainId: string) {
+  chainId.set(parseInt(newChainId));
+  window.location.reload();
+}
+
+// Initialize on browser
+if (browser) {
+  initializeWeb3();
+} 
