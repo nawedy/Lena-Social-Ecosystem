@@ -1,0 +1,18 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow crawling of private routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /settings/
+Disallow: /upload/
+Disallow: /library/
+Disallow: /playlists/
+Disallow: /favorites/
+
+# Sitemap location
+Sitemap: https://audio.lena.app/sitemap.xml
+
+# Crawl-delay to prevent server overload
+Crawl-delay: 10 

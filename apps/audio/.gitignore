@@ -1,0 +1,146 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+.svelte-kit
+build
+dist
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE and editor files
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage
+
+# Local development files
+*.local
+
+# Temporary files
+*.tmp
+*.temp
+.temp
+.tmp
+
+# Cache directories
+.cache
+.mf
+.rollup.cache
+tsconfig.tsbuildinfo
+
+# PWA assets
+**/public/workbox-*.js
+**/public/sw.js
+**/public/fallback-*.js
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Storybook
+storybook-static
+
+# Generated types
+.svelte-kit/types
+*.d.ts
+!src/app.d.ts
+!src/lib/types/*.d.ts
+
+# Media files
+*.mp3
+*.wav
+*.ogg
+*.m4a
+*.aac
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Vercel
+.vercel
+.now
+
+# Local Netlify folder
+.netlify
+
+# Cloudflare
+.cloudflare
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs* 
