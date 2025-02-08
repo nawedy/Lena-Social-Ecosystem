@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0066FF" />
+    <meta name="description" content="A decentralized long-form video platform" />
+    
+    <!-- Preload fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- PWA manifest -->
+    <link rel="manifest" href="%sveltekit.assets%/manifest.json" />
+    <link rel="apple-touch-icon" href="%sveltekit.assets%/icon-192x192.png" />
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Lena Lens" />
+    <meta property="og:description" content="A decentralized long-form video platform" />
+    <meta property="og:image" content="%sveltekit.assets%/og-image.png" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Lena Lens" />
+    <meta name="twitter:description" content="A decentralized long-form video platform" />
+    <meta name="twitter:image" content="%sveltekit.assets%/twitter-image.png" />
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Lena Lens",
+        "description": "A decentralized long-form video platform",
+        "url": "https://lens.lena.app",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://lens.lena.app/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+    
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover" class="min-h-screen bg-background font-cabinet antialiased">
+    <div style="display: contents">%sveltekit.body%</div>
+    <script>
+      // Theme initialization
+      const theme = localStorage.getItem('theme') ?? 'dark';
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      
+      // Service Worker registration
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js');
+      }
+      
+      // MediaSession API setup
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', () => {});
+        navigator.mediaSession.setActionHandler('pause', () => {});
+        navigator.mediaSession.setActionHandler('seekto', () => {});
+        navigator.mediaSession.setActionHandler('seekbackward', () => {});
+        navigator.mediaSession.setActionHandler('seekforward', () => {});
+        navigator.mediaSession.setActionHandler('previoustrack', () => {});
+        navigator.mediaSession.setActionHandler('nexttrack', () => {});
+      }
+      
+      // Picture-in-Picture support
+      if (document.pictureInPictureEnabled) {
+        document.addEventListener('enterpictureinpicture', () => {});
+        document.addEventListener('leavepictureinpicture', () => {});
+      }
+      
+      // Screen Wake Lock for video playback
+      if ('wakeLock' in navigator) {
+        let wakeLock = null;
+        const requestWakeLock = async () => {
+          try {
+            wakeLock = await navigator.wakeLock.request('screen');
+          } catch (err) {
+            console.error('Wake Lock error:', err);
+          }
+        };
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            requestWakeLock();
+          }
+        });
+      }
+      
+      // Network status monitoring
+      window.addEventListener('online', () => {
+        document.documentElement.classList.remove('offline');
+      });
+      window.addEventListener('offline', () => {
+        document.documentElement.classList.add('offline');
+      });
+    </script>
+  </body>
+</html> 

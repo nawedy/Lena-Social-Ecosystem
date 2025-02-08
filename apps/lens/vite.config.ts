@@ -1,0 +1,92 @@
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [sveltekit()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@core': path.resolve(__dirname, '../core/src')
+    }
+  },
+  server: {
+    fs: {
+      allow: ['..']
+    }
+  },
+  optimizeDeps: {
+    exclude: ['@lena/ui-core'],
+    include: [
+      'recordrtc',
+      'ffmpeg.wasm',
+      '@tensorflow/tfjs',
+      '@tensorflow-models/blazeface',
+      '@tensorflow-models/body-pix',
+      '@tensorflow-models/pose-detection',
+      '@mediapipe/tasks-vision',
+      'three',
+      'gsap',
+      'hls.js',
+      'dashjs',
+      'shaka-player',
+      'plyr',
+      'video.js',
+      'wavesurfer.js',
+      'howler'
+    ]
+  },
+  build: {
+    sourcemap: true,
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'video-engine': [
+            'recordrtc',
+            'ffmpeg.wasm'
+          ],
+          'ai-processing': [
+            '@tensorflow/tfjs',
+            '@tensorflow-models/blazeface',
+            '@tensorflow-models/body-pix',
+            '@tensorflow-models/pose-detection',
+            '@mediapipe/tasks-vision'
+          ],
+          'web3': [
+            'ethers',
+            'web3.storage',
+            '@magic-sdk/admin'
+          ],
+          'charts': [
+            'chart.js',
+            'svelte-chartjs'
+          ],
+          'animation': [
+            'three',
+            'gsap',
+            '@threlte/core',
+            '@threlte/extras'
+          ],
+          'video-players': [
+            'hls.js',
+            'dashjs',
+            'shaka-player',
+            'plyr',
+            'video.js'
+          ],
+          'audio-processing': [
+            'wavesurfer.js',
+            'howler'
+          ]
+        }
+      }
+    }
+  },
+  test: {
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts']
+  }
+}); 
