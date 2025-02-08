@@ -1,26 +1,69 @@
 <!-- PieChart Component -->
 <script lang="ts">
-  import { Pie } from 'svelte-chartjs';
-  import {
-    Chart as ChartJS,
-    Title,
-    Tooltip,
-    Legend,
-    ArcElement,
-    CategoryScale
-  } from 'chart.js';
+  import { onMount, onDestroy } from 'svelte';
+  import Chart from 'chart.js/auto';
+  import type { ChartData, ChartOptions } from 'chart.js';
 
-  ChartJS.register(
-    Title,
-    Tooltip,
-    Legend,
-    ArcElement,
-    CategoryScale
-  );
+  export let data: ChartData;
+  export let options: ChartOptions = {};
 
-  export let data: any;
-  export let options: any = {};
-  export let height: number = 400;
+  let canvas: HTMLCanvasElement;
+  let chart: Chart;
+
+  const defaultOptions: ChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right' as const,
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle'
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+            const percentage = Math.round((value / total) * 100);
+            return `${label}: ${value} (${percentage}%)`;
+          }
+        }
+      }
+    }
+  };
+
+  $: if (chart && data) {
+    chart.data = data;
+    chart.update();
+  }
+
+  onMount(() => {
+    chart = new Chart(canvas, {
+      type: 'pie',
+      data,
+      options: { ...defaultOptions, ...options }
+    });
+  });
+
+  onDestroy(() => {
+    if (chart) {
+      chart.destroy();
+    }
+  });
 </script>
 
-<Pie {data} {options} {height} /> 
+<div class="chart-container">
+  <canvas bind:this={canvas}></canvas>
+</div>
+
+<style>
+  .chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+  }
+</style> 
