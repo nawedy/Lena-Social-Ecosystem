@@ -3,9 +3,128 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply antialiased bg-black text-white;
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 328 100% 54%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 180 100% 50%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 300 59% 50%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 328 100% 54%;
+    --radius: 0.5rem;
   }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 328 100% 54%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 180 100% 50%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 300 59% 50%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 328 100% 54%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/50 rounded-full hover:bg-primary/75 transition-colors;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary/20 text-primary;
+}
+
+/* Focus outline */
+:focus {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Video player */
+.video-player {
+  @apply relative w-full aspect-[9/16] bg-black overflow-hidden;
+}
+
+.video-player__controls {
+  @apply absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent;
+}
+
+.video-player__progress {
+  @apply relative h-1 bg-white/20 rounded-full overflow-hidden;
+}
+
+.video-player__progress-bar {
+  @apply absolute top-0 left-0 h-full bg-primary rounded-full transition-all;
+}
+
+.video-player__progress-handle {
+  @apply absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full shadow-lg -ml-1.5 opacity-0 group-hover:opacity-100 transition-opacity;
+}
+
+/* Effects */
+.effect-overlay {
+  @apply absolute inset-0 pointer-events-none mix-blend-screen;
+}
+
+.effect-overlay--glitch {
+  @apply animate-glitch;
+}
+
+.effect-overlay--chromatic {
+  @apply animate-chromatic;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse bg-muted rounded;
+}
+
+/* Grid patterns */
+.grid-pattern {
+  background-image: linear-gradient(to right, theme(colors.primary.500/10) 1px, transparent 1px),
+    linear-gradient(to bottom, theme(colors.primary.500/10) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 @layer components {

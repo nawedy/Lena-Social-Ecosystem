@@ -1,38 +1,74 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import path from 'path';
 
 export default defineConfig({
   plugins: [sveltekit()],
-  test: {
-    include: ['src/**/*.{test,spec}.{js,ts}'],
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/setupTests.ts'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'src/setupTests.ts',
-        '**/*.d.ts',
-        '**/*.config.{js,ts}',
-        '**/*.{spec,test}.{js,ts}',
-        '**/__mocks__/**'
-      ]
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@core': path.resolve(__dirname, '../core/src')
     }
+  },
+  server: {
+    fs: {
+      allow: ['..']
+    }
+  },
+  optimizeDeps: {
+    exclude: ['@lena/ui-core'],
+    include: [
+      'recordrtc',
+      'ffmpeg.wasm',
+      '@tensorflow/tfjs',
+      '@tensorflow-models/blazeface',
+      '@tensorflow-models/body-pix',
+      '@tensorflow-models/pose-detection',
+      '@mediapipe/tasks-vision',
+      'three',
+      'gsap'
+    ]
   },
   build: {
     sourcemap: true,
+    target: 'esnext',
     rollupOptions: {
       output: {
         manualChunks: {
-          'web3': ['web3.storage', 'ethers'],
-          'auth': ['@supabase/supabase-js', 'magic-sdk'],
-          'ui': ['@lena/ui', 'svelte-french-toast']
+          'video-engine': [
+            'recordrtc',
+            'ffmpeg.wasm'
+          ],
+          'ai-processing': [
+            '@tensorflow/tfjs',
+            '@tensorflow-models/blazeface',
+            '@tensorflow-models/body-pix',
+            '@tensorflow-models/pose-detection',
+            '@mediapipe/tasks-vision'
+          ],
+          'web3': [
+            'ethers',
+            'web3.storage',
+            '@magic-sdk/admin'
+          ],
+          'charts': [
+            'chart.js',
+            'svelte-chartjs'
+          ],
+          'animation': [
+            'three',
+            'gsap',
+            '@threlte/core',
+            '@threlte/extras'
+          ]
         }
       }
     }
   },
-  ssr: {
-    noExternal: ['three', 'gsap', '@threlte/core', '@threlte/extras']
+  test: {
+    include: ['src/**/*.{test,spec}.{js,ts}'],
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts']
   }
 }); 

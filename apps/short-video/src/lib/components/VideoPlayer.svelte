@@ -1,215 +1,251 @@
 <!-- VideoPlayer.svelte -->
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { gsap } from 'gsap';
+  import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+  import { Button } from '$lib/components/ui';
+  import { Icon } from '$lib/components/ui';
 
   export let src: string;
+  export let poster: string | undefined = undefined;
   export let autoplay = false;
   export let loop = true;
   export let muted = false;
-  export let poster: string | undefined = undefined;
+  export let controls = true;
+  export let preload: 'none' | 'metadata' | 'auto' = 'metadata';
 
   let video: HTMLVideoElement;
-  let container: HTMLDivElement;
-  let playing = false;
-  let progress = 0;
+  let progressBar: HTMLDivElement;
+  let isPlaying = false;
+  let isMuted = muted;
   let volume = 1;
-  let showControls = false;
-  let controlsTimeout: number;
+  let currentTime = 0;
+  let duration = 0;
+  let buffered = 0;
+  let isFullscreen = false;
+  let showControls = true;
+  let controlsTimeout: NodeJS.Timeout;
 
-  // Touch handling for double tap
-  let lastTap = 0;
-  let tapTimeout: number;
-  let tapPosition = { x: 0, y: 0 };
+  const dispatch = createEventDispatcher<{
+    play: void;
+    pause: void;
+    ended: void;
+    timeupdate: { currentTime: number; duration: number };
+    volumechange: { volume: number; muted: boolean };
+    fullscreenchange: { isFullscreen: boolean };
+  }>();
 
   onMount(() => {
-    if (autoplay) {
-      playVideo();
+    if (video) {
+      video.volume = volume;
+      video.muted = isMuted;
+
+      // Update buffered amount
+      video.addEventListener('progress', updateBuffered);
+
+      // Handle fullscreen changes
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
     }
-
-    // Intersection Observer for autoplay
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            if (autoplay) playVideo();
-          } else {
-            pauseVideo();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    observer.observe(container);
-
-    return () => {
-      observer.disconnect();
-      clearTimeout(controlsTimeout);
-      clearTimeout(tapTimeout);
-    };
   });
 
-  function playVideo() {
-    if (video.paused) {
-      video.play().catch(() => {
-        // Autoplay was prevented
-        playing = false;
-      });
-      playing = true;
+  onDestroy(() => {
+    if (video) {
+      video.removeEventListener('progress', updateBuffered);
+    }
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  });
+
+  function updateBuffered() {
+    if (video.buffered.length > 0) {
+      buffered = (video.buffered.end(video.buffered.length - 1) / video.duration) * 100;
     }
   }
 
-  function pauseVideo() {
-    if (!video.paused) {
-      video.pause();
-      playing = false;
-    }
+  function handleFullscreenChange() {
+    isFullscreen = document.fullscreenElement !== null;
+    dispatch('fullscreenchange', { isFullscreen });
   }
 
   function togglePlay() {
     if (video.paused) {
-      playVideo();
+      video.play();
+      isPlaying = true;
+      dispatch('play');
     } else {
-      pauseVideo();
+      video.pause();
+      isPlaying = false;
+      dispatch('pause');
     }
   }
 
   function toggleMute() {
-    video.muted = !video.muted;
-    muted = video.muted;
+    isMuted = !isMuted;
+    video.muted = isMuted;
+    dispatch('volumechange', { volume, muted: isMuted });
+  }
+
+  function handleVolumeChange(event: Event) {
+    volume = parseFloat((event.target as HTMLInputElement).value);
+    video.volume = volume;
+    if (volume === 0) {
+      isMuted = true;
+    } else if (isMuted) {
+      isMuted = false;
+    }
+    dispatch('volumechange', { volume, muted: isMuted });
   }
 
   function handleTimeUpdate() {
-    progress = (video.currentTime / video.duration) * 100;
+    currentTime = video.currentTime;
+    duration = video.duration;
+    dispatch('timeupdate', { currentTime, duration });
   }
 
-  function handleVolumeChange() {
-    volume = video.volume;
-    muted = video.muted;
+  function handleProgressClick(event: MouseEvent) {
+    const rect = progressBar.getBoundingClientRect();
+    const pos = (event.clientX - rect.left) / rect.width;
+    video.currentTime = pos * video.duration;
   }
 
-  function handleTouchStart(event: TouchEvent) {
-    const touch = event.touches[0];
-    const now = Date.now();
-    
-    tapPosition = {
-      x: touch.clientX,
-      y: touch.clientY
-    };
+  function formatTime(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
 
-    if (now - lastTap < 300) {
-      // Double tap detected
-      clearTimeout(tapTimeout);
-      handleDoubleTap(tapPosition);
+  async function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      await video.requestFullscreen();
     } else {
-      tapTimeout = window.setTimeout(() => {
-        // Single tap
-        togglePlay();
-      }, 300);
+      await document.exitFullscreen();
     }
-
-    lastTap = now;
-  }
-
-  function handleDoubleTap(position: { x: number; y: number }) {
-    // Create heart animation
-    const heart = document.createElement('div');
-    heart.className = 'heart-animation';
-    heart.style.left = `${position.x - 25}px`;
-    heart.style.top = `${position.y - 25}px`;
-    container.appendChild(heart);
-
-    gsap.to(heart, {
-      opacity: 0,
-      scale: 2,
-      y: -100,
-      duration: 1,
-      ease: 'power2.out',
-      onComplete: () => {
-        container.removeChild(heart);
-      }
-    });
-
-    // TODO: Trigger like action
   }
 
   function showControlsTemporarily() {
     showControls = true;
     clearTimeout(controlsTimeout);
-    controlsTimeout = window.setTimeout(() => {
-      showControls = false;
+    controlsTimeout = setTimeout(() => {
+      if (isPlaying) {
+        showControls = false;
+      }
     }, 3000);
+  }
+
+  function handleEnded() {
+    isPlaying = false;
+    dispatch('ended');
+  }
+
+  $: if (video) {
+    video.muted = isMuted;
   }
 </script>
 
 <div
-  bind:this={container}
-  class="relative w-full h-full bg-black"
-  on:touchstart={handleTouchStart}
+  class="relative w-full aspect-[9/16] bg-black overflow-hidden rounded-lg group"
   on:mousemove={showControlsTemporarily}
+  on:mouseleave={() => showControls = false}
 >
   <video
     bind:this={video}
     {src}
     {poster}
-    {loop}
-    playsinline
+    {preload}
     class="w-full h-full object-cover"
+    on:play={() => isPlaying = true}
+    on:pause={() => isPlaying = false}
     on:timeupdate={handleTimeUpdate}
-    on:volumechange={handleVolumeChange}
+    on:ended={handleEnded}
+    {loop}
+    {autoplay}
   />
 
-  <!-- Video Controls -->
-  {#if showControls}
+  {#if controls}
     <div
-      class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent"
-      transition:fade={{ duration: 200 }}
+      class="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300"
+      class:opacity-0={!showControls && isPlaying}
+      class:opacity-100={showControls || !isPlaying}
     >
-      <!-- Progress Bar -->
-      <div class="w-full h-1 bg-gray-700 rounded-full mb-4">
+      <!-- Progress bar -->
+      <div
+        bind:this={progressBar}
+        class="relative h-1 bg-white/20 cursor-pointer"
+        on:click={handleProgressClick}
+      >
         <div
-          class="h-full bg-primary-500 rounded-full"
-          style="width: {progress}%"
+          class="absolute h-full bg-white/30"
+          style="width: {buffered}%"
         />
+        <div
+          class="absolute h-full bg-primary"
+          style="width: {(currentTime / duration) * 100}%"
+        >
+          <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full transform scale-0 group-hover:scale-100 transition-transform" />
+        </div>
       </div>
 
-      <!-- Control Buttons -->
-      <div class="flex items-center gap-4">
-        <button
-          class="text-white hover:text-primary-500 transition-colors"
-          on:click={togglePlay}
-        >
-          {#if playing}
-            <span class="text-2xl">⏸️</span>
-          {:else}
-            <span class="text-2xl">▶️</span>
-          {/if}
-        </button>
+      <!-- Controls -->
+      <div class="p-4 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            class="text-white hover:text-primary"
+            on:click={togglePlay}
+          >
+            <Icon name={isPlaying ? 'pause' : 'play'} class="h-6 w-6" />
+          </Button>
 
-        <button
-          class="text-white hover:text-primary-500 transition-colors"
-          on:click={toggleMute}
+          <div class="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              class="text-white hover:text-primary"
+              on:click={toggleMute}
+            >
+              <Icon
+                name={isMuted ? 'volume-x' : volume > 0.5 ? 'volume-2' : 'volume-1'}
+                class="h-5 w-5"
+              />
+            </Button>
+
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={volume}
+              on:input={handleVolumeChange}
+              class="w-20 h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
+            />
+          </div>
+
+          <div class="text-white text-sm font-medium">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </div>
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          class="text-white hover:text-primary"
+          on:click={toggleFullscreen}
         >
-          {#if muted}
-            <span class="text-2xl">🔇</span>
-          {:else}
-            <span class="text-2xl">🔊</span>
-          {/if}
-        </button>
+          <Icon name={isFullscreen ? 'minimize' : 'maximize'} class="h-5 w-5" />
+        </Button>
       </div>
     </div>
   {/if}
 </div>
 
 <style>
-  .heart-animation {
-    position: fixed;
-    width: 50px;
-    height: 50px;
-    background: url('/icons/heart.svg') no-repeat center center;
-    background-size: contain;
-    pointer-events: none;
-    z-index: 50;
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none w-3 h-3 bg-primary rounded-full cursor-pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    @apply appearance-none w-3 h-3 bg-primary rounded-full cursor-pointer border-none;
+  }
+
+  input[type="range"]::-ms-thumb {
+    @apply appearance-none w-3 h-3 bg-primary rounded-full cursor-pointer;
   }
 </style> 
