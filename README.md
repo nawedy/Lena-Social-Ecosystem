@@ -1,127 +1,190 @@
-# Lena - Privacy-First Social Platform
+# TikTokToe
 
-A decentralized social networking ecosystem built with privacy and security at its core.
+A modern social media platform for sharing and discovering content, built with privacy, security, and user experience at its core.
 
-## Project Structure
+## 🌟 Features
+
+- **Content Creation & Sharing**
+  - Short-form videos
+  - Long-form videos
+  - Audio content
+  - Interactive posts
+  - Real-time streaming
+
+- **Privacy & Security**
+  - End-to-end encryption
+  - Decentralized storage (IPFS)
+  - Zero-knowledge proofs
+  - Self-sovereign identity
+  - Granular privacy controls
+
+- **Social Features**
+  - Decentralized social graph
+  - Cross-platform integration
+  - Community-driven moderation
+  - Rich engagement tools
+  - Content discovery
+
+- **Creator Tools**
+  - Advanced analytics
+  - Monetization options
+  - Community management
+  - Content optimization
+  - Performance insights
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 20.x or higher
+- Docker and Docker Compose
+- PostgreSQL 15.x
+- Redis 7.x
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/TikTokToe.git
+cd TikTokToe
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+# Edit .env.local with your configuration
+```
+
+4. Start development services:
+```bash
+docker-compose up -d
+```
+
+5. Run the development server:
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3000` to see the application.
+
+## 🏗️ Architecture
+
+The project follows a monorepo structure using Turborepo:
 
 ```
-lena/
-├── apps/                # Platform-specific applications
+TikTokToe/
+├── apps/
 │   ├── core/           # Main web application
-│   ├── discourse/      # Debate & discussion platform
-│   ├── creators/       # Creator platform
-│   ├── echo/          # Microblogging platform
-│   ├── connect/       # Professional networking
-│   └── agora/         # Marketplace & commerce
-├── packages/          # Shared packages
-│   ├── ui/            # UI components
-│   ├── auth/          # Authentication
-│   ├── storage/       # IPFS & decentralized storage
-│   ├── blockchain/    # Web3 functionality
-│   └── shared/        # Common utilities
-└── services/         # Backend services
-    ├── user/         # User management
-    ├── content/      # Content handling
-    └── analytics/    # Privacy-first analytics
+│   ├── lens/           # Photo & story sharing
+│   ├── long-video/     # Long-form video platform
+│   ├── short-video/    # Short-form video platform
+│   ├── audio/          # Audio content platform
+│   ├── creators/       # Creator tools & analytics
+│   ├── borsa/          # Monetization & payments
+│   ├── discourse/      # Community & discussions
+│   ├── echo/           # Real-time messaging
+│   └── agora/          # Live streaming
+├── packages/
+│   ├── shared/         # Shared utilities & types
+│   ├── ui/             # Component library
+│   └── analytics/      # Analytics & tracking
+└── scripts/            # Build & deployment scripts
 ```
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- **Frontend**: Svelte, TailwindCSS, Three.js
-- **Backend**: Supabase, GraphQL
-- **Authentication**: Web3, Magic.link, AT Protocol
-- **Storage**: IPFS, Web3.Storage
-- **Database**: PostgreSQL (via Supabase)
-- **Build Tools**: Turbo, Vite
-- **Testing**: Vitest
-- **Analytics**: Plausible Analytics
+- **Frontend**
+  - Svelte/SvelteKit
+  - TailwindCSS
+  - Three.js (AR filters)
+  - WebRTC (streaming)
 
-## Getting Started
+- **Backend**
+  - Node.js
+  - PostgreSQL
+  - Redis
+  - Elasticsearch
 
-1. Prerequisites:
-   - Node.js >= 18
-   - npm >= 10
-   - Git
+- **Storage**
+  - IPFS/Web3.Storage
+  - MinIO
+  - Supabase
 
-2. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/lena.git
-   cd lena
-   ```
+- **Authentication**
+  - Web3 Auth
+  - Magic.link
+  - Supabase Auth
 
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
+- **DevOps**
+  - Docker
+  - GitHub Actions
+  - Vercel
+  - Grafana/Prometheus
 
-4. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+## 📚 Documentation
 
-5. Start development server:
-   ```bash
-   npm run dev
-   ```
+- [API Documentation](./docs/api/README.md)
+- [Architecture Overview](./docs/architecture/README.md)
+- [Development Guide](./docs/development/README.md)
+- [Deployment Guide](./docs/deployment/README.md)
+- [Security Considerations](./docs/security/README.md)
 
-## Development Workflow
+## 🧪 Testing
 
-- **Adding a new package**:
-  ```bash
-  cd packages
-  mkdir my-package
-  cd my-package
-  npm init
-  ```
+Run different test suites:
 
-- **Running tests**:
-  ```bash
-  npm test              # Run all tests
-  npm test -- --watch  # Watch mode
-  ```
+```bash
+# Unit tests
+npm run test
 
-- **Building**:
-  ```bash
-  npm run build        # Build all packages
-  ```
+# Integration tests
+npm run test:integration
 
-- **Linting**:
-  ```bash
-  npm run lint        # Lint all files
-  npm run format     # Format all files
-  ```
+# E2E tests
+npm run test:e2e
 
-## Contributing
+# API tests
+npm run test:api
+```
 
-1. Create a new branch:
-   ```bash
-   git checkout -b feature/my-feature
-   ```
+## 🔐 Security
 
-2. Make your changes and commit:
-   ```bash
-   git commit -m "feat: add new feature"
-   ```
+- Built-in protection against common web vulnerabilities
+- Regular security audits and penetration testing
+- Compliance with GDPR, CCPA, and other privacy regulations
+- Bug bounty program for responsible disclosure
 
-3. Push to your branch:
-   ```bash
-   git push origin feature/my-feature
-   ```
+## 🤝 Contributing
 
-4. Open a Pull Request
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Deployment
+Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct and development process.
 
-The project is deployed using Vercel:
+## 📄 License
 
-- Production: [https://lena.app](https://lena.app)
-- Staging: [https://staging.lena.app](https://staging.lena.app)
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
-## License
+## 🙏 Acknowledgments
 
-MIT
+- [Svelte](https://svelte.dev/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [Supabase](https://supabase.io/)
+- [IPFS](https://ipfs.io/)
+- [Web3.Storage](https://web3.storage/)
+- And all our amazing contributors!
 
-## Security
+## 📞 Support
 
-For security issues, please email security@lena.app
+- Documentation: [docs.tiktok-toe.com](https://docs.tiktok-toe.com)
+- Discord: [Join our community](https://discord.gg/tiktok-toe)
+- Twitter: [@TikTokToe](https://twitter.com/TikTokToe)
+- Email: support@tiktok-toe.com

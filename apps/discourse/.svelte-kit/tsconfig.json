@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "$lib": ["../src/lib"],
+      "$lib/*": ["../src/lib/*"],
+      "@/*": ["../src/*"],
+      "@core/*": ["../../core/src/*"]
+    }
+  },
+  "include": [
+    "../src/**/*.js",
+    "../src/**/*.ts",
+    "../src/**/*.svelte",
+    "./types/**/$types.d.ts"
+  ]
+} 

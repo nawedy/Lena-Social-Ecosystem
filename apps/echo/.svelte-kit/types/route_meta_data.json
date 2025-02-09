@@ -1,0 +1,10 @@
+{
+	"/": [],
+	"/about": [],
+	"/auth": [],
+	"/(protected)/create": [],
+	"/explore": [],
+	"/(protected)/messages": [],
+	"/(protected)/profile": [],
+	"/(protected)/settings/security": []
+}
