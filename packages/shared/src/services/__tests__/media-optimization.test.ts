@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { MediaOptimizer } from '../optimization/MediaOptimizer';
 import { PlatformOptimizer } from '../optimization/PlatformOptimizer';
 import { PlatformCache } from '../optimization/cache/PlatformCache';
