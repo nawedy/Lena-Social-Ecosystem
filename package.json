@@ -14,7 +14,12 @@
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "deploy:start": "ts-node scripts/deploy/start-deployment.ts",
+    "deploy:staging": "./scripts/deploy.sh staging",
+    "deploy:production": "./scripts/deploy.sh production",
+    "deploy:monitor": "ts-node scripts/deploy/monitor-deployment.ts",
+    "deploy:rollback": "ts-node scripts/deploy/rollback.ts"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.12.0",
