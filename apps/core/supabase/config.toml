@@ -63,10 +63,9 @@ enable_confirmations = true
 # "twitter", "slack", "spotify", "workos", "zoom"
 [auth.external.ethereum]
 enabled = true
-client_id = "env(PUBLIC_INFURA_PROJECT_ID)"
-secret = ""
-# Overrides the default auth redirectUrl.
-redirect_uri = ""
+client_id = "dummy-client-id-for-dev"  # Required for local development
+secret = "dummy-secret-for-dev"  # Required for local development
+redirect_uri = "http://localhost:5173/auth/callback"
 # Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
 # or any other third-party OIDC providers.
 url = "" 

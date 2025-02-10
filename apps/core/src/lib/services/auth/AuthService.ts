@@ -1,9 +1,19 @@
-import { supabase } from '$lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import { Magic } from 'magic-sdk';
 import { SiweMessage } from 'siwe';
 import { ethers } from 'ethers';
 import { writable } from 'svelte/store';
 import type { User, Session } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
+
+// Create stores for auth state
+export const user = writable<User | null>(null);
+export const session = writable<any>(null);
 
 // Types
 interface AuthConfig {
@@ -57,7 +67,7 @@ const createAuthStore = () => {
 
 export const authStore = createAuthStore();
 
-class AuthService {
+export class AuthService {
   private magic: Magic;
   private config: AuthConfig = {
     providers: {
@@ -99,7 +109,7 @@ class AuthService {
       authStore.update(state => ({ ...state, loading: true }));
 
       // Get initial session
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       if (error) throw error;
 
       // Set up auth state change listener
@@ -115,15 +125,15 @@ class AuthService {
 
       // Set initial state
       authStore.set({
-        user: session?.user || null,
-        session,
+        user: currentSession?.user || null,
+        session: currentSession,
         loading: false,
         error: null
       });
 
       // Start session refresh timer
-      if (session) {
-        this.startSessionRefreshTimer(session);
+      if (currentSession) {
+        this.startSessionRefreshTimer(currentSession);
       }
     } catch (error) {
       authStore.update(state => ({
@@ -135,39 +145,37 @@ class AuthService {
   }
 
   // Web3 Authentication
-  async signInWithEthereum(): Promise<void> {
+  async signInWithEthereum(address: string) {
     try {
-      if (!window.ethereum) {
-        throw new Error('No Web3 wallet found');
-      }
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-
-      // Create SIWE message
+      const nonce = await this.generateNonce();
       const message = new SiweMessage({
         domain: window.location.host,
         address,
-        statement: 'Sign in with Ethereum to access Lena',
+        statement: 'Sign in with Ethereum to TikTokToe',
         uri: window.location.origin,
         version: '1',
         chainId: 1,
-        nonce: this.generateNonce()
+        nonce
       });
 
-      // Sign message
-      const signature = await signer.signMessage(message.prepareMessage());
+      // Request signature from wallet
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message.prepareMessage(), address]
+      });
 
       // Verify signature with Supabase
-      const { error } = await supabase.auth.signInWithPassword({
-        email: `${address}@ethereum.local`,
-        password: signature
+      const { data, error } = await supabase.auth.signInWithWeb3({
+        provider: 'ethereum',
+        message: message.prepareMessage(),
+        signature
       });
 
       if (error) throw error;
+      return data;
     } catch (error) {
-      throw new Error(`Web3 sign in failed: ${error.message}`);
+      console.error('Error signing in with Ethereum:', error);
+      throw error;
     }
   }
 
@@ -206,65 +214,73 @@ class AuthService {
     }
   }
 
-  // Email/Password Authentication
-  async signInWithEmail(email: string, password: string): Promise<void> {
+  // Traditional email/password authentication with MFA
+  async signInWithEmail(email: string, password: string) {
     try {
-      // Validate password
-      if (!this.validatePassword(password)) {
-        throw new Error('Invalid password format');
-      }
-
-      // Check login attempts
-      if (await this.isAccountLocked(email)) {
-        throw new Error('Account temporarily locked. Please try again later.');
-      }
-
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (error) {
-        await this.incrementLoginAttempts(email);
-        throw error;
-      }
-
-      // Reset login attempts on successful login
-      await this.resetLoginAttempts(email);
-    } catch (error) {
-      throw new Error(`Email sign in failed: ${error.message}`);
-    }
-  }
-
-  // MFA Methods
-  async enableMFA(userId: string, method: 'totp' | 'sms'): Promise<void> {
-    try {
-      if (method === 'totp') {
-        const { data, error } = await supabase.functions.invoke('generate-totp', {
-          body: { userId }
-        });
-        if (error) throw error;
-        return data.secret;
-      } else {
-        const { error } = await supabase.functions.invoke('enable-sms-mfa', {
-          body: { userId }
-        });
-        if (error) throw error;
-      }
-    } catch (error) {
-      throw new Error(`Failed to enable MFA: ${error.message}`);
-    }
-  }
-
-  async verifyMFA(userId: string, code: string, method: 'totp' | 'sms'): Promise<boolean> {
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-mfa', {
-        body: { userId, code, method }
-      });
       if (error) throw error;
-      return data.valid;
+
+      // Check if MFA is required
+      if (data.session && await this.isMFARequired(data.user.id)) {
+        return { requiresMFA: true, session: data.session };
+      }
+
+      return data;
     } catch (error) {
-      throw new Error(`MFA verification failed: ${error.message}`);
+      console.error('Error signing in with email:', error);
+      throw error;
+    }
+  }
+
+  // MFA verification
+  async verifyMFA(userId: string, code: string) {
+    try {
+      const { data, error } = await supabase
+        .from('mfa_settings')
+        .select('totp_secret')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) throw error;
+
+      // Verify TOTP code
+      const isValid = this.verifyTOTPCode(code, data.totp_secret);
+      if (!isValid) {
+        throw new Error('Invalid MFA code');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error verifying MFA:', error);
+      throw error;
+    }
+  }
+
+  // Enable MFA for a user
+  async enableMFA(userId: string) {
+    try {
+      const secret = this.generateTOTPSecret();
+      const { error } = await supabase
+        .from('mfa_settings')
+        .upsert({
+          user_id: userId,
+          totp_enabled: true,
+          totp_secret: secret
+        });
+
+      if (error) throw error;
+
+      return {
+        secret,
+        qrCode: this.generateTOTPQRCode(secret)
+      };
+    } catch (error) {
+      console.error('Error enabling MFA:', error);
+      throw error;
     }
   }
 
@@ -412,9 +428,35 @@ class AuthService {
   }
 
   private generateNonce(): string {
-    return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    return Math.random().toString(36).substring(2, 15);
+  }
+
+  private async isMFARequired(userId: string): Promise<boolean> {
+    const { data } = await supabase
+      .from('mfa_settings')
+      .select('totp_enabled')
+      .eq('user_id', userId)
+      .single();
+
+    return data?.totp_enabled ?? false;
+  }
+
+  private generateTOTPSecret(): string {
+    return Array.from(crypto.getRandomValues(new Uint8Array(20)))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
+  }
+
+  private generateTOTPQRCode(secret: string): string {
+    const issuer = 'TikTokToe';
+    const uri = `otpauth://totp/${issuer}?secret=${secret}&issuer=${issuer}`;
+    return uri;
+  }
+
+  private verifyTOTPCode(code: string, secret: string): boolean {
+    // Implementation would use a TOTP library
+    // This is a placeholder that should be replaced with actual TOTP verification
+    return code.length === 6;
   }
 
   // Public Methods
