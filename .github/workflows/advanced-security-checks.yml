@@ -1,0 +1,100 @@
+name: Advanced Security Checks
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'  # Every 4 hours
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  vulnerability-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Advanced SAST
+        uses: github/codeql-action/analyze@v2
+        with:
+          languages: javascript, typescript
+          queries: security-extended,security-and-quality
+          config-file: .github/codeql/codeql-config.yml
+
+      - name: JWT Security Scan
+        uses: custom/jwt-scanner@v1
+        with:
+          patterns: |
+            - "jwt.sign"
+            - "jwt.verify"
+            - "jsonwebtoken"
+          severity: high
+
+      - name: GraphQL Injection Check
+        uses: custom/graphql-scanner@v1
+        with:
+          schema: ./schema.graphql
+          operations: ./src/graphql/**/*.ts
+          check-depth: full
+
+      - name: Crypto Implementation Check
+        run: |
+          npm install -g crypto-check
+          crypto-check scan \
+            --algorithms=AES,RSA \
+            --key-sizes=min:2048 \
+            --report-format=sarif
+
+      - name: Session Management Audit
+        uses: custom/session-audit@v1
+        with:
+          config: .security/session-config.yml
+          checks: |
+            - session-fixation
+            - session-timeout
+            - secure-cookie
+            - csrf-protection
+
+      - name: API Schema Security
+        uses: custom/api-security@v1
+        with:
+          openapi: ./api/openapi.yml
+          checks: |
+            - rate-limiting
+            - authentication
+            - input-validation
+            - response-headers
+
+      - name: Third-Party Package Audit
+        run: |
+          npm audit --audit-level=moderate
+          yarn audit
+          pnpm audit
+          snyk test --severity-threshold=medium
+
+      - name: Database Query Injection
+        uses: custom/sql-injection-check@v1
+        with:
+          patterns: |
+            - "executeQuery"
+            - "rawQuery"
+            - "createQueryBuilder"
+          exclude: |
+            - "**/*.test.ts"
+            - "**/migrations/*.ts"
+
+      - name: Memory Leak Detection
+        uses: custom/memory-leak-detector@v1
+        with:
+          heap-snapshot: true
+          duration: 1h
+          threshold: 100MB
+
+      - name: Security Headers Check
+        run: |
+          curl -sI ${{ secrets.STAGING_URL }} | \
+          custom-header-check \
+            --require "Strict-Transport-Security" \
+            --require "Content-Security-Policy" \
+            --require "X-Content-Type-Options" \
+            --require "X-Frame-Options" 
