@@ -11,6 +11,7 @@ import { runMonitoringChecks } from './monitoring';
 import { runPostDeploymentChecks } from './post-deployment';
 import { SlackNotifier } from '../utils/notifications';
 import { generateDeploymentReport } from '../utils/reporting';
+import { EmergencyResponseHandler } from './emergency';
 
 interface CheckResult {
   status: 'success' | 'failure' | 'warning';
@@ -30,10 +31,12 @@ export class DeploymentAutomation {
   private notifier: SlackNotifier;
   private startTime: number;
   private environment: string;
+  private emergencyHandler: EmergencyResponseHandler;
 
   constructor(environment: string = 'production') {
     this.notifier = new SlackNotifier();
     this.environment = environment;
+    this.emergencyHandler = new EmergencyResponseHandler();
   }
 
   async runAllChecks(): Promise<DeploymentResult> {
@@ -73,6 +76,9 @@ export class DeploymentAutomation {
       // 10. Post-deployment Checks
       results.postDeployment = await this.runWithRetry(runPostDeploymentChecks);
 
+      // Add new check
+      results.projectConsistency = await this.runWithRetry(checkProjectConsistency);
+
       const success = this.validateResults(results);
       const deploymentResult = this.createDeploymentResult(results, success);
 
@@ -83,6 +89,11 @@ export class DeploymentAutomation {
 
     } catch (error) {
       logger.error('Deployment automation failed:', error);
+      await this.emergencyHandler.handleDeploymentFailure({
+        status: 'failure',
+        details: [`Fatal error: ${error.message}`],
+        errors: [error]
+      });
       throw error;
     }
   }

@@ -153,6 +153,17 @@ export async function runPostDeploymentChecks(): Promise<CheckResult> {
       details.push(`✅ Backup verified (${formatBytes(backupStatus.size)})`);
     }
 
+    // 8. Social Platform Specific Checks
+    logger.info('Verifying social platform features...');
+    const socialChecks = await verifySocialFeatures();
+    
+    if (socialChecks.status === 'failure') {
+      details.push(`❌ Social platform issues: ${socialChecks.details.join(', ')}`);
+      errors.push(new Error('Social platform issues detected'));
+    } else {
+      details.push('✅ Social platform features verified');
+    }
+
     return {
       status: errors.length === 0 ? 'success' : 'failure',
       details,
@@ -314,4 +325,14 @@ function formatBytes(bytes: number): string {
   }
 
   return `${size.toFixed(2)} ${units[unit]}`;
+}
+
+// Add social platform specific checks
+async function verifySocialFeatures(): Promise<CheckResult> {
+  const checks = [
+    await verifyContentCreation(),
+    await verifyUserInteractions(),
+    await verifyATProtocolIntegration()
+  ];
+  return aggregateResults(checks);
 } 
