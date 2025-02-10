@@ -1,0 +1,187 @@
+environments:
+  development:
+    region: us-east1
+    scale: small
+    features:
+      - api-service
+      - auth-service
+      - data-service
+      - monitoring
+    testing:
+      load: false
+      chaos: false
+      integration: true
+    rollout:
+      strategy: rolling
+      phases: 2
+      interval: 5
+    security:
+      scan_dependencies: true
+      vulnerability_threshold: medium
+      container_scanning: true
+    resources:
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+    networking:
+      ingress:
+        enabled: true
+        domain: dev.tiktok-toe.com
+        ssl: true
+      egress:
+        restricted: false
+
+  staging:
+    region: us-east1
+    scale: medium
+    features:
+      - api-service
+      - auth-service
+      - data-service
+      - monitoring
+      - emergency-response
+      - disaster-recovery
+    testing:
+      load: true
+      chaos: true
+      integration: true
+    rollout:
+      strategy: canary
+      phases: 4
+      interval: 10
+    security:
+      scan_dependencies: true
+      vulnerability_threshold: low
+      container_scanning: true
+      penetration_testing: true
+      compliance_checks: true
+    resources:
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+    networking:
+      ingress:
+        enabled: true
+        domain: staging.tiktok-toe.com
+        ssl: true
+        waf_enabled: true
+      egress:
+        restricted: true
+        allowed_endpoints:
+          - api.aws.amazon.com
+          - auth.provider.com
+    backup:
+      enabled: true
+      frequency: hourly
+      retention_days: 7
+
+  production:
+    region: us-east1
+    scale: large
+    dr_regions:
+      - us-west1
+      - eu-west1
+    features:
+      - api-service
+      - auth-service
+      - data-service
+      - monitoring
+      - emergency-response
+      - disaster-recovery
+      - capacity-planning
+    testing:
+      load: true
+      chaos: false
+      integration: true
+    rollout:
+      strategy: blue-green
+      phases: 2
+      interval: 15
+    security:
+      scan_dependencies: true
+      vulnerability_threshold: low
+      container_scanning: true
+      penetration_testing: true
+      compliance_checks: true
+      audit_logging: true
+      secrets_rotation: true
+    resources:
+      limits:
+        cpu: "8"
+        memory: "16Gi"
+      requests:
+        cpu: "4"
+        memory: "8Gi"
+    networking:
+      ingress:
+        enabled: true
+        domain: tiktok-toe.com
+        ssl: true
+        waf_enabled: true
+        ddos_protection: true
+      egress:
+        restricted: true
+        allowed_endpoints:
+          - api.aws.amazon.com
+          - auth.provider.com
+    backup:
+      enabled: true
+      frequency: hourly
+      retention_days: 30
+      cross_region: true
+
+thresholds:
+  health:
+    availability: 99.95
+    latency_p95_ms: 200
+    error_rate: 0.001
+  resources:
+    cpu_threshold: 80
+    memory_threshold: 75
+    storage_threshold: 85
+  scaling:
+    min_replicas: 3
+    max_replicas: 10
+    target_cpu_utilization: 70
+
+monitoring:
+  metrics_retention_days: 30
+  alert_channels:
+    - slack:
+        channel: "#deployments"
+        urgent_channel: "#incidents"
+    - email:
+        distribution_lists:
+          - devops@tiktok-toe.com
+          - security@tiktok-toe.com
+    - pagerduty:
+        service_id: "PAGER_SERVICE_ID"
+  dashboards:
+    deployment:
+      - name: deployment-overview
+        refresh_rate: 30s
+        panels:
+          - deployment-status
+          - rollout-progress
+          - service-health
+          - error-rates
+      - name: service-metrics
+        refresh_rate: 1m
+        panels:
+          - cpu-usage
+          - memory-usage
+          - network-io
+          - latency-percentiles
+      - name: security-monitoring
+        refresh_rate: 5m
+        panels:
+          - vulnerability-status
+          - compliance-status
+          - audit-logs
+          - access-patterns 

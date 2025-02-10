@@ -1,0 +1,91 @@
+name: Security Checks
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  advanced-security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run OWASP ZAP Scan
+        uses: zaproxy/action-full-scan@v0.4.0
+        with:
+          target: ${{ secrets.STAGING_URL }}
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+      - name: Run Infrastructure Scan
+        uses: tenable/terrascan-action@main
+        with:
+          iac_type: 'k8s'
+          iac_version: 'v1'
+          policy_type: 'k8s'
+          only_warn: false
+
+      - name: Run License Compliance Check
+        uses: fossas/fossa-action@main
+        with:
+          api-key: ${{ secrets.FOSSA_API_KEY }}
+
+      - name: Run Security Headers Check
+        uses: securego/gosec@master
+        with:
+          args: './...'
+
+      - name: Run DAST Scan
+        uses: stackhawk/hawkscan-action@v2
+        with:
+          apiKey: ${{ secrets.HAWK_API_KEY }}
+          configurationFiles: stackhawk.yml
+
+      - name: Run Container Security Scan
+        uses: anchore/scan-action@v3
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          fail-build: true
+          severity-cutoff: high
+
+      - name: Run API Security Scan
+        uses: 42crunch/api-security-audit-action@v1
+        with:
+          api-token: ${{ secrets.API_SCANNER_TOKEN }}
+          min-score: 75
+
+      - name: Run Dependency Chain Analysis
+        uses: microsoft/component-detection@v1
+        with:
+          scan-type: 'deep'
+          alert-level: 'medium'
+
+      - name: Run Memory Safety Check
+        uses: microsoft/rust-analyzer@v1
+        with:
+          command: 'check'
+          args: '--all-features'
+
+      - name: Run Cloud Config Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infrastructure/
+          framework: all
+          soft_fail: false
+          output_format: cli,sarif
+          download_external_modules: true
+
+      - name: Run SSL/TLS Configuration Check
+        run: |
+          npm install -g sslyze
+          sslyze --regular ${{ secrets.STAGING_URL }} --json_out ssl_report.json
+
+      - name: Kubernetes Security Scan
+        uses: aquasecurity/kube-bench@main
+        with:
+          config: cis-1.6
+          threshold: warn 
