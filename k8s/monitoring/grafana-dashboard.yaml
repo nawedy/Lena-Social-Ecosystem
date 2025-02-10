@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tiktok-toe-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "true"
+data:
+  tiktok-toe-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "TikTokToe Service Dashboard",
+        "panels": [
+          {
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{service=\"tiktok-toe\"}[5m])",
+                "legendFormat": "{{method}} {{path}}"
+              }
+            ]
+          },
+          {
+            "title": "Response Times",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{service=\"tiktok-toe\"}[5m]))",
+                "legendFormat": "P95"
+              }
+            ]
+          }
+        ]
+      }
+    } 

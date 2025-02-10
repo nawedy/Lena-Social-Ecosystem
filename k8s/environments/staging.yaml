@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tiktok-toe-config
+  namespace: game-services
+data:
+  NODE_ENV: staging
+  LOG_LEVEL: debug
+  METRICS_ENABLED: "true"
+  CACHE_TTL: "1800"
+  MAX_CONNECTIONS: "500"
+  RATE_LIMIT: "200"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tiktok-toe
+  namespace: game-services
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+      - name: tiktok-toe
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi" 

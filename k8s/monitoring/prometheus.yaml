@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tiktok-toe-monitor
+  namespace: game-services
+spec:
+  selector:
+    matchLabels:
+      app: tiktok-toe
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tiktok-toe-metrics
+  namespace: game-services
+  labels:
+    app: tiktok-toe
+spec:
+  ports:
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+  selector:
+    app: tiktok-toe 

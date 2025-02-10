@@ -1,0 +1,44 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tiktok-toe-alerts
+  namespace: monitoring
+spec:
+  groups:
+  - name: application
+    rules:
+    - alert: HighErrorRate
+      expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: High error rate detected
+        description: Error rate is above 5% for 5 minutes
+
+    - alert: HighLatency
+      expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: High latency detected
+        description: 95th percentile latency is above 500ms
+
+    - alert: PodCrashLooping
+      expr: rate(kube_pod_container_status_restarts_total{namespace="game-services"}[15m]) > 0
+      for: 15m
+      labels:
+        severity: critical
+      annotations:
+        summary: Pod is crash looping
+        description: Pod {{ $labels.pod }} is restarting frequently
+
+    - alert: MemoryUsageHigh
+      expr: container_memory_usage_bytes{namespace="game-services"} > 0.85 * container_spec_memory_limit_bytes
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: High memory usage
+        description: Container {{ $labels.container }} is using more than 85% of its memory limit 
