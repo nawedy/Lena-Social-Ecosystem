@@ -1,4 +1,4 @@
-# TikTokToe
+# Lena Social Ecosystem
 
 A modern social media platform for sharing and discovering content, built with privacy, security, and user experience at its core.
 
